@@ -1,0 +1,10 @@
+---
+layout: default
+title:Hel1oW0rLd!
+---
+<h2>{{ page.title }}</h2>
+<p>{{ page.date | date_to_string }}</p>
+<p>每篇文章的头部，必须有一个yaml文件头，用来设置一些元数据。它用三根短划线"---"，标记开始和结束，
+里面每一行设置一种元数据。"layout:default"，表示该文章的模板使用_layouts目录下的default.html文件；"title: 你好，世界"，表示该文章的标题是"你好，世界"，如果不设置这个值，默认使用嵌入文件名的标题.</p>
+
+<p>在yaml文件头后面，就是文章的正式内容，里面可以使用模板变量。{{page.title}}就是文件头中设置的"你好，世界"，{{page.date}}则是嵌入文件名的日期（也可以在文件头重新定义date变量），"|date_to_string"表示将page.date变量转化成人类可读的格式。</p>
