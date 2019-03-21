@@ -228,3 +228,24 @@ title: HayHeapStudio
 <div class="footer text-center">&copy; 2019 Zero & Leaf. All Rights Reserved | Design by  <a href="https://twitter.com/Timothy_OwO"> Timothyhay</a></div>
 
 
+<script src="js/move-top.js"></script>
+<script>
+$(function(){
+                $('#gal').Chocolat({
+                    imageSize: 'contain'
+                });
+            });
+</script>
+<script type="text/javascript">
+$(document).ready(function() {
+var defaults = {
+containerID: 'toTop', // fading element id
+containerHoverID: 'toTopHover', // fading element hover id
+scrollSpeed: 1200,
+easingType: 'linear' 
+};
+
+$().UItoTop({ easingType: 'easeOutQuart' });
+
+});
+</script>
