@@ -227,6 +227,24 @@ title: HayHeapStudio
 
 <div class="footer text-center">&copy; 2019 Zero & Leaf. All Rights Reserved | Design by  <a href="https://weibo.com/TimothyHay"> Timothyhay</a></div>
 
+
+<!--javascript-->
+<script src="js/jquery-1.11.3.min.js"></script>
+<script src="js/bootstrap.js"></script>
+<script src="js/smoothscroll.js"></script>
+<script src="js/jquery.easing.min.js"></script>
+<script src="js/grayscale.js"></script>
+<script src="js/move-top.js"></script>
+<!--//javascript-->
+<!-- js for gallery -->
+<script type="text/javascript" src="js/jquery.chocolat.js"></script>
+<script>
+$(function(){
+                $('#gal').Chocolat({
+                    imageSize: 'contain'
+                });
+            });
+</script>
 <script type="text/javascript">
 $(document).ready(function() {
 var defaults = {
@@ -237,3 +255,8 @@ easingType: 'linear'
 };
 
 $().UItoTop({ easingType: 'easeOutQuart' });
+
+});
+</script>
+
+<!-- //js for gallery -->	
