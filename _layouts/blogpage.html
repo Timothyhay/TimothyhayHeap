@@ -50,11 +50,15 @@
 	<div class="services-w3ls" id="daily">
 		{{ content }}
 	</div>
-	
+
 	<div class="contact-agileinfo" id="contact">
 
 		<div class="contact-agileinfo-content">
 			<div class="container">
+				<!-- Comment Area -->
+				
+				{% if page.comments %}
+
 				<div class="contact-agileinfo-address">
 					<div class="contact-agileinfo-icons">
 						<div class="contact-icons-info">
@@ -62,9 +66,6 @@
 						</div>
 					</div>
 				</div>
-				
-				<!-- Comment Area -->
-				{% if page.comments %}
 				<div id="disqus_thread"></div>
 					<script>
 						/**
