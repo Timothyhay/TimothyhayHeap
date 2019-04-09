@@ -1,2 +1,5 @@
+url: http://zero.razzorleaf.fun
 baseurl: /
 theme: jekyll-theme-architect
+disqus:
+    shortname: razzorleaf
