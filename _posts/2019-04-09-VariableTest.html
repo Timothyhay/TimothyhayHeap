@@ -1,0 +1,62 @@
+---
+layout: blogpage
+title:  变量与参数测试
+comments: true
+---
+
+<div class="contact-agileinfo-info text-center">
+	<h3>调试好就能解决评论问题了！</h3>
+	<h6>{{ page.date | date_to_string }}</h6>
+	<p>p.s. 想和你说的话还没写好 ..！ 才不是这条干巴巴的测试界面呢 ..</p>
+</div>
+<div class="container">
+	<h4>page</h4>
+	<ul>
+    	<li><p>page.date - {{ page.date }}</p></li>
+    	<li><p>page.title - {{ page.title }}</p></li>
+    	<li><p>page.day - {{ page.day }}</p></li>
+    	<li><p>page.hour - {{ page.hour }}</p></li>
+    	<li><p>page.minute - {{ page.minute }}</p></li>
+    	<li><p>page.second - {{ page.second }}</p></li>
+    	<li><p>page.pretty - {{ page.pretty }}</p></li>
+    	<li><p>page.url - {{ page.url }}</p></li>
+    </ul>
+
+	<!--URL HINT http://zero.razzorleaf.fun/2019/04/09/springmelody.html -->
+
+	<div class="contact-agileinfo-address">
+		<div class="contact-agileinfo-icons">
+			<div class="contact-icons-info">
+				<h3>Comments</h3>
+			</div>
+		</div>
+	</div>
+	
+	<!-- Comment Area -->
+	{% if page.comments %}
+	<div id="disqus_thread"></div>
+		<script>
+			/**
+			*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+			*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+			
+			var disqus_config = function () {
+			this.page.url = '{{ page.url }}';  // Replace PAGE_URL with your page's canonical URL variable
+			 this.page.identifier ='{{ page.url }}'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+			};
+			
+			(function() { // DON'T EDIT BELOW THIS LINE
+			var d = document, s = d.createElement('script');
+			s.src = 'https://razzorleaf.disqus.com/embed.js';
+			s.setAttribute('data-timestamp', +new Date());
+			(d.head || d.body).appendChild(s);
+			})();
+		</script>
+	<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+	{% endif %}
+
+</div>
+
+
+
+	
