@@ -51,15 +51,16 @@
 		{{ content }}
 	</div>
 　　　　
-
-
-	<div class="contact-agileinfo-address">
-		<div class="contact-agileinfo-icons">
-			<div class="contact-icons-info">
-				<h3>Comments</h3>
+	<div class="contact-agileinfo" id="contact">
+		<div class="contact-agileinfo-info text-center">
+			<div class="contact-agileinfo-address">
+				<div class="contact-agileinfo-icons">
+					<div class="contact-icons-info">
+						<h3>Comments</h3>
+					</div>
+				</div>
 			</div>
 			<!-- Comment Area -->
-			<!-- ALERT: 这里域名是静态串 需要后续修改-->
 			{% if page.comments %}
 			<div id="disqus_thread"></div>
 				<script>
