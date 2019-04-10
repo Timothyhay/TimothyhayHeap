@@ -11,8 +11,8 @@ comments: true
 <div class="container">
 	<h2>插入图片的方法</h2>
 	<p>这里我用了首页带鼠标悬停效果并且可以点开的图，这个类叫做"chocolat-image"。</p>
-	<div class="hovereffect" >
-		<a class="chocolat-image"  href="/postimg/WelshOnion.jpg"><img src="/postimg/WelshOnion.jpg" class="img-responsive" alt="一颗大葱" style="height: 400px">
+	<div class="hovereffect" style="height: 400px; weight:250px;">
+		<a class="chocolat-image"  href="/postimg/WelshOnion.jpg"><img src="/postimg/WelshOnion.jpg" class="img-responsive" alt="一颗大葱" style="height: 400px; weight:250px;">
 		<div class="overlay">
 			<h4>WelshOnion</h4>
 			<p>对着人家种的大葱也好奇半天的我们</p>
@@ -22,7 +22,7 @@ comments: true
 	<p>对首页这种用JavaScript修饰过的图片(其实是一堆div和超链接的组合体) 你只需要像这样做：</p>
 
 {% highlight html %}
-<div class="hovereffect" style="height: 200px">
+<div class="hovereffect" style="height: 400px; weight:250px;">
 	<!-- 修改下面两行的 
 		 1.a的href属性 - 超链接控制的展示图片路径 
 		 2.img的src属性 - 外部显示图片的路径 
