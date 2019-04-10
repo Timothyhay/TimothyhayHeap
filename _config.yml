@@ -1,5 +1,6 @@
 url: http://zero.razzorleaf.fun
 baseurl: /
 theme: jekyll-theme-architect
+highlighter: rouge
 disqus:
     shortname: razzorleaf
