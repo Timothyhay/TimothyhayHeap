@@ -1,0 +1,45 @@
+---
+layout: blogpage
+title:  说给我的零
+comments: true
+---
+
+<div class="contact-agileinfo-info text-center">
+	<h3>从天津回来的话 让我慢慢写完</h3>
+	<h6>{{ page.date | date_to_string }}</h6>
+</div>
+<div class="container">
+	<h2>插入图片的方法</h2>
+	<p>这里我用了首页带鼠标悬停效果并且可以点开的图，这个类叫做"chocolat-image"。</p>
+	<div class="hovereffect">
+		<a class="chocolat-image"  href="/postimg/WelshOnion.jpg"><img src="/postimg/WelshOnion.jpg" class="img-responsive" alt="一颗大葱">
+		<div class="overlay">
+			<h4>WelshOnion</h4>
+			<p>对着人家种的大葱也好奇半天的我们</p>
+		</div>
+		</a>
+	</div>
+	<p>对首页这种用JavaScript修饰过的图片(其实是一堆div和超链接的组合体) 你只需要像这样做：</p>
+	{% highlight HTML %}
+	<div class="hovereffect">
+		<a class="chocolat-image"  href="/postimg/WelshOnion.jpg"><img src="/postimg/WelshOnion.jpg" class="img-responsive" alt="一颗大葱">
+		<div class="overlay">
+			<h4>WelshOnion</h4>
+			<p>对着人家种的大葱也好奇半天的我们</p>
+		</div>
+		</a>
+	</div>
+	{% endhighlight %}
+
+	<p>差不多就是这样！</p>
+	<p>那么普通的威尔士洋葱是什么样的呢？看下面：</p>
+	<img src="/postimg/WelshOnion.jpg">
+	<p>这样普通的图片只需要添加一个img标签就可以了 ~ </p>
+	{% highlight HTML %}
+	<img src="/postimg/WelshOnion.jpg">
+	{% endhighlight %}
+</div>
+
+
+
+	
