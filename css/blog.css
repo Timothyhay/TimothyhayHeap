@@ -1,13 +1,13 @@
-.container p{
+.container p {
     text-align: justify; text-justify: inter-ideograph; text-indent: 2em;
 }
 
-span .zero{
+.container span.zero {
 	color: rgb(147, 112, 219);
 	font-weight: 550;
 }
 
-span .razzor{
+.container span.razzor {
 	color: rgba(87,147,217,1);
 	font-weight: 550;
 }
