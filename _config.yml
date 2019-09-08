@@ -3,3 +3,5 @@ baseurl: /
 highlighter: rouge
 disqus:
     shortname: razzorleaf
+collections:
+- coincidence
