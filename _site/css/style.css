@@ -6,7 +6,7 @@ body {
     padding: 0;
     margin: 0;
     background: #FFF;
-    font-family: 'Poppins', sans-serif;
+    font-family: '39 Smooth', sans-serif;
 }
 
 body a {
@@ -44,7 +44,7 @@ h5,
 h6 {
     margin: 0;
     padding: 0;
-    font-family: 'Poppins', sans-serif;
+    font-family: '39 Smooth', sans-serif;
 }
 
 p {
@@ -146,20 +146,21 @@ body {
     width: 100%;
     margin: 0 auto;
 }
-
+/*
 @font-face {
-    font-family: '39 Smooth';
-    src: url('../fonts/39smooth.ttf') format('truetype');
+    font-family: 'TypeMeTwo';
+    src: url('../fonts/TypeMeTwo.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
+*/
 
 h1 {
     letter-spacing: 16px;
     padding-bottom: 28px;
     font-size: 73px;
     font-weight: 700;
-    font-family: '39 Smooth', sans-serif;
+    font-family: 'TypeMeTwo', sans-serif;
     text-transform: uppercase;
     text-shadow: 2px 2px 2px rgba(16, 16, 16, 0.38);
 }

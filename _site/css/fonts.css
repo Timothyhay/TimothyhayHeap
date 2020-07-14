@@ -1,0 +1,12 @@
+/*-- All the Fonts --*/
+
+@font-face {
+    font-family: 'TypeMeTwo';
+    src: url('../fonts/TypeMeTwo.ttf') format('truetype');
+
+    font-family: '39smooth';
+    src: url('../fonts/39smooth.ttf') format('truetype');
+    
+    font-weight: normal;
+    font-style: normal;
+}
