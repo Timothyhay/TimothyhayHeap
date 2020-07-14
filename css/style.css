@@ -149,7 +149,7 @@ body {
 
 @font-face {
     font-family: '39 Smooth';
-    src: url('fonts/39smooth.ttf') format('truetype'),
+    src: url('../fonts/39smooth.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
