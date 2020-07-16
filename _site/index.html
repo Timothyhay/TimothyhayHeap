@@ -18,6 +18,8 @@
 <link rel="stylesheet" type="text/css" href="css/elastislide.css" />
 <link rel="stylesheet" type="text/css" href="css/custom.css" />
 
+<link href="css/tilteffect.css" rel="stylesheet" type="text/css" media="all">
+
 <!--//css-->
 
 <!--google fonts-->
@@ -103,10 +105,10 @@
 
 <!--about us-->
 <div class="about-us-agileits" id="about">
+
 <div class="about-info text-center">
 	<h3>ABOUT</h3>
 	<label></label>
-	<h6>DIGITAL BIOCARD</h6>
 	</div>
 		<div class="about-us-agileits-info">
 			<div class="container">
@@ -118,10 +120,20 @@
 						<p>我好喜欢吃提子吐司，到底是谁发明了提子吐司？</p>
 
 					</div>
+						<p>Updated on: </p>
 
 					<div class="col-sm-6 col-md-7 text-center">
-						<p> BIOCARD </p>
-						<img src="images/biocard.jpg" alt="profile" style="height: 275px">
+						<ul class="grid grid--examples">
+							<li class="grid__item">
+
+							<div class="grid__img grid__img--example-4">
+								<img src="images/biocard.jpg" class="tilt-effect" alt="grid04"  data-tilt-options='{ "opacity" : 0.8, "bgfixed" : false, "extraImgs" : 3, "movement": { "perspective" : 1500, "translateX" : 80, "translateY" : 80, "translateZ" : 0, "rotateY" : 20 } }' />
+							</div>
+							<p> DIGITAL BIOCARD </p>
+							</li>
+
+						</ul>
+						
 					</div>
 
 					<div class="clearfix"></div>
@@ -140,31 +152,33 @@
 		<h6>ALL ARTICILES</h6>
 	</div>
 	<div class="container">
+		<ul>
 		
 
 　　　　　　<li>06 Jul 2020 - <a href="//2020/07/06/Gitlog.html">Gitlog</a></li>
 
-　　　　
+　　　　 
 
 　　　　　　<li>20 Jun 2020 - <a href="//2020/06/20/MLNote.html">Mlnote</a></li>
 
-　　　　
+　　　　 
 
 　　　　　　<li>19 Feb 2020 - <a href="//2020/02/19/SeeSharp1.html">C#学习笔记</a></li>
 
-　　　　
+　　　　 
 
 　　　　　　<li>09 Apr 2019 - <a href="//2019/04/09/VariableTest.html">Disqus变量与参数测试</a></li>
 
-　　　　
+　　　　 
 
 　　　　　　<li>21 Mar 2019 - <a href="//2019/03/21/IndexFin.html">主页做好了！大概 ~</a></li>
 
-　　　　
+　　　　 
 
 　　　　　　<li>20 Mar 2019 - <a href="//2019/03/20/GiveItAShot.html">Hel1oW0rLd!</a></li>
 
-　　　　
+　　　　 
+		</ul>
 	</div>
 </div>
 
@@ -306,6 +320,7 @@
 <div class="contact-agileinfo" id="contact">
 	<div class="contact-agileinfo-info text-center">
 	<h3>CONTACT ME</h3>
+	<label></label>
 	<h6>DROP ME A LINE</h6>
 	</div>
 		<div class="contact-agileinfo-content">
@@ -410,6 +425,7 @@
 <script src="js/jquery.easing.min.js"></script>
 <script src="js/grayscale.js"></script>
 <script src="js/move-top.js"></script>
+<script src="js/tiltfx.js"></script>
 <!--//javascript-->
 
 <!-- js for gallery -->

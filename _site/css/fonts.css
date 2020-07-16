@@ -6,7 +6,11 @@
 
     font-family: '39smooth';
     src: url('../fonts/39smooth.ttf') format('truetype');
-    
+
+    /* 方正宋刻本秀楷简体 */
+    font-family: 'FZSKBXKJW';
+    src: url('../fonts/FZSKBXKJW.ttf') format('truetype');
+
     font-weight: normal;
     font-style: normal;
 }

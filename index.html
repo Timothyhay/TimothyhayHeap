@@ -79,10 +79,10 @@ comments: true
 
 <!--about us-->
 <div class="about-us-agileits" id="about">
+
 <div class="about-info text-center">
 	<h3>ABOUT</h3>
 	<label></label>
-	<h6>DIGITAL BIOCARD</h6>
 	</div>
 		<div class="about-us-agileits-info">
 			<div class="container">
@@ -94,10 +94,20 @@ comments: true
 						<p>我好喜欢吃提子吐司，到底是谁发明了提子吐司？</p>
 
 					</div>
+						<p>Updated on: </p>
 
 					<div class="col-sm-6 col-md-7 text-center">
-						<p> BIOCARD </p>
-						<img src="images/biocard.jpg" alt="profile" style="height: 275px">
+						<ul class="grid grid--examples">
+							<li class="grid__item">
+
+							<div class="grid__img grid__img--example-4">
+								<img src="images/biocard.jpg" class="tilt-effect" alt="grid04"  data-tilt-options='{ "opacity" : 0.8, "bgfixed" : false, "extraImgs" : 3, "movement": { "perspective" : 1500, "translateX" : 80, "translateY" : 80, "translateZ" : 0, "rotateY" : 20 } }' />
+							</div>
+							<p> DIGITAL BIOCARD </p>
+							</li>
+
+						</ul>
+						
 					</div>
 
 					<div class="clearfix"></div>
@@ -116,11 +126,13 @@ comments: true
 		<h6>ALL ARTICILES</h6>
 	</div>
 	<div class="container">
+		<ul>
 		{% for post in site.posts %}
 
 　　　　　　<li>{{ post.date | date_to_string }} - <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></li>
 
-　　　　{% endfor %}
+　　　　 {% endfor %}
+		</ul>
 	</div>
 </div>
 
@@ -262,6 +274,7 @@ comments: true
 <div class="contact-agileinfo" id="contact">
 	<div class="contact-agileinfo-info text-center">
 	<h3>CONTACT ME</h3>
+	<label></label>
 	<h6>DROP ME A LINE</h6>
 	</div>
 		<div class="contact-agileinfo-content">
