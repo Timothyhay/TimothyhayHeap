@@ -89,13 +89,13 @@ comments: true
 				<div class="row">
 					<div class="col-sm-6 col-md-5">
 						<h2>Status &gt;&gt;</h2>
-						<p>写摸鱼代码的时候总是特别有激情：Unity 3D 研究中！</p>
-						<p>有学上了！准备好成为新加坡蓝军啦 ~</p>
-						<p>我好喜欢吃提子吐司，到底是谁发明了提子吐司？</p>
-
+						{% for state in site.status reverse limit:1 %}
+						{{ state }}
+						<br><br>
+						<p>Updated on: {{ state.title }}</p> <!-- Title实际上存的是日期 -->
+						{% endfor %}
 					</div>
-						<p>Updated on: </p>
-
+						
 					<div class="col-sm-6 col-md-7 text-center">
 						<ul class="grid grid--examples">
 							<li class="grid__item">
