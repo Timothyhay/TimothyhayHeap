@@ -1,7 +1,7 @@
-url: http://zero.razzorleaf.fun/
+url: https://world.tangerinesoda.fun/
 baseurl: /
 highlighter: rouge
 disqus:
     shortname: razzorleaf
 collections:
-  status
+- status
