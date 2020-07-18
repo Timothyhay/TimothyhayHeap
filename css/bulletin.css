@@ -1,0 +1,21 @@
+
+.left, .right{
+width: 200px;
+background-color: #7ecff2;
+text-align: left;
+}
+
+.main{
+flex: 1;
+background-color: #ff5000;
+text-align: center;
+}
+
+
+.stream-warpper{
+    position: absolute;
+    width: 100%;
+    display: flex;
+    top: 100px;
+    bottom: 100px;
+}
