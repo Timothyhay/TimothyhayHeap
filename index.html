@@ -89,11 +89,12 @@ comments: true
 				<div class="row">
 					<div class="col-sm-6 col-md-5">
 						<h2>Status</h2>
-						{% for state in site.status reverse limit:1 %}
-						{{ state }}
+
+						{{ site.status.first.content }}
+
 						<br><br>
-						<p>Updated on: {{ state.title }}</p> <!-- Title实际上存的是日期 -->
-						{% endfor %}
+						<p>Updated on: {{ site.status.first.title }}</p> <!-- Title实际上存的是日期; 之前的写法要把endfor放到本行以下 -->
+
 					</div>
 						
 					<div class="col-sm-6 col-md-7 text-center">
@@ -128,8 +129,11 @@ comments: true
 	<div class="container">
 		<ul>
 		{% for post in site.posts %}
-
-　　　　　　<li>{{ post.date | date_to_string }} - <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></li>
+			{% assign tag = post.tags.first %}
+			{% if tag == nil %}
+  				{% assign tag = "砂" %}
+			{% endif %}
+　　　　　　 <li>{{ post.date | date_to_string }} - {{ tag }} / <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></li>
 
 　　　　 {% endfor %}
 		</ul>

@@ -311,6 +311,11 @@ label {
     background-color: rgba(230, 242, 255, 0.7);
 }
 
+.services-widerspace {
+    padding: 80px 0px;
+    background-color: rgba(230, 242, 255, 0.2);
+}
+
 .services-w3ls-content {
     padding-top: 73px;
 }
