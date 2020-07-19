@@ -703,6 +703,7 @@ a.icon3:hover {
 .contact-agileinfo-icons ul li a {
     color: #00182d;
     text-decoration: none;
+    font-family: sans-serif;
     font-size: large;
 }
 
