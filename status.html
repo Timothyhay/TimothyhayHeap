@@ -1,0 +1,22 @@
+---
+layout: timeline
+title: StatusTimeline
+comments: false
+---
+
+{% for state in site.status %}
+	<div class="timeline__item timeline__item--{% increment Postcount %}">
+        <div class="timeline__item__station"></div>
+        <div class="timeline__item__content">
+            <h2 class="timeline__item__content__date">{{ state.title }}</h2>
+            <p class="timeline__item__content__description">{{ state.content }}</p>
+        </div>
+	</div>
+{% endfor %}
+
+
+<script type="text/javascript">
+    for (i = 0; i < {{ site.status.size }}; i++) {
+     customWayPoint('.timeline__item--' + i, 'timeline__item-bg', defaultOffset);
+    }
+</script>
