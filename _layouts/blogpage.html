@@ -53,7 +53,15 @@
 
 
 	<div class="services-deeperwiderspace" id="daily">
-		{{ content }}
+		<div class="contact-agileinfo-info text-center">
+			<h2>{{ page.title }}</h2>
+			<label></label>
+			<h6>{{ page.date | date_to_string }}  {{ page.tags }}</h6>
+		</div>
+
+		<div class="container">
+			{{ content }}
+		</div>
 	</div>
 
 	<div class="contact-agileinfo" id="contact">
