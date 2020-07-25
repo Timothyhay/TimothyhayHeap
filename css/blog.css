@@ -1,3 +1,13 @@
+body {
+    /* font-family: 'Nunito', sans-serif; */
+    background: -webkit-linear-gradient(right, #d7e9eb, #a3daeb);
+    background: linear-gradient(to left, #d7e9eb, #a3daeb);
+}
+
+.container{
+    margin-top: 37px;
+}
+
 .container p {
     text-align: justify; text-justify: inter-ideograph; text-indent: 2em;
 }
@@ -22,8 +32,11 @@
     text-align: center;
     width: 40%
     height: 40%;
+    min-width: 200px;
+    max-width: 250px;
 }
 
 img{
     max-width: 100%
+    height: 40%;
 }
