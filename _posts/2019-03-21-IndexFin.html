@@ -3,11 +3,10 @@ layout: blogpage
 title: 主页做好了！大概 ~
 comments: true
 ---
-<h2>记一个git的时候的小错误</h2>
-<p>{{ page.date | date_to_string }}</p>
-<p>
+
+	{% highlight sh %}
 	PS Y:\Blog> git push origin gh-pages
-	<br>
+
 	fatal: HttpRequestException encountered.
 	   发送请求时出错。
 	Username for 'https://github.com': timothyhay
@@ -20,13 +19,17 @@ comments: true
 	hint: to the same ref. You may want to first integrate the remote changes
 	hint: (e.g., 'git pull ...') before pushing again.
 	hint: See the 'Note about fast-forwards' in 'git push --help' for details.
-</p>
+	{% endhighlight %}
 <p> 
 	解决方法是：
 	<br>
+	{% highlight sh %}
 	git pull --rebase origin gh-pages
+	{% endhighlight %}
 	<br>
+	{% highlight sh %}
 	git push -u origin gh-pages
+	{% endhighlight %}
 </p>
 
 <br>

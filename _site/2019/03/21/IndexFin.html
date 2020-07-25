@@ -60,30 +60,29 @@
 		</div>
 
 		<div class="container" id="blogpage">
-			<h2>记一个git的时候的小错误</h2>
-<p>21 Mar 2019</p>
-<p>
-	PS Y:\Blog> git push origin gh-pages
-	<br>
+				<figure class="highlight"><pre><code class="language-sh" data-lang="sh">	PS Y:<span class="se">\B</span>log&gt; git push origin gh-pages
+
 	fatal: HttpRequestException encountered.
 	   发送请求时出错。
-	Username for 'https://github.com': timothyhay
-	Password for 'https://timothyhay@github.com':
+	Username <span class="k">for</span> <span class="s1">'https://github.com'</span>: timothyhay
+	Password <span class="k">for</span> <span class="s1">'https://timothyhay@github.com'</span>:
 	To https://github.com/Timothyhay/TimothyhayHeap.git
-	 ! [rejected]        gh-pages -> gh-pages (fetch first)
-	error: failed to push some refs to 'https://github.com/Timothyhay/TimothyhayHeap.git'
-	hint: Updates were rejected because the remote contains work that you do
-	hint: not have locally. This is usually caused by another repository pushing
+	 <span class="o">!</span> <span class="o">[</span>rejected]        gh-pages -&gt; gh-pages <span class="o">(</span>fetch first<span class="o">)</span>
+	error: failed to push some refs to <span class="s1">'https://github.com/Timothyhay/TimothyhayHeap.git'</span>
+	hint: Updates were rejected because the remote contains work that you <span class="k">do
+	</span>hint: not have locally. This is usually caused by another repository pushing
 	hint: to the same ref. You may want to first integrate the remote changes
-	hint: (e.g., 'git pull ...') before pushing again.
-	hint: See the 'Note about fast-forwards' in 'git push --help' for details.
-</p>
+	hint: <span class="o">(</span>e.g., <span class="s1">'git pull ...'</span><span class="o">)</span> before pushing again.
+	hint: See the <span class="s1">'Note about fast-forwards'</span> <span class="k">in</span> <span class="s1">'git push --help'</span> <span class="k">for </span>details.
+	</code></pre></figure>
 <p> 
 	解决方法是：
 	<br>
-	git pull --rebase origin gh-pages
+	<figure class="highlight"><pre><code class="language-sh" data-lang="sh">	git pull <span class="nt">--rebase</span> origin gh-pages
+	</code></pre></figure>
 	<br>
-	git push -u origin gh-pages
+	<figure class="highlight"><pre><code class="language-sh" data-lang="sh">	git push <span class="nt">-u</span> origin gh-pages
+	</code></pre></figure>
 </p>
 
 <br>
