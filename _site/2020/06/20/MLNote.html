@@ -171,74 +171,74 @@ Try 30 epochs – you  might see the loss value stops decreasing, and sometimes 
 
 <p>· 项目代码</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	<span class="n">import</span> <span class="n">tensorflow</span> <span class="k">as</span> <span class="n">tf</span>
-	<span class="k">from</span> <span class="n">tensorflow</span> <span class="n">import</span> <span class="n">keras</span>
-	
-	<span class="n">import</span> <span class="n">matplotlib</span><span class="p">.</span><span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
-	<span class="n">print</span><span class="p">(</span><span class="n">tf</span><span class="p">.</span><span class="n">__version__</span><span class="p">)</span>
-	
-	<span class="p">#</span> <span class="err">写一个</span><span class="n">callback</span><span class="err">函数</span> <span class="err">在达到预期准确率之后停止训练</span>
-	<span class="s1">'''
-	class myCallback(tf.keras.callbacks.Callback):
-	  def on_epoch_end(self, epoch, logs={}):
-	    if(logs.get('</span><span class="n">acc</span><span class="s1">')&gt;0.9):
-	      print("\nReached 90% accuracy so cancelling training!")
-	      self.model.stop_training = True
-	
-	'''</span>
-	<span class="p">#</span><span class="n">callbacks</span> <span class="p">=</span> <span class="n">myCallback</span><span class="p">()</span>
-	<span class="n">mnist</span> <span class="p">=</span> <span class="n">tf</span><span class="p">.</span><span class="n">keras</span><span class="p">.</span><span class="n">datasets</span><span class="p">.</span><span class="n">fashion_mnist</span>
-	
-	<span class="p">#</span> <span class="n">Calling</span> <span class="n">load_data</span> <span class="n">on</span> <span class="n">this</span> <span class="n">object</span> <span class="n">will</span> <span class="n">give</span> <span class="n">you</span> <span class="n">two</span> <span class="n">sets</span> <span class="k">of</span> <span class="n">two</span> <span class="n">lists</span><span class="p">,</span> <span class="n">these</span> <span class="n">will</span> <span class="n">be</span> <span class="n">the</span> <span class="n">training</span> <span class="k">and</span> <span class="n">testing</span> <span class="n">values</span> <span class="n">for</span> <span class="n">the</span> <span class="n">graphics</span> <span class="n">that</span> <span class="n">contain</span> <span class="n">the</span> <span class="n">clothing</span> <span class="n">items</span> <span class="k">and</span> <span class="n">their</span> <span class="n">labels</span><span class="p">.</span>
-	<span class="p">(</span><span class="n">training_images</span><span class="p">,</span> <span class="n">training_labels</span><span class="p">),</span> <span class="p">(</span><span class="n">test_images</span><span class="p">,</span> <span class="n">test_labels</span><span class="p">)</span> <span class="p">=</span> <span class="n">mnist</span><span class="p">.</span><span class="n">load_data</span><span class="p">()</span>
-	
-	<span class="p">#</span> <span class="err">用</span><span class="n">plt</span><span class="err">看看测试数据和标签长什么样</span>
-	<span class="n">plt</span><span class="p">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">training_images</span><span class="p">[</span><span class="m">0</span><span class="p">])</span>
-	<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
-	<span class="n">print</span><span class="p">(</span><span class="n">training_images</span><span class="p">[</span><span class="m">0</span><span class="p">])</span>
-	<span class="n">print</span><span class="p">(</span><span class="n">training_labels</span><span class="p">[</span><span class="m">0</span><span class="p">])</span>
-	
-	<span class="p">#</span> <span class="n">Normalizing</span>
-	<span class="n">training_images</span> <span class="p">=</span> <span class="n">training_images</span> <span class="p">/</span> <span class="m">255.0</span>
-	<span class="n">test_images</span> <span class="p">=</span> <span class="n">test_images</span> <span class="p">/</span> <span class="m">255.0</span>
-	
-	<span class="p">#*</span> <span class="err">可以不带</span><span class="n">input</span><span class="err">——</span><span class="n">shape</span><span class="p">(</span><span class="err">只写</span><span class="n">tf</span><span class="p">.</span><span class="n">keras</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">Flatten</span><span class="p">()</span> <span class="p">)</span>
-	<span class="k">model</span> <span class="p">=</span> <span class="n">keras</span><span class="p">.</span><span class="n">Sequential</span><span class="p">([</span><span class="n">tf</span><span class="p">.</span><span class="n">keras</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="p">=(</span><span class="m">28</span><span class="p">,</span> <span class="m">28</span><span class="p">)),</span>
-	                                   <span class="n">tf</span><span class="p">.</span><span class="n">keras</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">Dense</span><span class="p">(</span><span class="m">128</span><span class="p">,</span> <span class="n">activation</span><span class="p">=</span><span class="n">tf</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">relu</span><span class="p">),</span>
-	                                   <span class="n">tf</span><span class="p">.</span><span class="n">keras</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">Dense</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="n">activation</span><span class="p">=</span><span class="n">tf</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">softmax</span><span class="p">)])</span> <span class="p">#</span><span class="n">input_shape</span><span class="p">=(</span><span class="m">28</span><span class="p">,</span> <span class="m">28</span><span class="p">)</span>
-	
-	<span class="s1">'''
-	Sequential: That defines a SEQUENCE of layers in the neural network
-	
-	Flatten: Remember earlier where our images were a square, when you printed them out? Flatten just takes that square and turns it into a 1 dimensional set.
-	
-	Dense: Adds a layer of neurons
-	
-	Each layer of neurons need an activation function to tell them what to do. There'</span><span class="n">s</span> <span class="n">lots</span> <span class="k">of</span> <span class="k">options</span><span class="p">,</span> <span class="n">but</span> <span class="n">just</span> <span class="n">use</span> <span class="n">these</span> <span class="n">for</span> <span class="n">now</span><span class="p">.</span>
-	
-	<span class="n">Relu</span> <span class="n">effectively</span> <span class="n">means</span> <span class="s2">"If X&gt;0 return X, else return 0"</span> <span class="p">--</span> <span class="n">so</span> <span class="n">what</span> <span class="n">it</span> <span class="n">does</span> <span class="n">it</span> <span class="n">it</span> <span class="n">only</span> <span class="n">passes</span> <span class="n">values</span> <span class="m">0</span> <span class="k">or</span> <span class="n">greater</span> <span class="k">to</span> <span class="n">the</span> <span class="k">next</span> <span class="n">layer</span> <span class="k">in</span> <span class="n">the</span> <span class="n">network</span><span class="p">.</span>
-	
-	<span class="n">Softmax</span> <span class="n">takes</span> <span class="n">a</span> <span class="k">set</span> <span class="k">of</span> <span class="n">values</span><span class="p">,</span> <span class="k">and</span> <span class="n">effectively</span> <span class="n">picks</span> <span class="n">the</span> <span class="n">biggest</span> <span class="n">one</span><span class="p">,</span> 
-	<span class="n">so</span><span class="p">,</span> <span class="n">for</span> <span class="n">example</span><span class="p">,</span> <span class="k">if</span> <span class="n">the</span> <span class="n">output</span> <span class="k">of</span> <span class="n">the</span> <span class="n">last</span> <span class="n">layer</span> <span class="n">looks</span> <span class="n">like</span> <span class="p">[</span><span class="m">0.1</span><span class="p">,</span> <span class="m">0.1</span><span class="p">,</span> <span class="m">0.05</span><span class="p">,</span> <span class="m">0.1</span><span class="p">,</span> <span class="m">9.5</span><span class="p">,</span> <span class="m">0.1</span><span class="p">,</span> <span class="m">0.05</span><span class="p">,</span> <span class="m">0.05</span><span class="p">,</span> <span class="m">0.05</span><span class="p">],</span> <span class="n">it</span> <span class="n">saves</span> <span class="n">you</span> <span class="k">from</span> <span class="n">fishing</span> <span class="n">through</span> <span class="n">it</span> <span class="n">looking</span> <span class="n">for</span> <span class="n">the</span> <span class="n">biggest</span> <span class="n">value</span><span class="p">,</span> <span class="k">and</span> <span class="n">turns</span> <span class="n">it</span> <span class="n">into</span> <span class="p">[</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">1</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">]</span> <span class="p">--</span> <span class="n">The</span> <span class="n">goal</span> <span class="n">is</span> <span class="k">to</span> <span class="n">save</span> <span class="n">a</span> <span class="n">lot</span> <span class="k">of</span> <span class="n">coding</span><span class="c1">!
-</span>	<span class="s1">'''
-	
-	#* optimizer的参数也可以是 optimizer = '</span><span class="n">adam</span><span class="s1">'
-	model.compile(optimizer=tf.keras.optimizers.Adam(),
-	              loss='</span><span class="n">sparse_categorical_crossentropy</span><span class="s1">',
-	              metrics=['</span><span class="n">accuracy</span><span class="s1">'])
-	
-	model.fit(training_images, training_labels, epochs=5)
-	#model.fit(training_images, training_labels, epochs=5, callbacks=[callbacks])
-	# 训练完得到的准确度为训练集图像与标签的匹配准确度，要判断测试集的准确度需要调用model.evaluate
-	
-	test_loss, test_acc = model.evaluate(test_images, test_labels)
-	print(test_loss)
-	print(test_acc)
-	
-	# classification
-	pedictions = model.predict(test_images)
-	# the probability that this item is each of the 10 classes
-	print(pedictions[0]) # test_labels[0] == 9, 即标签为9可能性最大, 代表ankle boot
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">import</span> <span class="n">tensorflow</span> <span class="k">as</span> <span class="n">tf</span>
+<span class="k">from</span> <span class="n">tensorflow</span> <span class="n">import</span> <span class="n">keras</span>
+
+<span class="n">import</span> <span class="n">matplotlib</span><span class="p">.</span><span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="n">print</span><span class="p">(</span><span class="n">tf</span><span class="p">.</span><span class="n">__version__</span><span class="p">)</span>
+
+<span class="p">#</span> <span class="err">写一个</span><span class="n">callback</span><span class="err">函数</span> <span class="err">在达到预期准确率之后停止训练</span>
+<span class="s1">'''
+class myCallback(tf.keras.callbacks.Callback):
+  def on_epoch_end(self, epoch, logs={}):
+    if(logs.get('</span><span class="n">acc</span><span class="s1">')&gt;0.9):
+      print("\nReached 90% accuracy so cancelling training!")
+      self.model.stop_training = True
+
+'''</span>
+<span class="p">#</span><span class="n">callbacks</span> <span class="p">=</span> <span class="n">myCallback</span><span class="p">()</span>
+<span class="n">mnist</span> <span class="p">=</span> <span class="n">tf</span><span class="p">.</span><span class="n">keras</span><span class="p">.</span><span class="n">datasets</span><span class="p">.</span><span class="n">fashion_mnist</span>
+
+<span class="p">#</span> <span class="n">Calling</span> <span class="n">load_data</span> <span class="n">on</span> <span class="n">this</span> <span class="n">object</span> <span class="n">will</span> <span class="n">give</span> <span class="n">you</span> <span class="n">two</span> <span class="n">sets</span> <span class="k">of</span> <span class="n">two</span> <span class="n">lists</span><span class="p">,</span> <span class="n">these</span> <span class="n">will</span> <span class="n">be</span> <span class="n">the</span> <span class="n">training</span> <span class="k">and</span> <span class="n">testing</span> <span class="n">values</span> <span class="n">for</span> <span class="n">the</span> <span class="n">graphics</span> <span class="n">that</span> <span class="n">contain</span> <span class="n">the</span> <span class="n">clothing</span> <span class="n">items</span> <span class="k">and</span> <span class="n">their</span> <span class="n">labels</span><span class="p">.</span>
+<span class="p">(</span><span class="n">training_images</span><span class="p">,</span> <span class="n">training_labels</span><span class="p">),</span> <span class="p">(</span><span class="n">test_images</span><span class="p">,</span> <span class="n">test_labels</span><span class="p">)</span> <span class="p">=</span> <span class="n">mnist</span><span class="p">.</span><span class="n">load_data</span><span class="p">()</span>
+
+<span class="p">#</span> <span class="err">用</span><span class="n">plt</span><span class="err">看看测试数据和标签长什么样</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">training_images</span><span class="p">[</span><span class="m">0</span><span class="p">])</span>
+<span class="n">plt</span><span class="p">.</span><span class="n">show</span><span class="p">()</span>
+<span class="n">print</span><span class="p">(</span><span class="n">training_images</span><span class="p">[</span><span class="m">0</span><span class="p">])</span>
+<span class="n">print</span><span class="p">(</span><span class="n">training_labels</span><span class="p">[</span><span class="m">0</span><span class="p">])</span>
+
+<span class="p">#</span> <span class="n">Normalizing</span>
+<span class="n">training_images</span> <span class="p">=</span> <span class="n">training_images</span> <span class="p">/</span> <span class="m">255.0</span>
+<span class="n">test_images</span> <span class="p">=</span> <span class="n">test_images</span> <span class="p">/</span> <span class="m">255.0</span>
+
+<span class="p">#*</span> <span class="err">可以不带</span><span class="n">input</span><span class="err">——</span><span class="n">shape</span><span class="p">(</span><span class="err">只写</span><span class="n">tf</span><span class="p">.</span><span class="n">keras</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">Flatten</span><span class="p">()</span> <span class="p">)</span>
+<span class="k">model</span> <span class="p">=</span> <span class="n">keras</span><span class="p">.</span><span class="n">Sequential</span><span class="p">([</span><span class="n">tf</span><span class="p">.</span><span class="n">keras</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">Flatten</span><span class="p">(</span><span class="n">input_shape</span><span class="p">=(</span><span class="m">28</span><span class="p">,</span> <span class="m">28</span><span class="p">)),</span>
+                                   <span class="n">tf</span><span class="p">.</span><span class="n">keras</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">Dense</span><span class="p">(</span><span class="m">128</span><span class="p">,</span> <span class="n">activation</span><span class="p">=</span><span class="n">tf</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">relu</span><span class="p">),</span>
+                                   <span class="n">tf</span><span class="p">.</span><span class="n">keras</span><span class="p">.</span><span class="n">layers</span><span class="p">.</span><span class="n">Dense</span><span class="p">(</span><span class="m">10</span><span class="p">,</span> <span class="n">activation</span><span class="p">=</span><span class="n">tf</span><span class="p">.</span><span class="n">nn</span><span class="p">.</span><span class="n">softmax</span><span class="p">)])</span> <span class="p">#</span><span class="n">input_shape</span><span class="p">=(</span><span class="m">28</span><span class="p">,</span> <span class="m">28</span><span class="p">)</span>
+
+<span class="s1">'''
+Sequential: That defines a SEQUENCE of layers in the neural network
+
+Flatten: Remember earlier where our images were a square, when you printed them out? Flatten just takes that square and turns it into a 1 dimensional set.
+
+Dense: Adds a layer of neurons
+
+Each layer of neurons need an activation function to tell them what to do. There'</span><span class="n">s</span> <span class="n">lots</span> <span class="k">of</span> <span class="k">options</span><span class="p">,</span> <span class="n">but</span> <span class="n">just</span> <span class="n">use</span> <span class="n">these</span> <span class="n">for</span> <span class="n">now</span><span class="p">.</span>
+
+<span class="n">Relu</span> <span class="n">effectively</span> <span class="n">means</span> <span class="s2">"If X&gt;0 return X, else return 0"</span> <span class="p">--</span> <span class="n">so</span> <span class="n">what</span> <span class="n">it</span> <span class="n">does</span> <span class="n">it</span> <span class="n">it</span> <span class="n">only</span> <span class="n">passes</span> <span class="n">values</span> <span class="m">0</span> <span class="k">or</span> <span class="n">greater</span> <span class="k">to</span> <span class="n">the</span> <span class="k">next</span> <span class="n">layer</span> <span class="k">in</span> <span class="n">the</span> <span class="n">network</span><span class="p">.</span>
+
+<span class="n">Softmax</span> <span class="n">takes</span> <span class="n">a</span> <span class="k">set</span> <span class="k">of</span> <span class="n">values</span><span class="p">,</span> <span class="k">and</span> <span class="n">effectively</span> <span class="n">picks</span> <span class="n">the</span> <span class="n">biggest</span> <span class="n">one</span><span class="p">,</span> 
+<span class="n">so</span><span class="p">,</span> <span class="n">for</span> <span class="n">example</span><span class="p">,</span> <span class="k">if</span> <span class="n">the</span> <span class="n">output</span> <span class="k">of</span> <span class="n">the</span> <span class="n">last</span> <span class="n">layer</span> <span class="n">looks</span> <span class="n">like</span> <span class="p">[</span><span class="m">0.1</span><span class="p">,</span> <span class="m">0.1</span><span class="p">,</span> <span class="m">0.05</span><span class="p">,</span> <span class="m">0.1</span><span class="p">,</span> <span class="m">9.5</span><span class="p">,</span> <span class="m">0.1</span><span class="p">,</span> <span class="m">0.05</span><span class="p">,</span> <span class="m">0.05</span><span class="p">,</span> <span class="m">0.05</span><span class="p">],</span> <span class="n">it</span> <span class="n">saves</span> <span class="n">you</span> <span class="k">from</span> <span class="n">fishing</span> <span class="n">through</span> <span class="n">it</span> <span class="n">looking</span> <span class="n">for</span> <span class="n">the</span> <span class="n">biggest</span> <span class="n">value</span><span class="p">,</span> <span class="k">and</span> <span class="n">turns</span> <span class="n">it</span> <span class="n">into</span> <span class="p">[</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">1</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">,</span><span class="m">0</span><span class="p">]</span> <span class="p">--</span> <span class="n">The</span> <span class="n">goal</span> <span class="n">is</span> <span class="k">to</span> <span class="n">save</span> <span class="n">a</span> <span class="n">lot</span> <span class="k">of</span> <span class="n">coding</span><span class="c1">!
+</span><span class="s1">'''
+
+#* optimizer的参数也可以是 optimizer = '</span><span class="n">adam</span><span class="s1">'
+model.compile(optimizer=tf.keras.optimizers.Adam(),
+              loss='</span><span class="n">sparse_categorical_crossentropy</span><span class="s1">',
+              metrics=['</span><span class="n">accuracy</span><span class="s1">'])
+
+model.fit(training_images, training_labels, epochs=5)
+#model.fit(training_images, training_labels, epochs=5, callbacks=[callbacks])
+# 训练完得到的准确度为训练集图像与标签的匹配准确度，要判断测试集的准确度需要调用model.evaluate
+
+test_loss, test_acc = model.evaluate(test_images, test_labels)
+print(test_loss)
+print(test_acc)
+
+# classification
+pedictions = model.predict(test_images)
+# the probability that this item is each of the 10 classes
+print(pedictions[0]) # test_labels[0] == 9, 即标签为9可能性最大, 代表ankle boot
 </span></code></pre></div></div>
 
 <h2 id="3---introduction-to-convolutions">3 - Introduction to Convolutions</h2>
