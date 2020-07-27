@@ -1,3 +1,10 @@
+body {
+	background-image: url('../images/banner-image1.jpg');
+	background-position: center center;
+	background-repeat: repeat-y;
+	background-size: cover;	
+}
+
 .bulletin-header {
     text-align: center;
     padding-top: 40px;
@@ -10,10 +17,9 @@
 }
 
 .bulletin-title{
-	font-size: 36px;
-    color: #fff;
+	font-size: 40px;
+    color: #ffffff;
 }
-
 
 
 .container{
@@ -23,25 +29,29 @@
 
 .left, .right{
 width: 200px;
-background-color: #7ecff2;
+/* background-color: #7ecff2; */
 text-align: left;
 }
 
 .main{
 flex: 1;
-background-color: #ff5000;
+/* background-color: #ff5000; */
 text-align: center;
 }
 
 
 .stream-warpper{
-    position: absolute;
     width: 100%;
     display: flex;
     top: 100px;
     bottom: 100px;
 }
 
-#biocard{
+.resistance {
+    color: #3e92f3;
+}
 
+.signature {
+    text-align: right;
+    margin-top: 20px;
 }
