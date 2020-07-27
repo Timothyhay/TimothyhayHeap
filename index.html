@@ -131,7 +131,15 @@ comments: true
 			{% if tag == nil %}
   				{% assign tag = "砂" %}
 			{% endif %}
-　　　　　　 <li>{{ post.date | date_to_string }} - {{ tag }} / <a href="{{ site.baseurl }}{{ post.url }}">{{ post.title }}</a></li>
+
+			{% comment %}
+				Control Flow for debugging
+			{% endcomment %}
+			{% assign baseurl = site.baseurl %}
+			{% if baseurl == "/" %}
+				{% assign baseurl = "http://127.0.0.1:4000" %}
+			{% endif %}
+　　　　　　 <li>{{ post.date | date_to_string }} - {{ tag }} / <a href="{{ baseurl }}{{ post.url }}">{{ post.title }}</a></li>
 
 　　　　 {% endfor %}
 		</ul>
