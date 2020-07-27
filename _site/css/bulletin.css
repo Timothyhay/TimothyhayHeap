@@ -1,3 +1,25 @@
+.bulletin-header {
+    text-align: center;
+    padding-top: 40px;
+    padding-bottom: 40;
+    padding-left: 18px;
+    padding-right: 18px;
+    max-width: 1236px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.bulletin-title{
+	font-size: 36px;
+    color: #fff;
+}
+
+
+
+.container{
+    margin-top: 37px;
+}
+
 
 .left, .right{
 width: 200px;
@@ -18,4 +40,8 @@ text-align: center;
     display: flex;
     top: 100px;
     bottom: 100px;
+}
+
+#biocard{
+
 }

@@ -48,3 +48,7 @@ img{
 #blogpage ol li{
     list-style-type: decimal;
 }
+
+#blogpage p{
+    font-family: sans-serif; 
+}
