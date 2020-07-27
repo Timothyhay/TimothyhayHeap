@@ -1,0 +1,49 @@
+---
+layout: bulletin
+title: All Articles
+comments: false
+---
+
+<div class="stream-warpper">
+    <div class="left">
+        
+            <h4>Tags</h4>
+            <label></label>
+            <div class="collapse navbar-collapse">
+                <ul class="nav navbar-nav tag-nav">
+                {% for tag in site.tags %}
+                    <li><a href="#" class="page-scroll">{{ tag.first }}</a></li>
+                {% endfor %}
+                </ul>
+            </div><!-- /.navbar-collapse -->
+        
+    </div>
+    <div class="main list">
+
+            <h4>Article List</h4>
+            <label></label>
+            <ul>
+            {% for post in site.posts %}
+                {% assign tag = post.tags.first %}
+                {% if tag == nil %}
+                        {% assign tag = "砂" %}
+                {% endif %}
+    
+                {% comment %}
+                    Control Flow for debugging
+                {% endcomment %}
+                {% assign baseurl = site.baseurl %}
+                {% if baseurl == "/" %}
+                    {% assign baseurl = "http://127.0.0.1:4000" %}
+                {% endif %}
+    　　　　　　 <li>{{ post.date | date_to_string }} - {{ tag }} / <a href="{{ baseurl }}{{ post.url }}">{{ post.title }}</a></li>
+    
+    　　　　 {% endfor %}
+            </ul>
+        
+    </div>
+</div>
+            
+
+
+ 

@@ -8,7 +8,7 @@ body {
 .bulletin-header {
     text-align: center;
     padding-top: 40px;
-    padding-bottom: 40;
+    padding-bottom: 40px;
     padding-left: 18px;
     padding-right: 18px;
     max-width: 1236px;
@@ -23,22 +23,33 @@ body {
 
 
 .container{
-    margin-top: 37px;
+    margin-top: 15px;
 }
 
 
 .left, .right{
-width: 200px;
-/* background-color: #7ecff2; */
-text-align: left;
+    width: 31%;
+    min-width: 200px;
+    max-width: 300px;
+    /* background-color: #7ecff2; */
+    text-align: left;
 }
 
 .main{
-flex: 1;
-/* background-color: #ff5000; */
-text-align: center;
+    flex: 1;
+    /* background-color: #ff5000; */
+    text-align: center;
 }
 
+.list{
+    text-align: left;
+}
+
+label {
+    width: 35%;
+    height: 1px;
+    background-color: #606257;
+}
 
 .stream-warpper{
     width: 100%;
@@ -54,4 +65,8 @@ text-align: center;
 .signature {
     text-align: right;
     margin-top: 20px;
+}
+
+.tag-nav>li {
+    float: none;
 }
