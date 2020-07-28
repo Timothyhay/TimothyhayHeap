@@ -12,7 +12,7 @@ comments: false
             <div class="collapse navbar-collapse">
                 <ul class="nav navbar-nav tag-nav">
                 {% for tag in site.tags %}
-                    <li><a href="#" class="page-scroll">{{ tag.first }}</a></li>
+                    <li><a href="/filter/tag/{{ tag.first }}" class="page-scroll">{{ tag.first }}</a></li>
                 {% endfor %}
                 </ul>
             </div><!-- /.navbar-collapse -->
@@ -40,7 +40,7 @@ comments: false
     
     　　　　 {% endfor %}
             </ul>
-        
+
     </div>
 </div>
             
