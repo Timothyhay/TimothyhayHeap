@@ -7,29 +7,45 @@ comments: false
 <div class="stream-warpper">
     <div class="left">
         
-            <h4>Tags</h4>
-            <label></label>
-            <div class="collapse navbar-collapse">
-                <ul class="nav navbar-nav tag-nav">
-                {% assign tagname = page.tagname %}
-                
-                {% for tag in site.tags %}
-                    {% if tag.first == tagname %}
-                    {% assign classname = %}
-                    <li><a href="/filter/tag/{{ tag.first }}" class="page-scroll">{{ tag.first }}</a></li>
-                {% endfor %}
-                </ul>
-            </div><!-- /.navbar-collapse -->
+        <h4>Tags</h4>
+        <label></label>
+        <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav tag-nav">
+            {% assign tagname = page.tagname %}
+            
+            {% for tag in site.tags %}
+                {% if tag.first == tagname %}
+                    {% assign classname = "active" %}
+                {% else %}
+                    {% assign classname = "page-scroll" %}
+                <li><a href="/filter/tag/{{ tag.first }}" class="{{ classname }}">{{ tag.first }}</a></li>
+                {% endif %}
+            {% endfor %}
+                <label></label>
+                <li><a href="/filter/tag/Sand" class="{{ classname }}">Sands</a></li>
+                <li><a href="/articlelist.html" class="{{ classname }}">All Articles</a></li>
+            </ul>
+        </div><!-- /.navbar-collapse -->
         
     </div>
     <div class="main list">
 
-        <h4>Tag / {{ tagname }}</h4>
+        <h4>Tag Filter / {{ tagname }}</h4>
         <label></label>
 
         <ul>
-        {% for post in site.tags[page.tagname] %}
+        {% if tagname == "Sand" %}
+            {% for post in site.posts %}
+                {% assign tag = post.tags.first %}
+                {% if tag == nil %}
+                　　<li>{{ post.date | date_to_string }} / Sands & Stardust 
+                    <li><a href="{{ post.url }}">{{ post.title }}</a></li>
+                </li>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
 
+        {% for post in site.tags[page.tagname] %}
 　　　　　　 <li>{{ post.date | date_to_string }} / {{ post.tags | array_to_sentence_string }} 
                 <li><a href="{{ post.url }}">{{ post.title }}</a></li>
             </li>

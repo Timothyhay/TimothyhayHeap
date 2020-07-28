@@ -1,7 +1,7 @@
 ---
 layout: blogpage
 title: OSA Live Show 笔记
-tags: 笔记
+tags: Note
 ---
 
 ##OSA Live Show - 图书馆相关

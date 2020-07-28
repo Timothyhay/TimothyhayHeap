@@ -1,0 +1,21 @@
+---
+layout: blogpage
+title: 更新记录
+comments: true
+tags: Jekyll
+---
+
+<p>突然觉得应该写一个更新记录！研究Jekyll, Liquid和Ruby的过程还有debug的过程，应该有一个文章记录一下才对！</p>
+<p style="text-decoration: line-through;">毕竟那么多笔记都只开了个头也好意思留着，真正花时间的东西居然一点都没记录..</p>
+<p>所以就从2020/07/28开始更新起吧 ~！</p>
+
+<h2>2020 07 28</h2>
+<ul>
+    <li>Feature: 实现了按标签过滤文章！现在标签功能已经完全做好啦 ~ 未分类的文章也可以被过滤到！</li>
+    <li>Fix: 解决了一个小问题，报的是下面字符串相关意义不明的错.. 发现原因是 post.tags 如果为 nil，就不能使用过滤器 array_to_sentence_string。毕竟人家是处理串的..！</li>
+    {% highlight shell %}
+        Liquid Exception: undefined method `join' for "Not":String in articlelist.html
+    {% endhighlight%}
+    <li></li>
+
+</ul>
