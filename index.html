@@ -126,7 +126,7 @@ comments: true
 	</div>
 	<div class="container">
 		<ul>
-		{% for post in site.posts limit:10 %}
+		{% for post in site.posts reversed limit:10 %}
 			{% assign tag = post.tags.first %}
 			{% if tag == nil %}
   				{% assign tag = "Sand" %}
