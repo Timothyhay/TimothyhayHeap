@@ -109,19 +109,17 @@
 
 <ul>
   <li>
-    <p>关于结构</p>
-
-    <p>model = tf.keras.models.Sequential([tf.keras.layers.Flatten(input_shape=(28, 28)), # 输入28*28像素图片
+    <p>关于结构
+  model = tf.keras.models.Sequential([tf.keras.layers.Flatten(input_shape=(28, 28)), # 输入28*28像素图片
   tf.keras.layers.Dense(128, activation=tf.nn.relu), # 128 相当于128个函数，都带不同参数，每个输入都经由其中算得唯一结果
   tf.keras.layers.Dense(10, activation=tf.nn.softmax)])  # 输出10个分类中的一种</p>
   </li>
   <li>
-    <p>激励函数</p>
+    <p>激励函数
+relu 线性整流函数 - 返回一个大于零的数值，过滤到小于等于0的结果。<br />
+softmax - 选出集合中最大的数，最终被设为1。</p>
   </li>
 </ul>
-
-<p>relu 线性整流函数 - 返回一个大于零的数值，过滤到小于等于0的结果。<br />
-softmax - 选出集合中最大的数，最终被设为1。</p>
 
 <p>这里的图像大小都一致（28*28），且物件都在图像正中。需要识别更泛用的普通图像，物件混杂的图片，需要识别特征的方法，使用卷积神经网络。</p>
 

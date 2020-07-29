@@ -12,6 +12,7 @@
 <link href="/css/style.css" rel="stylesheet" type="text/css" media="all">
 <link href="/css/syntax.css" media="all" rel="stylesheet" type="text/css"  />
 <link href="/css/bulletin.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/APlayer.min.css" rel="stylesheet" type="text/css" >
 <!--//css-->
 
 <!--icon-->
@@ -92,6 +93,22 @@
 <div class="signature">
 	<p>Updated on: 2020 07 27</p>
 </div>
+
+
+<div id="aplayer"></div>
+<script src="js/APlayer.min.js"></script>
+<script type="text/javascript">
+	const ap = new APlayer({
+    container: document.getElementById('aplayer'),
+    fixed: true,
+    audio: [{
+        name: '星見る頃を過ぎても',
+        artist: 'H△G',
+        url: '/music/HAG.mp3',
+        cover: '/images/album/Shojo-tachi_no_owaranai_yoru.jpg',
+    }]
+});
+</script>
 
 
 		</div>
