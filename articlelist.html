@@ -10,8 +10,40 @@ comments: false
         
         <h4>Tags</h4>
         <label></label>
+        <!--
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="/">HayHeapStudio</a>
+            </div>
+
+
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li><a href="/" class="page-scroll">Home</a></li>
+                    <li><a href="/profile.html" class="active">Biocard</a></li>
+                    <li><a href="/status.html" class="page-scroll">Status</a></li>
+                    <li><a href="/articlelist.html" class="page-scroll">All Articles</a></li>
+                </ul>
+            </div>
+          </div>
+-->
+
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#tags-navbar-collapse" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+        </div>
+
         <div class="collapse navbar-collapse">
-            <ul class="nav navbar-nav tag-nav">
+            <ul class="nav navbar-nav tag-nav" id="tags-navbar-collapse">
             {% for tag in site.tags %}
                 <li><a href="/filter/tag/{{ tag.first }}" class="{{ classname }}">{{ tag.first }}</a></li>
             {% endfor %}
