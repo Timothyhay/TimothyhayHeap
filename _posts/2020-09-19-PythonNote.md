@@ -26,7 +26,7 @@ Output:
 
 for 循环有两个变量参与时，第一个输出序号。序号可以从给定值开始。
 
-	for count, enum_days in enumerate(days, 5): 
+	for count, enum_days in enumerate(days, 5): # Start from 5
 	   print(count, enum_days)
 
 Output:
@@ -55,6 +55,9 @@ Output:
 	1 111
 	2 222
 	3 333
+
+
+# 函数内修改参数变量，如果是可变类型，会修改到函数外噢！ #
 
 Reference:
 ----------
