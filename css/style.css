@@ -91,7 +91,7 @@ body {
     color: #fff;
     letter-spacing: 3px;
     font-size: 37px;
-    font-weight: bold;
+    /* font-weight: bold; */
 }
 
 .navbar-default .navbar-nav>li>a {
