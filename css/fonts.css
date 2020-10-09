@@ -1,12 +1,12 @@
 /*-- All the Fonts --*/
 @font-face {
     font-family: 'typemetwomedium';
-    src: url('typemetwo-webfont.eot');
-    src: url('typemetwo-webfont.eot?#iefix') format('embedded-opentype'),
-         url('typemetwo-webfont.woff2') format('woff2'),
-         url('typemetwo-webfont.woff') format('woff'),
-         url('typemetwo-webfont.ttf') format('truetype'),
-         url('typemetwo-webfont.svg#typemetwomedium') format('svg');
+    src: url('../fonts/typemetwo-webfont.eot');
+    src: url('../fonts/typemetwo-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/typemetwo-webfont.woff2') format('woff2'),
+         url('../fonts/typemetwo-webfont.woff') format('woff'),
+         url('../fonts/typemetwo-webfont.ttf') format('truetype'),
+         url('../fonts/typemetwo-webfont.svg#typemetwomedium') format('svg');
     font-weight: normal;
     font-style: normal;
 
@@ -17,12 +17,12 @@
 
 @font-face {
     font-family: '39_smoothregular';
-    src: url('39smooth-webfont-webfont.eot');
-    src: url('39smooth-webfont-webfont.eot?#iefix') format('embedded-opentype'),
-         url('39smooth-webfont-webfont.woff2') format('woff2'),
-         url('39smooth-webfont-webfont.woff') format('woff'),
-         url('39smooth-webfont-webfont.ttf') format('truetype'),
-         url('39smooth-webfont-webfont.svg#39_smoothregular') format('svg');
+    src: url('../fonts/39smooth-webfont-webfont.eot');
+    src: url('../fonts/39smooth-webfont-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/39smooth-webfont-webfont.woff2') format('woff2'),
+         url('../fonts/39smooth-webfont-webfont.woff') format('woff'),
+         url('../fonts/39smooth-webfont-webfont.ttf') format('truetype'),
+         url('../fonts/39smooth-webfont-webfont.svg#39_smoothregular') format('svg');
     font-weight: normal;
     font-style: normal;
 
@@ -33,12 +33,12 @@
 
 @font-face {
     font-family: 'fzsongkebenxiukais-r-gbRg';
-    src: url('fzskbxkjw-webfont.eot');
-    src: url('fzskbxkjw-webfont.eot?#iefix') format('embedded-opentype'),
-         url('fzskbxkjw-webfont.woff2') format('woff2'),
-         url('fzskbxkjw-webfont.woff') format('woff'),
-         url('fzskbxkjw-webfont.ttf') format('truetype'),
-         url('fzskbxkjw-webfont.svg#fzsongkebenxiukais-r-gbRg') format('svg');
+    src: url('../fonts/fzskbxkjw-webfont.eot');
+    src: url('../fonts/fzskbxkjw-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/fzskbxkjw-webfont.woff2') format('woff2'),
+         url('../fonts/fzskbxkjw-webfont.woff') format('woff'),
+         url('../fonts/fzskbxkjw-webfont.ttf') format('truetype'),
+         url('../fonts/fzskbxkjw-webfont.svg#fzsongkebenxiukais-r-gbRg') format('svg');
     font-weight: normal;
     font-style: normal;
 
@@ -49,12 +49,12 @@
 
 @font-face {
     font-family: 'fzyingbikaishu-s15sregular';
-    src: url('fzybksjw-webfont.eot');
-    src: url('fzybksjw-webfont.eot?#iefix') format('embedded-opentype'),
-         url('fzybksjw-webfont.woff2') format('woff2'),
-         url('fzybksjw-webfont.woff') format('woff'),
-         url('fzybksjw-webfont.ttf') format('truetype'),
-         url('fzybksjw-webfont.svg#fzyingbikaishu-s15sregular') format('svg');
+    src: url('../fonts/fzybksjw-webfont.eot');
+    src: url('../fonts/fzybksjw-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../fonts/fzybksjw-webfont.woff2') format('woff2'),
+         url('../fonts/fzybksjw-webfont.woff') format('woff'),
+         url('../fonts/fzybksjw-webfont.ttf') format('truetype'),
+         url('../fonts/fzybksjw-webfont.svg#fzyingbikaishu-s15sregular') format('svg');
     font-weight: normal;
     font-style: normal;
 
