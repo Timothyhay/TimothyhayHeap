@@ -5,7 +5,7 @@ body {
     padding: 0;
     margin: 0;
     background: #FFF;
-    font-family: '39_smoothregular','fzsongkebenxiukais-r-gbRg', sans-serif;
+    font-family: '39_smoothregular','fzsongkebenxiukais', sans-serif;
 }
 
 body a {
@@ -452,7 +452,7 @@ label {
 }
 
 .overlay p {
-    font-family: '39_smoothregular','fzsongkebenxiukais-r-gbRg', sans-serif;
+    font-family: '39_smoothregular','fzsongkebenxiukais', sans-serif;
     font-weight: 600;
     letter-spacing: 2px;
     padding-top: 57px;

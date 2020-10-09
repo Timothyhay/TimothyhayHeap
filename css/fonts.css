@@ -33,13 +33,13 @@
 
 
 @font-face {
-    font-family: 'fzsongkebenxiukais-r-gbRg';
+    font-family: 'fzsongkebenxiukais';
     src: url('../fonts/fzskbxkjw-webfont.eot');
     src: url('../fonts/fzskbxkjw-webfont.eot?#iefix') format('embedded-opentype'),
          url('../fonts/fzskbxkjw-webfont.woff2') format('woff2'),
          url('../fonts/fzskbxkjw-webfont.woff') format('woff'),
          url('../fonts/fzskbxkjw-webfont.ttf') format('truetype'),
-         url('../fonts/fzskbxkjw-webfont.svg#fzsongkebenxiukais-r-gbRg') format('svg');
+         url('../fonts/fzskbxkjw-webfont.svg#fzsongkebenxiukais') format('svg');
     font-weight: normal;
     font-style: normal;
 
