@@ -5,7 +5,7 @@ body {
     padding: 0;
     margin: 0;
     background: #FFF;
-    font-family: '39 Smooth','FZSKBXKJW', sans-serif;
+    font-family: '39_smoothregular','fzsongkebenxiukais-r-gbRg', sans-serif;
 }
 
 body a {
@@ -43,13 +43,13 @@ h5,
 h6 {
     margin: 0;
     padding: 0;
-    font-family: '39 Smooth', sans-serif;
+    font-family: '39_smoothregular', sans-serif;
 }
 
 p {
     margin: 0;
     line-height: 1.9;
-    font-family: '39 Smooth', sans-serif;
+    font-family: '39_smoothregular', sans-serif;
     font-size: 14px;
 }
 
@@ -151,8 +151,8 @@ body {
 }
 /*
 @font-face {
-    font-family: 'TypeMeTwo';
-    src: url('../fonts/TypeMeTwo.ttf') format('truetype');
+    font-family: 'typemetwomedium';
+    src: url('../fonts/typemetwomedium.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
@@ -163,7 +163,7 @@ h1 {
     padding-bottom: 28px;
     font-size: 73px;
     font-weight: 700;
-    font-family: 'TypeMeTwo', sans-serif;
+    font-family: 'typemetwomedium', sans-serif;
     text-transform: uppercase;
     text-shadow: 2px 2px 2px rgba(16, 16, 16, 0.38);
 }
@@ -452,7 +452,7 @@ label {
 }
 
 .overlay p {
-    font-family: '39 Smooth','FZSKBXKJW', sans-serif;
+    font-family: '39_smoothregular','fzsongkebenxiukais-r-gbRg', sans-serif;
     font-weight: 600;
     letter-spacing: 2px;
     padding-top: 57px;
