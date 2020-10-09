@@ -62,6 +62,40 @@ Output:
 
 当传的是字典型(dictionary)、列表型(list)时，如果是重新对其进行赋值，则不会改变函数外参数的值，如果是对其进行操作，则会改变。
 
+
+## print() 语法 ##
+
+	print(*objects, sep=' ', end='\n', file=sys.stdout, flush=False)
+
+param:
+
+objects – 一次输出多个对象。输出多个对象时，需要用 , 分隔。
+
+sep – 用来间隔多个对象，默认值是一个空格。
+
+end – 用来设定以什么结尾。默认值是换行符 \n，我们可以换成其他字符串。
+
+file: It should be an object with a write(str) method. If this value is not mentioned, it prints objects on the standard output device i.e. screen.
+
+flush: The stream gets forcibly flushed if this value is True. By default, this value is False.
+
+Example:
+
+	>>> a = 'Hello'
+	>>> b = 'World'
+	
+	>>> print(a,b)      # 直接打印，分隔符默认有一个空格
+	Hello World
+	
+	>>> print(a,b,sep='') # 分隔符 设置为空
+	HelloWorld
+	 
+	>>> print(a,b,sep=".")  # 分隔符设置为.
+	Hello.World
+
+
+
 Reference:
 ----------
 [1]Enumerate() in Python - https://www.tutorialspoint.com/enumerate-in-python
+[2]Introduction to Print Statement in Python - https://www.educba.com/print-statement-in-python/
