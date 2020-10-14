@@ -1,6 +1,6 @@
 ---
 layout: blogpage
-title: 用惯了C/C++的人不习惯的Python语法笔记！
+title: 关于用惯了C/C++的人不习惯的Python语法和特性
 comments: true
 tags: Skill Note Python
 ---
@@ -73,7 +73,7 @@ objects – 一次输出多个对象。输出多个对象时，需要用 , 分�
 
 sep – 用来间隔多个对象，默认值是一个空格。
 
-end – 用来设定以什么结尾。默认值是换行符 \n，我们可以换成其他字符串。
+end – 用来设定以什么结尾。默认值是换行符 \n，可以换成其他字符串。
 
 file: It should be an object with a write(str) method. If this value is not mentioned, it prints objects on the standard output device i.e. screen.
 
@@ -93,9 +93,13 @@ Example:
 	>>> print(a,b,sep=".")  # 分隔符设置为.
 	Hello.World
 
+格式化输出方法：
+
+	print("%d records removed in %s:" %(removal_count, column_name))
 
 
 Reference:
 ----------
 [1]Enumerate() in Python - https://www.tutorialspoint.com/enumerate-in-python
+
 [2]Introduction to Print Statement in Python - https://www.educba.com/print-statement-in-python/
