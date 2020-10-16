@@ -98,6 +98,19 @@ Example:
 	print("%d records removed in %s:" %(removal_count, column_name))
 
 
+## 原地逆序遍历list ##
+
+从列表末尾元素往前循环，步长为-1，直到下标为0的元素。
+无需额外内存开销存放reversed(list)副本。
+
+	>>> for zi in range(len(crt_eplist)-1, -1, -1):  # len(crt_eplist) == 4
+	    	print(zi)  
+
+	3
+	2
+	1
+	0
+
 Reference:
 ----------
 [1]Enumerate() in Python - https://www.tutorialspoint.com/enumerate-in-python
