@@ -111,8 +111,38 @@ Example:
 	1
 	0
 
+
+## lambda operator 的用法 ##
+
+使用lambda operator 本质上是使用一种内联的函数的定义方式。
+
+比如：
+
+	list_a = [1, 2, 3]
+	list_b = [10, 20, 30]
+	  
+	map(lambda x, y: x + y, list_a, list_b) # Output: [11, 22, 33]
+
+或者用于操作字典：
+
+	dict_a = [{'name': 'python', 'points': 10}, {'name': 'java', 'points': 8}]
+	  
+	map(lambda x : x['name'], dict_a) # Output: ['python', 'java']
+	  
+	map(lambda x : x['points']*10,  dict_a) # Output: [100, 80]
+	
+	map(lambda x : x['name'] == "python", dict_a) # Output: [True, False]
+
+> We can’t access the elements of the map object with index nor we can use len() to find the length of the map object.
+> We can, however, force convert the map output, i.e. the map object, to list by list().
+
+
+
+
 Reference:
 ----------
 [1]Enumerate() in Python - https://www.tutorialspoint.com/enumerate-in-python
 
 [2]Introduction to Print Statement in Python - https://www.educba.com/print-statement-in-python/
+
+[3]https://medium.com/better-programming/lambda-map-and-filter-in-python-4935f248593
