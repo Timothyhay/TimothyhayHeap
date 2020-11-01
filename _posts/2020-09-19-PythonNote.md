@@ -137,12 +137,37 @@ Example:
 > We can, however, force convert the map output, i.e. the map object, to list by list().
 
 
+## copy & deepcopy ##
+
+	import copy
+	a = [1, 2, 3, 4, ['a', 'b']] #原始对象
+	 
+	b = a                       #赋值，传对象的引用
+	c = copy.copy(a)            #对象拷贝，浅拷贝
+	d = copy.deepcopy(a)        #对象拷贝，深拷贝
+	 
+	a.append(5)                 #修改对象a
+	a[4].append('c')            #修改对象a中的['a', 'b']数组对象
+	 
+	print( 'a = ', a )
+	print( 'b = ', b )
+	print( 'c = ', c )
+	print( 'd = ', d )
+
+Output:
+
+	('a = ', [1, 2, 3, 4, ['a', 'b', 'c'], 5])
+	('b = ', [1, 2, 3, 4, ['a', 'b', 'c'], 5])
+	('c = ', [1, 2, 3, 4, ['a', 'b', 'c']])
+	('d = ', [1, 2, 3, 4, ['a', 'b']])
 
 
 Reference:
 ----------
-[1]Enumerate() in Python - https://www.tutorialspoint.com/enumerate-in-python
+[1] Enumerate() in Python - https://www.tutorialspoint.com/enumerate-in-python
 
-[2]Introduction to Print Statement in Python - https://www.educba.com/print-statement-in-python/
+[2] Introduction to Print Statement in Python - https://www.educba.com/print-statement-in-python/
 
-[3]https://medium.com/better-programming/lambda-map-and-filter-in-python-4935f248593
+[3] https://medium.com/better-programming/lambda-map-and-filter-in-python-4935f248593
+
+[4] Python 直接赋值、浅拷贝和深度拷贝解析 - https://www.runoob.com/w3cnote/python-understanding-dict-copy-shallow-or-deep.html
