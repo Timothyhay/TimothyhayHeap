@@ -6,11 +6,12 @@ tags: Note
 ---
 
 <p>既然开始刷题了，就要刷个明白！所以..！一边做，一边记录 Python 和 C++ 的语法/算法技巧吧 ~</p>
-<span style="font-weight: bold">总结一下LeetCode里得到的经验！</span>
+<p style="font-weight: bold">总结一下LeetCode里得到的经验！</p>
 
 <h2>2. Add Two Numbers</h2>
 <p class="tag">Linklist Pointer</p>
-<pre>
+
+{% highlight python %}
     class Solution:
         def addTwoNumbers(self, l1, l2):
             carry = 0
@@ -26,5 +27,4 @@ tags: Note
                 n.next = n = ListNode(val)
             return res.next
 
-</pre>
-
+{% endhighlight %}
