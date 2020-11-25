@@ -6,10 +6,10 @@ tags: Note
 ---
 
 <p>既然开始刷题了，就要刷个明白！所以..！一边做，一边记录 Python 和 C++ 的语法/算法技巧吧 ~</p>
-<p style="font-weight: bold">总结一下LeetCode里得到的经验！</p>
+<p style="font-weight: bold">总结一下LeetCode里得到的经验！( ´ ▽ ` )</p>
 
 <h2>2. Add Two Numbers</h2>
-<p class="tag">Linklist Pointer</p>
+<p class="tag"># Linklist Pointer</p>
 
 {% highlight python %}
     class Solution:
@@ -26,5 +26,42 @@ tags: Note
                 carry, val = divmod(carry, 10)
                 n.next = n = ListNode(val)
             return res.next
+{% endhighlight %}
 
+
+<h2>9. Palindrome Number</h2>
+
+<p class="tag"># String </p>
+<p>C++11 introduces std::stoi (and variants for each numeric type) and std::to_string,
+    the counterparts of the C atoi and itoa but expressed in term of std::string.</p>
+<p>When choosing convert int to string in C++, simply {% highlight cpp %}#include &ls;string&gt; {% endhighlight %} </p>
+{% highlight cpp %}
+        std::string str = std::to_string(x);
+        string ss = to_string(x);
+        int len = ss.length();
+        for(int i=0, j=len-1; i<j; i++, j--) if(ss[i] != ss[j]) return false;
+{% endhighlight %}
+<p>A pure math inplementation is:</p>
+{% highlight cpp %}
+class Solution {
+public:
+    bool isPalindrome(int x) {
+        if(x < 0 || (x != 0 && x % 10 == 0))
+            return false;
+        long int sum = 0;
+        long int temp = x;
+        while(temp > 0){
+                sum = 10 * sum + temp % 10;
+                temp /= 10;
+        }
+        if(x == sum){
+            //printf("True");
+            return true;
+        }
+        else{
+            //printf("False");
+            return false;
+        }
+    }
+};
 {% endhighlight %}
