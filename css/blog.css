@@ -52,3 +52,8 @@ img{
 #blogpage p{
     font-family: sans-serif; 
 }
+
+code{
+    color: #288adb
+    background-color: #ffffff85;
+}
