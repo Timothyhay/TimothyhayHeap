@@ -7,7 +7,7 @@ tags: Git Skill
 
 这个问题.. 居然被我碰到了两次！
 
-{% highlight shell %}
+{% highlight console %}
   layout: tagarchive
 - title: Tag - Csharp
 - tagname: Csharp
