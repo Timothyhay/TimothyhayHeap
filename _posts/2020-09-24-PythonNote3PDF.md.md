@@ -26,10 +26,10 @@ for obid in range(len(x_list)):
 一开始我发现这一点的时候，是这样写的：
 
 ```python
-    # for x in observation:
-    #     # Use scipy.stats.norm.pd to calculate Gaussian PDF
-    #     p = scipy.stats.norm.pdf(x, phi['mu'], phi['sigma'])
-    #     eplist.append(p)
+    for x in observation:
+        # Use scipy.stats.norm.pd to calculate Gaussian PDF
+        p = scipy.stats.norm.pdf(x, phi['mu'], phi['sigma'])
+        eplist.append(p)
 ```
 但实际上，仅仅针对`x`的对 Gaussian PDF 的多次调用也会造成非常恐怖的性能开销。
 
