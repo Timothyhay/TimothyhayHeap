@@ -30,7 +30,7 @@ Input:
 
 	print((pima == 0 | pima.isnull()).sum(axis=0))
 
-Oytput:
+Output:
 
 	Pregnancies                 111
 	Glucose                       5
