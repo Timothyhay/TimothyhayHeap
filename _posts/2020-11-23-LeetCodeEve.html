@@ -84,3 +84,25 @@ public:
     }
 };
 {% endhighlight %}
+
+
+<h2>12. Integer to Roman</h2>
+
+<p>C++ 里的map底层是用类似红黑树的方式存的，默认按照key排序，而且不能直接调用sort函数对value排序。</p>
+<p>如果一定要按value排序，该怎么做呢！</p>
+{% highlight cpp %}
+// 先定义好重载运算符的struct
+typedef pair<string, int> PAIR;
+
+struct CmpByValue {
+    bool operator()(const PAIR& lhs, const PAIR& rhs) {
+    return lhs.second > rhs.second;
+    }
+};
+
+// 然后把map中元素转存到vector中按Value排序！
+vector<PAIR> vec(ref.begin(), ref.end());
+sort(vec.begin(), vec.end(), CmpByValue());
+
+
+{% endhighlight %}
