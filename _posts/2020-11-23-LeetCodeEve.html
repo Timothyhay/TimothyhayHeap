@@ -28,7 +28,7 @@ tags: LeetCode Note
             return res.next
 {% endhighlight %}
 
-<h2>4.</h2>
+<h2>4. Median of Two Sorted Arrays</h2>
 <p>Python里求均值、中位数和众数的方法：</p>
 {% highlight python %}
     import numpy as np
@@ -55,10 +55,10 @@ tags: LeetCode Note
     the counterparts of the C atoi and itoa but expressed in term of std::string.</p>
 <p>When choosing convert int to string in C++, simply <code>#include &lt;string&gt;</code> and call it to handle variant length string! </p>
 {% highlight cpp %}
-        std::string str = std::to_string(x);
-        string ss = to_string(x);
-        int len = ss.length();
-        for(int i=0, j=len-1; i<j; i++, j--) if(ss[i] != ss[j]) return false;
+    std::string str = std::to_string(x);
+    string ss = to_string(x);
+    int len = ss.length();
+    for(int i=0, j=len-1; i<j; i++, j--) if(ss[i] != ss[j]) return false;
 {% endhighlight %}
 <p>A pure math implementation is:</p>
 {% highlight cpp %}
@@ -101,8 +101,8 @@ struct CmpByValue {
 };
 
 // 然后把map中元素转存到vector中按Value排序！
-vector<PAIR> vec(ref.begin(), ref.end());
+vector&lt;PAIR&gt; vec(ref.begin(), ref.end());
 sort(vec.begin(), vec.end(), CmpByValue());
-
-
 {% endhighlight %}
+
+<p>Besides, use <code>for(auto & it : vec)</code> to traverse the vector elegantly./</p>
