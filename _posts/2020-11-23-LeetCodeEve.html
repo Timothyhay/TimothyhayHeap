@@ -101,8 +101,16 @@ struct CmpByValue {
 };
 
 // 然后把map中元素转存到vector中按Value排序！
-vector&lt;PAIR&gt; vec(ref.begin(), ref.end());
+vector<PAIR> vec(ref.begin(), ref.end());
 sort(vec.begin(), vec.end(), CmpByValue());
 {% endhighlight %}
 
-<p>Besides, use <code>for(auto & it : vec)</code> to traverse the vector elegantly./</p>
+<p>Besides, use <code>for(auto & it : vec)</code> to traverse the vector elegantly.</p>
+
+
+<h2>1</h2>
+    <p class="tag">Dynamic Programming</p>
+    <p>Intuition</p>
+<p>
+    As the problem has an optimal substructure, it is natural to cache intermediate results. We ask the question \text{dp(i, j)}dp(i, j): does \text{text[i:]}text[i:] and \text{pattern[j:]}pattern[j:] match? We can describe our answer in terms of answers to questions involving smaller strings.
+</p>
