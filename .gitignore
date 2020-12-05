@@ -7,5 +7,5 @@
 .DS_Store
 .cache
 *.pyc
-._site
-._site/
+_site
+_site/
