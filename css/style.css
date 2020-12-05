@@ -4,7 +4,8 @@
 body {
     padding: 0;
     margin: 0;
-    background: #FFF;
+    /* background: #FFF; */
+    background: #f7f7f7 url(../images/pinstripe.gif) repeat top left;
     font-family: '39_smoothregular','fzsongkebenxiukais', sans-serif;
 }
 
