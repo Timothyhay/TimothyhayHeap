@@ -30,14 +30,14 @@ body {
     margin: 35px;
     display: inline-block;
     text-align: center;
-    width: 40%
+    width: 40%;
     height: 40%;
     min-width: 200px;
     max-width: 250px;
 }
 
 img{
-    max-width: 100%
+    max-width: 100%;
     height: 40%;
 }
 
@@ -51,4 +51,9 @@ img{
 
 #blogpage p{
     font-family: sans-serif; 
+}
+
+code{
+    color: #288adb;
+    background-color: #ffffff85;
 }

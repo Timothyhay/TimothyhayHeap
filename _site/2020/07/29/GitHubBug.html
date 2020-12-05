@@ -12,6 +12,7 @@
 <link href="/css/style.css" rel="stylesheet" type="text/css" media="all">
 <link href="/css/syntax.css" media="all" rel="stylesheet" type="text/css"  />
 <link href="/css/blog.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/fonts.css" rel="stylesheet" type="text/css" media="all">
 <!--//css-->
 
 <!--icon-->
@@ -64,11 +65,11 @@
 		<div class="container" id="blogpage">
 			<p>这个问题.. 居然被我碰到了两次！</p>
 
-<figure class="highlight"><pre><code class="language-shell" data-lang="shell">  layout: tagarchive
+<figure class="highlight"><pre><code class="language-console" data-lang="console"><span class="go">  layout: tagarchive
 - title: Tag - Csharp
 - tagname: Csharp
 + title: Tag - CSharp
-+ tagname: CSharp</code></pre></figure>
++ tagname: CSharp</span></code></pre></figure>
 
 <p>上面的变更记录只是修改文件名的时候同时修改的文件内容的记录。我把Csharp.md重命名为了CSharp.md。
 就是说，在给文件名大小写做修改的时候，如果GitHub仓库里原始文件依然存在（这是当然的），那么对文件的修改会被保存，但是文件名的修改不会。
@@ -102,11 +103,6 @@
 						*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
 						
 						var disqus_config = function () {
-							/*
-							var connecterlink = '/2020/07/29/GitHubBug.html';
-							var predomain = 'zero.razzorleaf.fun';
-							var resulturl = connecterlink + predomain;
-							*/
 						this.page.url = 'http://localhost:4000/2020/07/29/GitHubBug.html';  // Replace PAGE_URL with your page's canonical URL variable
 						this.page.identifier = '/2020/07/29/GitHubBug.html'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 						};
@@ -126,12 +122,11 @@
 		</div>
 	</div>
 
-		
-
 	
+<div class="footer text-center">
+    &copy; 2019 TangerineSoda. All Rights Reserved | Design by  <a href="https://twitter.com/Timothy_OwO"> Timothyhay</a>
+</div>
 
-
-	<div class="footer text-center">&copy; 2019 TangerineSoda. All Rights Reserved | Design by  <a href="https://twitter.com/Timothy_OwO"> Timothyhay</a></div>
 
 	<style type="text/css">
 		#toTop {

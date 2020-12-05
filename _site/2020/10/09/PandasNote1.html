@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>作业里积累的Pandas笔记 - SodaFridge</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<!--css-->
+<link href="/css/bootstrap.min.css" rel="stylesheet">
+<link href="/css/chocolat.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/style.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/syntax.css" media="all" rel="stylesheet" type="text/css"  />
+<link href="/css/blog.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/fonts.css" rel="stylesheet" type="text/css" media="all">
+<!--//css-->
+
+<!--icon-->
+<link rel="shortcut icon" href="/images/favicon.ico" />
+
+<!--google fonts-->
+<!--
+<link href="//fonts.googleapis.com/css?family=Poppins:200,200i,300,400,500,500i,600,700,700i" rel="stylesheet">
+<link href="//fonts.googleapis.com/css?family=Nunito:400,700,700i,800i,900" rel="stylesheet">
+-->
+<!--//google fonts-->
+</head>
+<body>
+
+	<div class="top nav">
+		<nav class="navbar navbar-default">
+		  <div class="container">
+		    <!-- Brand and toggle get grouped for better mobile display -->
+		    <div class="navbar-header">
+		     	<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+		        	<span class="sr-only">Toggle navigation</span>
+		        	<span class="icon-bar"></span>
+		        	<span class="icon-bar"></span>
+		        	<span class="icon-bar"></span>
+		      	</button>
+		    	<a class="navbar-brand" href="/">HayHeapStudio</a>
+		    </div>
+
+		    <!-- Collect the nav links, forms, and other content for toggling -->
+		    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+		    	<ul class="nav navbar-nav navbar-right">
+					<li><a href="/" class="page-scroll">Home</a></li>
+					<li><a href="/profile.html" class="page-scroll">Biocard</a></li>
+					<li><a href="/status.html" class="page-scroll">Status</a></li>
+		        	<li><a href="/articlelist.html" class="page-scroll">All Articles</a></li>
+		        </ul>
+		    </div><!-- /.navbar-collapse -->
+		  </div><!-- /.container-fluid -->
+		</nav>
+	</div>
+
+
+	<div class="services-deeperwiderspace" id="daily">
+		<div class="contact-agileinfo-info text-center">
+			<h2>作业里积累的Pandas笔记</h2>
+			<label></label>
+			<h6>09 Oct 2020  Skill, Note, and Python</h6>
+		</div>
+
+		<div class="container" id="blogpage">
+			<h2 id="from-cs5228-knowledge-discovery-and-data-mining-assignment-2">From CS5228 Knowledge Discovery and Data Mining Assignment 2</h2>
+
+<h2 id="关于条件判断---这两个表达式得到的真值不一样">关于条件判断 - 这两个表达式得到的真值不一样：</h2>
+
+<p>Input:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>print(((pima == 0) | (pima.isnull())).sum(axis=0))
+</code></pre></div></div>
+
+<p>Output:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Pregnancies                 111
+Glucose                       5
+BloodPressure                36
+SkinThickness               228
+Insulin                     374
+BMI                          11
+DiabetesPedigreeFunction      1
+Age                           0
+Outcome                     500
+dtype: int64
+</code></pre></div></div>
+
+<p>Input:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>print((pima == 0 | pima.isnull()).sum(axis=0))
+</code></pre></div></div>
+
+<p>Output:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Pregnancies                 111
+Glucose                       5
+BloodPressure                35
+SkinThickness               227
+Insulin                     374
+BMI                          11
+DiabetesPedigreeFunction      0
+Age                           0
+Outcome                     500
+dtype: int64
+</code></pre></div></div>
+
+<p>不把两个表达式都bracket起来的话，DiabetesPedigreeFunction中的NaN项无法被检测到</p>
+
+<h2 id="对dataframe的copy">对DataFrame的copy</h2>
+
+<p>使用<code class="highlighter-rouge">pandas.DataFrame.copy</code>方法！参数deep=True代表深拷贝。</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>DataFrame.copy(deep=True)
+</code></pre></div></div>
+
+<p>deep=false时相当于引用，原值改变时复制的结果随着改变。</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>data = DataFrame.copy(deep=False)
+# Actually equals to:
+data = DataFrame
+</code></pre></div></div>
+
+<h2 id="pandascut">pandas.cut</h2>
+
+<p>pandas.cut(x, bins, right=True, labels=None, retbins=False, precision=3, include_lowest=False, duplicates=’raise’, ordered=True)</p>
+
+<p><strong>Examples</strong></p>
+
+<p>Discretize into three equal-sized bins.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pd.cut(np.array([1, 7, 5, 4, 6, 3]), 3)
+
+[(0.994, 3.0], (5.0, 7.0], (3.0, 5.0], (3.0, 5.0], (5.0, 7.0], ...
+Categories (3, interval[float64]): [(0.994, 3.0] &lt; (3.0, 5.0] ...
+pd.cut(np.array([1, 7, 5, 4, 6, 3]), 3, retbins=True)
+
+([(0.994, 3.0], (5.0, 7.0], (3.0, 5.0], (3.0, 5.0], (5.0, 7.0], ...
+Categories (3, interval[float64]): [(0.994, 3.0] &lt; (3.0, 5.0] ...
+array([0.994, 3.   , 5.   , 7.   ]))
+</code></pre></div></div>
+
+<p>Discovers the same bins, but assign them specific labels. Notice that the returned Categorical’s categories are labels and is ordered.</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pd.cut(np.array([1, 7, 5, 4, 6, 3]),
+       3, labels=["bad", "medium", "good"])
+['bad', 'good', 'medium', 'medium', 'good', 'bad']
+Categories (3, object): ['bad' &lt; 'medium' &lt; 'good']
+</code></pre></div></div>
+
+<p>In Assignment 2, I did like this：</p>
+
+<ul>
+  <li>Normal:  &lt;140 mg/dl of glucose,</li>
+  <li>Prediabetes:  ≥140  but  &lt;200 mg/dl of glucose,</li>
+  <li>Diabetes:  &gt;200 mg/dl of glucose</li>
+</ul>
+
+<p>To do this, setting inf = float(‘inf’). Use pd.cut with bins of [-inf,139.99,199.99,inf] and labels of [‘Normal’, ‘Prediabetes’, ‘Diabetes’].</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 1) Transform continuous variables into categorical variables
+inf = float('inf')
+pima1 = pima.copy(deep=True)
+
+pima1.Glucose = pd.cut(pima.Glucose, [-inf, 139.99, 199.99, inf], labels=['Normal', 'Prediabetes', 'Diabetes'])
+</code></pre></div></div>
+
+<h2 id="reference">Reference:</h2>
+<p>[1]pandas.cut - https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.cut.html</p>
+
+		</div>
+	</div>
+
+	<div class="contact-agileinfo" id="contact">
+
+		<div class="contact-agileinfo-content">
+			<div class="container">
+				<!-- Comment Area -->
+
+				
+
+				<div class="contact-agileinfo-address">
+					<div class="contact-agileinfo-icons">
+						<div class="contact-icons-info">
+							<h3>Comments</h3>
+						</div>
+					</div>
+				</div>
+				<div id="disqus_thread"></div>
+					<script>
+						/**
+						*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+						*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+						
+						var disqus_config = function () {
+						this.page.url = 'http://localhost:4000/2020/10/09/PandasNote1.html';  // Replace PAGE_URL with your page's canonical URL variable
+						this.page.identifier = '/2020/10/09/PandasNote1.html'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+						};
+						
+						(function() { // DON'T EDIT BELOW THIS LINE
+						var d = document, s = d.createElement('script');
+						s.src = 'https://razzorleaf.disqus.com/embed.js';
+						s.setAttribute('data-timestamp', +new Date());
+						(d.head || d.body).appendChild(s);
+						})();
+					</script>
+				<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+			                
+				
+
+			</div>
+		</div>
+	</div>
+
+	
+<div class="footer text-center">
+    &copy; 2019 TangerineSoda. All Rights Reserved | Design by  <a href="https://twitter.com/Timothy_OwO"> Timothyhay</a>
+</div>
+
+
+	<style type="text/css">
+		#toTop {
+	    display: none;
+	    text-decoration: none;
+	    position: fixed;
+	    bottom: 20px;
+	    right: 2%;
+	    overflow: hidden;
+	    z-index: 999;
+	    width: 32px;
+	    height: 32px;
+	    border: none;
+	    text-indent: 100%;
+	    background: url("/images/arrow.png") no-repeat 0px 0px;
+	}
+	</style>
+
+	<!--javascript-->
+	<script src="/js/jquery-1.11.3.min.js"></script>
+	<script src="/js/bootstrap.js"></script>
+	<script src="/js/smoothscroll.js"></script>
+	<script src="/js/jquery.easing.min.js"></script>
+	<script src="/js/grayscale.js"></script>
+	<script src="/js/move-top.js"></script>
+	<!--//javascript-->
+	<!-- js for gallery -->
+	<script type="text/javascript" src="/js/jquery.chocolat.js"></script>
+
+	<script>
+	$(function(){
+	                $('#gal').Chocolat({
+	                    imageSize: 'contain'
+	                });
+	            });
+	</script>
+	<script type="text/javascript">
+	$(document).ready(function() {
+	var defaults = {
+	containerID: 'toTop', // fading element id
+	containerHoverID: 'toTopHover', // fading element hover id
+	scrollSpeed: 1200,
+	easingType: 'linear' 
+	};
+
+	$().UItoTop({ easingType: 'easeOutQuart' });
+
+	});
+	</script>
+	<!-- //js for gallery -->	
+
+</body>
+</html>
