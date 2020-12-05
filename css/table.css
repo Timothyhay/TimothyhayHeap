@@ -1,0 +1,102 @@
+/*
+    Blogpost listing table on Index
+*/
+.table-container{
+    width: 70%;
+}
+
+@media (max-width: 768px) {
+    .table-container {
+        width: 100%;
+    }
+}
+
+.bloglist-table {
+    border:0px;
+}
+
+.bloglist-table th {
+    font-size:16px;
+    background: #99bde1 url(../images/noisy.png);
+    text-transform:uppercase;
+    letter-spacing:2px;
+    padding:15px 15px;
+    color:#fff;
+    font-weight: bold;
+    text-shadow:1px 1px rgba(0,0,0,0.25);
+    border-bottom-width: 5px;
+    border-bottom-style: solid;
+    border-bottom-color: #7db1e5;
+}
+
+.bloglist-table td {
+    background: #daeafb url(../images/noisy.png);
+    padding: 10px 15px;}
+
+
+.bloglist-table th {
+    border-left: 1px solid #7db1e5;
+    border-top: 1px solid #7db1e5;}
+
+.bloglist-table td {
+    border-left: 1px solid #99bde1;
+    border-top: 1px solid #99bde1;
+    border-bottom: 1px solid #99bde1;
+    vertical-align:middle;
+}
+
+.bloglist-table tbody > tr > td:first-child {
+    width: 11%;
+}
+
+.bloglist-table tbody > tr > td:nth-child(2) {
+    /*width: 12%;*/
+}
+
+.bloglist-table tbody > tr > td:last-child {
+    /* width: 80%; */
+}
+
+.bloglist-table tbody > tr:nth-child(odd) > td {
+    background: #ebf4fdc9 url(../images/noisy.png);
+}
+
+/*
+.bloglist-table tbody > tr:last-child > td {
+    background: #b55d66 url(../images/noisy.png);
+    border-left: 1px solid #ad535d;
+    border-top: 6px solid #ad535d;
+}
+*/
+
+.bloglist-table h3 {
+    font-size:20px;
+    margin-top:0px;
+    margin-bottom:3px;
+    line-height:26px;}
+
+
+.bloglist-table td i {
+    margin:0 auto;
+    font-size:25px;
+    text-align:center}
+
+.fancy-heading {
+    text-align:center;
+    border-bottom:1px solid #fff;
+    margin-bottom:35px;
+}
+.fancy-heading h3 {
+    display: inline-block;
+    font-family: "Clicker Script", cursive;
+    line-height:11px;
+    font-size: 46px;
+    font-weight:bold;
+    letter-spacing:-1px;
+    position: relative;
+    top: 25px;
+    padding: 8px 10px;
+    background: #9fc0cc url(../images/noisy.png);
+    color: #fff;
+    text-shadow:2px 2px 0 rgba(0,0,0,0.25);
+}

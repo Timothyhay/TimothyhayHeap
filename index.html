@@ -123,25 +123,34 @@ comments: true
 		<label></label>
 		<h6>LATEST ARTICILES</h6>
 	</div>
-	<div class="container">
-		<ul>
-		{% for post in site.posts reversed limit:10 %}
-			{% assign tag = post.tags.first %}
-			{% if tag == nil %}
-  				{% assign tag = "Sand" %}
-			{% endif %}
+	<div class="container table-container">
+		<table class="table table-bordered bloglist-table">
+			<tr>
+				<th>Date</th>
+				<th>Tag[0]</th>
+				<th>Title</th>
+			</tr>
+			{% for post in site.posts reversed limit:10 %}
+			<tr>
+				{% assign tag = post.tags.first %}
+				{% if tag == nil %}
+					{% assign tag = "Sand" %}
+				{% endif %}
 
-			{% comment %}
-				Control Flow for debugging
-			{% endcomment %}
-			{% assign baseurl = site.baseurl %}
-			{% if baseurl == "/" %}
-				{% assign baseurl = "http://127.0.0.1:4000" %}
-			{% endif %}
-　　　　　　 <li>{{ post.date | date_to_string }} - {{ tag }} / <a href="{{ baseurl }}{{ post.url }}">{{ post.title }}</a></li>
+				{% comment %}
+					Control Flow for debugging
+				{% endcomment %}
+				{% assign baseurl = site.baseurl %}
+				{% if baseurl == "/" %}
+					{% assign baseurl = "http://127.0.0.1:4000" %}
+				{% endif %}
+　　　　　　 	<td>{{ post.date | date_to_string }}</td>
+				<td>{{ tag }}</td>
+				<td><a href="{{ baseurl }}{{ post.url }}">{{ post.title }}</a></td>
 
-　　　　 {% endfor %}
-		</ul>
+			</tr>
+　　　　 	{% endfor %}
+		</table>
 		<br>
 		<a href="/articlelist"><h5>All Articles</h5></a>
 	</div>
