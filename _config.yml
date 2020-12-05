@@ -1,8 +1,0 @@
-url: https://world.tangerinesoda.fun/
-baseurl: /
-highlighter: rouge
-disqus:
-    shortname: razzorleaf
-paginate: 12
-collections:
-- status
