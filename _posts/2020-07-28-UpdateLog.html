@@ -1,0 +1,43 @@
+---
+layout: blogpage
+title: 本站的更新记录 ~
+comments: true
+tags: Jekyll
+---
+
+<p>突然觉得应该写一个更新记录！研究Jekyll, Liquid和Ruby的过程还有debug的过程，应该有一个文章记录一下才对！</p>
+<p style="text-decoration: line-through;">毕竟那么多笔记都只开了个头也好意思留着，真正花时间的东西居然一点都没记录..</p>
+<p>所以就从2020/07/28开始更新起吧 ~！</p>
+
+
+<h2>2020 07 29</h2>
+<ul>
+    <li>Feature: 给Biocard界面配上了播放器，可以听听描述里提到的歌手的曲子。但是静态网页想多网页间无缝播放感觉不太现实了 ..</li>
+    <li>Fix: 去掉了想做但是没东西放的模块和相关CSS/JS。等我有许许多多拿得出手的作品的时候再开起来！说的就是你，陈列柜！</li>
+</ul>
+
+
+<h2>2020 07 28</h2>
+<ul>
+    <li>Feature: 实现了按标签过滤文章！现在标签功能已经完全做好啦 ~ 未分类的文章也可以被过滤到！</li>
+    <li>Fix: 解决了一个trace log 全是自带库里的方法问题，报的是下面字符串相关意义不明的错.. 发现原因是 post.tags 如果为 nil，就不能使用过滤器 array_to_sentence_string。毕竟人家是处理串的..！</li>
+    {% highlight shell %}
+        Liquid Exception: undefined method `join' for "Not":String in articlelist.html
+    {% endhighlight%}
+    <li>Fix: 所有文章界面右侧白边的问题，发现是把container类div塞进来之后太宽了，直接凸了出去。网上查到了个有趣的debug方法，F12一个一个删除元素，看谁被删掉之后界面恢复，问题就在哪个元素内部！感觉学到了 ~
+        <br>但是说实话感觉用ghost page插件更容易定位一些..
+    </li>
+
+</ul>
+
+<h2>2020 10 10</h2>
+<ul>
+    <li>Feature: 现在！终于！全平台！各浏览器！都支持花里胡哨的我的自定义中英文字体了！</li>
+</ul>
+
+<h2>2020 12 05</h2>
+<ul>
+    <li>Feature: 首页文章列表现在用表格显示。</li>
+    <li>Update: 现在网站用回虚线+灰色背景，替换纯白色背景。</li>
+    <li>Fix: 去掉了Banner上方的意外白边。</li>
+</ul>
