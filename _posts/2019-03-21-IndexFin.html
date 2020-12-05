@@ -1,0 +1,34 @@
+---
+layout: blogpage
+title: 主页做好了！大概 ~
+comments: true
+---
+
+{% highlight shell %}
+PS Y:\Blog> git push origin gh-pages
+
+fatal: HttpRequestException encountered.
+	发送请求时出错。
+Username for 'https://github.com': timothyhay
+Password for 'https://timothyhay@github.com':
+To https://github.com/Timothyhay/TimothyhayHeap.git
+    ! [rejected]      gh-pages -> gh-pages (fetch first)
+error: failed to push some refs to 'https://github.com/Timothyhay/TimothyhayHeap.git'
+hint: Updates were rejected because the remote contains work that you do
+hint: not have locally. This is usually caused by another repository pushing
+hint: to the same ref. You may want to first integrate the remote changes
+hint: (e.g., 'git pull ...') before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+{% endhighlight %}
+
+<p> 解决方法是：</p>
+{% highlight sh %}
+git pull --rebase origin gh-pages
+{% endhighlight %}
+<br>
+{% highlight sh %}
+git push -u origin gh-pages
+{% endhighlight %}
+
+<br>
+<p> 总之今天把首页先变得能看了 其他界面和样式以后再慢慢做吧！</p>
