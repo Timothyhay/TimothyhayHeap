@@ -90,6 +90,7 @@ public:
 
 <p>C++ 里的map底层是用类似红黑树的方式存的，默认按照key排序，而且不能直接调用sort函数对value排序。</p>
 <p>如果一定要按value排序，该怎么做呢！</p>
+<div>
 {% highlight cpp %}
 // 先定义好重载运算符的struct
 typedef pair<string, int> PAIR;
@@ -104,7 +105,7 @@ struct CmpByValue {
 vector<PAIR> vec(ref.begin(), ref.end());
 sort(vec.begin(), vec.end(), CmpByValue());
 {% endhighlight %}
-
+</div>
 <p>Besides, use <code>for(auto & it : vec)</code> to traverse the vector elegantly.</p>
 
 
@@ -114,3 +115,23 @@ sort(vec.begin(), vec.end(), CmpByValue());
 <p>
     As the problem has an optimal substructure, it is natural to cache intermediate results. We ask the question \text{dp(i, j)}dp(i, j): does \text{text[i:]}text[i:] and \text{pattern[j:]}pattern[j:] match? We can describe our answer in terms of answers to questions involving smaller strings.
 </p>
+
+<h2></h2>
+
+<h3>Longest Common Substring</h3>
+<p>For completeness, difflib in the standard-library provides loads of sequence-comparison utilities.</p>
+<p>For instance find_longest_match which finds the longest common substring when used on strings.</p>
+<p>Example use:</p>
+
+{% highlight python %}
+from difflib import SequenceMatcher
+
+string1 = "apple pie available"
+string2 = "come have some apple pies"
+
+match = SequenceMatcher(None, string1, string2).find_longest_match(0, len(string1), 0, len(string2))
+
+print(match)  # -> Match(a=0, b=15, size=9)
+print(string1[match.a: match.a + match.size])  # -> apple pie
+print(string2[match.b: match.b + match.size])  # -> apple pie
+{% endhighlight %}
