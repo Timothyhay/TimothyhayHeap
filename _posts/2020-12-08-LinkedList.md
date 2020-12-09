@@ -81,9 +81,47 @@ We increment `prev` to keep it one step behind one of our list heads.
     </div>
 </div>
 
-p.s. There's a bug in this figure. When l1.val == l2.val, in this question we actually choose l2 as `prev.next`. 
-More specifically, `if (l1.val < l2.val) prev->next = l1; l1 = l1.next;`.
+p.s. There's a bug in this figure. When `l1.val == l2.val`, in this question we actually choose l2 as `prev.next`. 
 
+More specifically, `if (l1.val < l2.val) {prev->next = l1; l1 = l1.next;}`.
+
+```cpp lineos
+ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
+    // Here, head node rather than head pointer.
+    // If both head & prev are nullptr, then they
+    ListNode head = ListNode(-1);
+    ListNode* prev = &head;
+    while (l1 && l2){
+        if (l1->val <= l2->val){
+            prev->next = l1;
+            l1 = l1->next;
+        } else {
+            prev->next = l2;
+            l2 = l2->next;
+        }
+        prev = prev->next;
+    }
+    prev->next = l1 ? l1 : l2;
+    return head.next;
+}
+```
+
+An interesting issue:
+
+What if we define `head` as head pointer rather than a node?
+
+Then we will get this:
+
+> Line 18: Char 23: runtime error: member access within null pointer of type 'ListNode' (solution.cpp)
+>
+> SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior prog_joined.cpp:27:23
+
+Because when `head` is a nullptr, `prev` will also be a nullptr. So `prev->next` is inaccessible. 
+Because nullptr have no members. 
+
+When we let `ListNode head = ListNode(-1);` or  `ListNode head = NULL;`. It has members `val(-1 or 0)` and `next(NULL)`. In such case we can manipulate `prev->next`.
+
+    
 ```python
 class Solution:
     def mergeTwoLists(self, l1: ListNode, l2: ListNode) -> ListNode:
