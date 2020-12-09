@@ -5,22 +5,23 @@ comments: true
 tags: LeetCode Note
 ---
 
-Examples:
-## 21. Merge Two Sorted Lists ##
+Basic Operations:
+## Merge - 21. Merge Two Sorted Lists ##
 
 Check out the definition of linked list in C++ & Python first!
 
 ```cpp
 /**
  * Definition for singly-linked list.
- * struct ListNode {
- *     int val;
- *     ListNode *next;
- *     ListNode() : val(0), next(nullptr) {}
- *     ListNode(int x) : val(x), next(nullptr) {}
- *     ListNode(int x, ListNode *next) : val(x), next(next) {}
- * };
  */
+struct ListNode {
+    int val;
+    ListNode *next;
+    ListNode() : val(0), next(nullptr) {}
+    ListNode(int x) : val(x), next(nullptr) {}
+    ListNode(int x, ListNode *next) : val(x), next(next) {}
+};
+
 class Solution {
 public:
     ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
@@ -43,10 +44,10 @@ Implementation with Python:
 
 ```python
 # Definition for singly-linked list.
-# class ListNode:
-#     def __init__(self, val=0, next=None):
-#         self.val = val
-#         self.next = next
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
 
 class Solution:
     def mergeTwoLists(self, l1, l2):
@@ -106,5 +107,51 @@ Time complexity: O(n+m). The while loop runs for a number of iterations equal to
 
 Space complexity: O(1). The iterative approach only allocates a few pointers, so it has a constant overall memory footprint. 
 
+
+## Reverse - 206. Reverse Linked List ##
+
+Change the current node's next pointer to point to its previous element.
+ 
+Since a node does not have reference to its previous node, we must store its previous element `prev` beforehand. 
+
+Also need another pointer to store the next node `nxt` before changing the reference. 
+
+Finally return the new head reference at the end(the final `prev`, rather than final `curr`. The later one is NULL).
+
+Implementation:
+
+```cpp
+class Solution {
+public:
+    ListNode* reverseList(ListNode* head) {
+        ListNode* prev = nullptr;
+        ListNode* curr = head;
+        while (curr){
+            ListNode* next = curr->next; // Step 1.
+            curr->next = prev;           // Step 2.
+            prev = curr;                 // Step 3.
+            curr = next;                 // Step 4.
+        }
+        return prev;
+    }
+};
+```
+
+```python
+class Solution:
+    def reverseList(self, head: ListNode) -> ListNode:
+        prev = None
+        curr = head
+        while curr is not None:
+            nxt = curr.next
+            curr.next = prev
+            prev = curr
+            curr = nxt
+        return prev
+```
+
+
+---
+
 ## Reference ##
-[1] What is the difference between “ is None ” and “ ==None ” - https://stackoverflow.com/questions/3257919/what-is-the-difference-between-is-none-and-none
+[1] What is the difference between "is None" and "==None" - https://stackoverflow.com/questions/3257919/what-is-the-difference-between-is-none-and-none
