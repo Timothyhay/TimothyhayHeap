@@ -85,7 +85,7 @@ p.s. There's a bug in this figure. When `l1.val == l2.val`, in this question we 
 
 More specifically, `if (l1.val < l2.val) {prev->next = l1; l1 = l1.next;}`.
 
-```cpp lineos
+```cpp
 ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
     // Here, head node rather than head pointer.
     // If both head & prev are nullptr, then they
