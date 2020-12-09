@@ -81,7 +81,8 @@ We increment `prev` to keep it one step behind one of our list heads.
     </div>
 </div>
 
-
+p.s. There's a bug in this figure. When l1.val == l2.val, in this question we actually choose l2 as `prev.next`. 
+More specifically, `if (l1.val < l2.val) prev->next = l1; l1 = l1.next;`.
 
 ```python
 class Solution:
