@@ -106,15 +106,14 @@ ListNode* mergeTwoLists(ListNode* l1, ListNode* l2) {
 }
 ```
 
-An interesting issue:
+### An interesting issue: ###
 
 What if we define `head` as head pointer rather than a node?
 
 Then we will get this:
 
-> Line 18: Char 23: runtime error: member access within null pointer of type 'ListNode' (solution.cpp)
->
-> SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior prog_joined.cpp:27:23
+    Line 18: Char 23: runtime error: member access within null pointer of type 'ListNode' (solution.cpp)
+    SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior prog_joined.cpp:27:23
 
 Because when `head` is a nullptr, `prev` will also be a nullptr. So `prev->next` is inaccessible. 
 Because nullptr have no members. 
