@@ -9,7 +9,7 @@ tags: LeetCode Note
 <p style="font-weight: bold">总结一下LeetCode里得到的经验！( ´ ▽ ` )</p>
 
 <h2>2. Add Two Numbers</h2>
-<p class="tag"># Linklist Pointer</p>
+<p class="tag"># Linklist / Pointer</p>
 
 {% highlight python %}
     class Solution:
@@ -46,6 +46,14 @@ tags: LeetCode Note
 <p>I used a silly method at first, with pretty slow speed.</p>
 <p>Check out <a href="https://leetcode.com/problems/median-of-two-sorted-arrays/discuss/2481/Share-my-O(log(min(mn)))-solution-with-explanation">
     this O(log(min(m,n))) solution then!</a></p>
+
+<h2>6. ZigZag Conversion</h2>
+<p class="tag"># String </p>
+<p>To convert list into string in Python. Simply use <code>"".join(str)</code>. This will make <code>''</code> between every single chars.</p>
+{% highlight python %}
+for val in hashlist.values():
+result += "".join(val)
+{% endhighlight %}
 
 
 <h2>9. Palindrome Number</h2>
@@ -134,4 +142,30 @@ match = SequenceMatcher(None, string1, string2).find_longest_match(0, len(string
 print(match)  # -> Match(a=0, b=15, size=9)
 print(string1[match.a: match.a + match.size])  # -> apple pie
 print(string2[match.b: match.b + match.size])  # -> apple pie
+{% endhighlight %}
+
+
+
+<h2>136. Single Number</h2>
+<p class="tag">Bit Manipulation / Hash Map</p>
+<p>A XOR trick to solve this:</p>
+<p>If we take XOR of zero and some bit, it will return that bit</p>
+a⊕0=a
+<p>If we take XOR of two same bits, it will return 0</p>
+a⊕a=0
+<p>And</p>
+a⊕b⊕a=(a⊕a)⊕b=0⊕b=b
+<p>So we can XOR(<code>^</code>in Python) all bits together to find the unique number.</p>
+
+{% highlight python %}
+class Solution(object):
+    def singleNumber(self, nums):
+        """
+        :type nums: List[int]
+        :rtype: int
+        """
+        a = 0
+        for i in nums:
+        a ^= i
+        return a
 {% endhighlight %}
