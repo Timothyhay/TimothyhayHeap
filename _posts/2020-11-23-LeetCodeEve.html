@@ -154,7 +154,7 @@ while (!q.empty()) {
     v.push_back(q.front());
     q.pop();
 }
-{% highlight python %}
+{% endhighlight %}
 </div>
 
 
@@ -162,11 +162,11 @@ while (!q.empty()) {
 <p class="tag">Bit Manipulation / Hash Map</p>
 <p>A XOR trick to solve this:</p>
 <p>If we take XOR of zero and some bit, it will return that bit</p>
-a⊕0=a
+<blockquote>a⊕0=a</blockquote>
 <p>If we take XOR of two same bits, it will return 0</p>
-a⊕a=0
+<blockquote>a⊕a=0</blockquote>
 <p>And</p>
-a⊕b⊕a=(a⊕a)⊕b=0⊕b=b
+<blockquote>a⊕b⊕a=(a⊕a)⊕b=0⊕b=b</blockquote>
 <p>So we can XOR(<code>^</code>in Python) all bits together to find the unique number.</p>
 
 {% highlight python %}
