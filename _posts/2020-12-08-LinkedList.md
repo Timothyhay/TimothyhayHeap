@@ -145,6 +145,47 @@ Time complexity: O(n+m). The while loop runs for a number of iterations equal to
 
 Space complexity: O(1). The iterative approach only allocates a few pointers, so it has a constant overall memory footprint. 
 
+## Merge - 23. Merge k Sorted Lists ##
+
+About how to write a customized comparing function to use in the third param of `priority_queue`.
+This priority queue actually stores only heads of each linked list, whose `next` may have another ListNode.
+
+When a `head` was pop out, since each linked list was sorted, we let `head = head->next` to maintain this place with 
+the next valid and reasonable value.
+
+```cpp
+struct cmp {
+    bool operator()(ListNode* a, ListNode* b){
+        // Small -> Large
+        return a->val > b->val;
+    }
+};
+
+class Solution {
+public:
+    ListNode* mergeKLists(vector<ListNode*>& lists) {
+        priority_queue<ListNode*, vector<ListNode*>, cmp> q;
+        for (auto it : lists)
+            // Use if (it) to avoid push empty vector [[]], or head->next will be nullptr while q is not empty (has [])
+            if (it)
+                q.push(it);
+
+        if (q.empty())
+            return nullptr;
+        ListNode result;
+        ListNode* head = &result;
+        while (!q.empty()){
+            head->next = q.top();
+            head = head->next;
+            q.pop();
+            if (head->next)
+                q.push(head->next);
+        }
+        return result.next;
+    }
+};
+```
+
 
 ## Reverse - 206. Reverse Linked List ##
 
