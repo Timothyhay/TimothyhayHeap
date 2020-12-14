@@ -157,6 +157,42 @@ while (!q.empty()) {
 {% endhighlight %}
 </div>
 
+<h2>15. 3Sum</h2>
+<p>Classic! Fix 1 pointer then move the rest 2 pointers.</p>
+<p class="tag">2 Pointers</p>
+<div>
+{% highlight cpp %}
+class Solution {
+public:
+vector<vector<int>> threeSum(vector<int>& nums) {
+    sort(nums.begin(), nums.end());
+    int pivot, low, high;
+    vector<vector<int>> result;
+    // If the current value is greater than zero, break from the loop. Remaining values cannot sum to zero.
+    for (pivot = 0; pivot < nums.size() && nums[pivot] <= 0; ++pivot) {
+        if (pivot == 0 || nums[pivot-1] != nums[pivot]) {
+            low = pivot + 1;
+            high = nums.size() - 1;
+            while (low < high) {
+                int sum = nums[low] + nums[high] + nums[pivot];
+                if (sum == 0) {
+                    result.push_back({nums[pivot], nums[low++], nums[high--]});
+                    // Increment lo while the next value is the same as before to avoid duplicates in the result.
+                    while (low < high && nums[low] == nums[low-1])
+                        low++;
+                } else if (sum < 0)
+                    low++;
+                else
+                    high--;
+                }
+            }
+        }
+        return result;
+    }
+};
+
+{% endhighlight %}
+</div>
 
 <h2>136. Single Number</h2>
 <p class="tag">Bit Manipulation / Hash Map</p>
