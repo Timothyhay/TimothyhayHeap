@@ -59,7 +59,7 @@ paginate: true
         <label></label>
         {% if paginator.total_pages > 1 %}
         <p>{{ paginator.previous_page_path}}</p>
-        <p>{{site.baseurl }}}</p>
+        <p>{{site.baseurl }}</p>
         <p>{{site.paginate_path }}</p>
         <p>{{ paginator.previous_page_path | prepend: site.baseurl }}</p>
         <p>{{site.paginate_path | prepend: site.baseurl}}</p>
