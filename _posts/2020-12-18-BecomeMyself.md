@@ -1,6 +1,6 @@
 ---
 layout: blogpage
-title: 好不容易，有机会重新成为我自己
+title: 好不容易，我开始重新成为我自己
 comments: true
 tags: Life-Fragments
 ---
