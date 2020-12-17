@@ -75,46 +75,41 @@ comments: true
 
 <!--about us-->
 <div class="about-us-agileits" id="about">
-
-<div class="about-info text-center">
-	<h3>ABOUT</h3>
-	<label></label>
+	<div class="about-info text-center">
+		<h3>ABOUT</h3>
+		<label></label>
 	</div>
-		<div class="about-us-agileits-info">
-			<div class="container">
-				<div class="row">
-					<div class="col-sm-6 col-md-5">
-						<a href="/status"><h2>Status</h2></a>
+	<div class="about-us-agileits-info">
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-6 col-md-5">
+					<a href="/status"><h2>Status</h2></a>
 
-						{{ site.status.last.content }}
+					{{ site.status.last.content }}
 
-						<br><br>
-						<!-- Title实际上存的是日期; 之前的写法要把endfor放到次行以下 -->
-						<p>Updated on: <a href="/status">{{ site.status.last.title }}</a></p>
-					</div>
-						
-					<div class="col-sm-6 col-md-7 text-center">
-						<ul class="grid grid--examples">
-							<li class="grid__item">
-
-								<a href="/profile" class="active">
-									<div class="grid__img grid__img--example-4">
-										<img src="images/biocard.jpg" class="tilt-effect" alt="biocard"  data-tilt-options='{ "opacity" : 0.8, "bgfixed" : false, "extraImgs" : 3, "movement": { "perspective" : 1500, "translateX" : 80, "translateY" : 80, "translateZ" : 0, "rotateY" : 20 } }' />
-									</div>
-									<!-- <span style=" float:right; font-size: 20px;">Digital Biocard</span> -->
-								</a>
-								<img src="images/postmark.png" style="position: absolute; left: 430px; top: 250px; z-index: 100;">
-
-							</li>
-
-						</ul>
-						
-					</div>
-
-					<div class="clearfix"></div>
+					<br><br>
+					<!-- Title实际上存的是日期; 之前的写法要把endfor放到次行以下 -->
+					<p>Updated on: <a href="/status">{{ site.status.last.title }}</a></p>
 				</div>
+
+				<div class="col-sm-6 col-md-7 text-center">
+					<ul class="grid grid--examples">
+						<li class="grid__item">
+
+							<a href="/profile" class="active">
+								<div class="grid__img grid__img--example-4">
+									<img src="images/biocard.jpg" class="tilt-effect" alt="biocard"  data-tilt-options='{ "opacity" : 0.8, "bgfixed" : false, "extraImgs" : 3, "movement": { "perspective" : 1500, "translateX" : 80, "translateY" : 80, "translateZ" : 0, "rotateY" : 20 } }' />
+								</div>
+								<!-- <span style=" float:right; font-size: 20px;">Digital Biocard</span> -->
+							</a>
+							<img src="images/postmark.png" style="position: absolute; left: 430px; top: 250px; z-index: 100;">
+						</li>
+					</ul>
+				</div>
+				<div class="clearfix"></div>
 			</div>
 		</div>
+	</div>
 </div>
 <!---728x90--->
 <!--//about us-->
@@ -133,7 +128,7 @@ comments: true
 				<th>Tag[0]</th>
 				<th>Title</th>
 			</tr>
-			{% for post in site.posts reversed limit:10 %}
+			{% for post in site.posts reversed limit:10  %}
 			<tr>
 				{% assign tag = post.tags.first %}
 				{% if tag == nil %}
@@ -181,7 +176,7 @@ comments: true
 						<div class="overlay">
 							<h4>Weihai</h4>
 							<p>没有去之前以为是另一个普林斯顿</p>
-							<p>Pic / 山东大学·威海</p>
+							<p>Fig / 山东大学·威海</p>
 						</div>
 						</a>
 					</div>
@@ -191,7 +186,7 @@ comments: true
 						<div class="overlay">
 							<h4>Shanghai</h4>
 							<p>大城市里的惬意旅行，攻略最随意的一次。</p>
-							<p>Pic / 只记得是从某个下沉式蹦迪广场出来之后遇到的一组立交桥</p>
+							<p>Fig / 只记得是从某个下沉式蹦迪广场出来之后遇到的一组立交桥</p>
 						</div>
 						</a>
 					</div>
@@ -204,6 +199,7 @@ comments: true
 						<div class="overlay">
 							<h4>Quanzhou</h4>
 							<p>为了闽南小吃绝对值得一去的地方。</p>
+							<p>Fig / 忘记名字的粉色教堂</p>
 						</div>
 						</a>
 					</div>
@@ -213,7 +209,7 @@ comments: true
 						<div class="overlay">
 							<h4>Tianjin</h4>
 							<p>落花的四月天津，有第一次到达摩天轮最顶端的回忆。</p>
-							<p>Pic / 滨海图书馆</p>
+							<p>Fig / 滨海图书馆</p>
 						</div>
 						</a>
 					</div>
@@ -225,7 +221,7 @@ comments: true
 						<div class="overlay">
 							<h4>Singapore</h4>
 							<p>在新加坡过了第一个生日</p>
-							<p>Pic / ERC @ NUS</p>
+							<p>Fig / ERC @ NUS</p>
 						</div>
 						</a>
 					</div>
@@ -235,7 +231,7 @@ comments: true
 						<div class="overlay">
 							<h4>Fuzhou</h4>
 							<p>童年回忆。</p>
-							<p>Pic / 上下杭</p>
+							<p>Fig / 上下杭</p>
 						</div>
 						</a>
 					</div>
@@ -271,7 +267,6 @@ comments: true
 			<div class="row" >
 
 				<ul id="carousel" class="elastislide-list">
-					<li><a href="./photowall.html">PHOTOWALL</a></li>
 					<li><a href="./countdown.html">EV. COUNTDOWN</a></li>
 				</ul>
 

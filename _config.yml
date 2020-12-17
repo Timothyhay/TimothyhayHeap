@@ -3,6 +3,8 @@ baseurl: /
 highlighter: rouge
 disqus:
     shortname: razzorleaf
+gems: [jekyll-paginate]
 paginate: 12
+paginate_path: "articlelist/UwU/:num"
 collections:
 - status
