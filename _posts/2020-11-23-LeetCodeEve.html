@@ -194,6 +194,59 @@ vector<vector<int>> threeSum(vector<int>& nums) {
 {% endhighlight %}
 </div>
 
+<h2>23. Merge k Sorted Lists</h2>
+<p class="tag">Linked List / Priority Queue</p>
+<p>Definition:</p>
+<code>priority_queue<Type, Container, Functional></code>
+<p>e.g. </p>
+{% highlight cpp %}
+//升序队列
+priority_queue <int,vector<int>,greater<int> > q;
+//降序队列
+priority_queue <int,vector<int>,less<int> >q;
+{% endhighlight %}
+
+<p>The usage of priority queue in C++:</p>
+<div>
+{% highlight cpp %}
+
+// Write a struct with bool operator()() to customize the comparing function.
+struct cmp {
+    bool operator()(ListNode* a, ListNode* b){
+    // Small -> Large
+    return a->val > b->val;
+    }
+};
+
+// When comparing pair, first cmp 1st elem, then 2nd one.
+priority_queue<pair<int, int> > a;
+pair<int, int> b(1, 2);
+pair<int, int> c(1, 3);
+pair<int, int> d(2, 5);
+a.push(d);
+a.push(c);
+a.push(b);
+// Pop order: d->c->b
+
+
+{% endhighlight %}
+</div>
+<blockquote>
+    empty - Test whether container is empty (public member function )
+
+    size - Return size (public member function )
+
+    top - Access top element (public member function )
+
+    push - Insert element (public member function )
+
+    emplace - Construct and insert element (public member function )
+
+    pop - Remove top element (public member function )
+
+    swap - Swap contents (public member function )
+</blockquote>
+
 <h2>136. Single Number</h2>
 <p class="tag">Bit Manipulation / Hash Map</p>
 <p>A XOR trick to solve this:</p>
