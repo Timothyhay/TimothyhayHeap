@@ -74,6 +74,10 @@ label {
     float: none;
 }
 
+.pagination {
+    display: block;
+}
+
 @media screen and (max-width: 600px){
     .stream-warpper{float: left; flex-direction: column;}
     #tag-title{display: none;}
