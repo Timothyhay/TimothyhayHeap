@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>All about Hash Map - SodaFridge</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<!--css-->
+<link href="/css/bootstrap.min.css" rel="stylesheet">
+<link href="/css/chocolat.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/style.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/syntax.css" media="all" rel="stylesheet" type="text/css"  />
+<link href="/css/blog.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/fonts.css" rel="stylesheet" type="text/css" media="all">
+<!--//css-->
+
+<!--icon-->
+<link rel="shortcut icon" href="/images/favicon.ico" />
+
+<!--google fonts-->
+<!--
+<link href="//fonts.googleapis.com/css?family=Poppins:200,200i,300,400,500,500i,600,700,700i" rel="stylesheet">
+<link href="//fonts.googleapis.com/css?family=Nunito:400,700,700i,800i,900" rel="stylesheet">
+-->
+<!--//google fonts-->
+</head>
+<body>
+
+	<div class="top nav">
+		<nav class="navbar navbar-default">
+		  <div class="container">
+		    <!-- Brand and toggle get grouped for better mobile display -->
+		    <div class="navbar-header">
+		     	<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+		        	<span class="sr-only">Toggle navigation</span>
+		        	<span class="icon-bar"></span>
+		        	<span class="icon-bar"></span>
+		        	<span class="icon-bar"></span>
+		      	</button>
+		    	<a class="navbar-brand" href="/">HayHeapStudio</a>
+		    </div>
+
+		    <!-- Collect the nav links, forms, and other content for toggling -->
+		    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+		    	<ul class="nav navbar-nav navbar-right">
+					<li><a href="/" class="page-scroll">Home</a></li>
+					<li><a href="/profile.html" class="page-scroll">Biocard</a></li>
+					<li><a href="/status.html" class="page-scroll">Status</a></li>
+		        	<li><a href="/articlelist.html" class="page-scroll">All Articles</a></li>
+		        </ul>
+		    </div><!-- /.navbar-collapse -->
+		  </div><!-- /.container-fluid -->
+		</nav>
+	</div>
+
+
+	<div class="services-deeperwiderspace" id="daily">
+		<div class="contact-agileinfo-info text-center">
+			<h2>All about Hash Map</h2>
+			<label></label>
+			<h6>06 Dec 2020  LeetCode and Note</h6>
+		</div>
+
+		<div class="container" id="blogpage">
+			<p>Use hash table to avoid the O(n) time required for searching the elements.</p>
+
+<p>A simple example in <code class="highlighter-rouge">136. Single Number</code>:</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="k">class</span> <span class="nc">Solution</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">singleNumber</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nums</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="n">hash_table</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">nums</span><span class="p">:</span>
+            <span class="n">hash_table</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">hash_table</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">hash_table</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">i</span>
+</code></pre></div></div>
+
+<p>When handling hashmap(dict actually) for counting, we can <code class="highlighter-rouge">from collections import defaultdict</code> and use <code class="highlighter-rouge">defaultdict(int)</code>.
+Cuz int’s factory function has default value 0. Using defaultdict here is actually defining a dict with default value 0s.</p>
+
+<p>An example of <code class="highlighter-rouge">defaultdict(int)</code>:</p>
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="nb">str</span> <span class="o">=</span> <span class="s">'mississippi'</span>
+    <span class="n">dic</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">:</span>
+         <span class="n">dic</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+=</span> <span class="mi">1</span>
+    <span class="nb">list</span><span class="p">(</span><span class="n">dic</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+</code></pre></div></div>
+<p>Output</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[('i',4), ('p',2), ('s',4), ('m',1)]
+</code></pre></div></div>
+
+<p>In the same question, my solution with C++:</p>
+
+<figure class="highlight"><pre><code class="language-cpp" data-lang="cpp"><table class="rouge-table"><tbody><tr><td class="gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+</pre></td><td class="code"><pre><span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="kt">int</span> <span class="n">singleNumber</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span> <span class="n">nums</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">unordered_map</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">hashmap</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="o">&amp;</span><span class="n">it</span><span class="o">:</span> <span class="n">nums</span><span class="p">)</span>
+            <span class="n">hashmap</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">it</span><span class="p">)</span> <span class="o">==</span> <span class="n">hashmap</span><span class="p">.</span><span class="n">end</span><span class="p">()</span> <span class="o">?</span> <span class="n">hashmap</span><span class="p">[</span><span class="n">it</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">:</span> <span class="n">hashmap</span><span class="p">[</span><span class="n">it</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="c1">//cout &lt;&lt; "it" &lt;&lt; it &lt;&lt; "value" &lt;&lt; hashmap[it] &lt;&lt;endl;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="o">&amp;</span><span class="n">it</span><span class="o">:</span> <span class="n">hashmap</span><span class="p">)</span>
+            <span class="c1">//cout &lt;&lt;"it-&gt;first" &lt;&lt; it.first &lt;&lt; "it-&gt;second" &lt;&lt; it.second &lt;&lt; endl;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">it</span><span class="p">.</span><span class="n">second</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">it</span><span class="p">.</span><span class="n">first</span><span class="p">;</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</pre></td></tr></tbody></table></code></pre></figure>
+
+<p>We can simply replace line 6 with <code class="highlighter-rouge">hashmap[it]++;</code> cuz <code class="highlighter-rouge">unordered_map</code> is also initialized with default 0.</p>
+
+<blockquote>
+  <p>It is actually safe to assume that the values inside Foo are always initialized to zero because of the behaviour of operator[]
+When the default allocator is used, this results in the key being copy/move constructed from key and the mapped value being value-initialized.
+You do not provide a constructor which means that each field in Foo will be value initialized individually which for primitive types means zero initialization.</p>
+
+  <p>But the problem you are actually facing here is that a field called “Apple” does not exist in your map. Unfortunately the semantics of operator[] are such that if the value does not exist, it will be created on the fly. You probably didn’t even want to access a non-existent field in the map and you are asking whether it is always initialized to zero so that you can use this fact to check whether the element was there. For this purpose however, you should either use the find() or at() member function.
+find() will return an iterator pointing to the end of the map if the element does not exist. That means you could guards the element access using</p>
+
+  <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="k">auto</span> <span class="n">apple</span> <span class="o">=</span> <span class="n">map</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="s">"Apple"</span><span class="p">);</span> <span class="n">apple</span> <span class="o">!=</span> <span class="n">map</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">apple</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">.</span><span class="n">num</span> <span class="o">&lt;&lt;</span> <span class="sc">'\n'</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">apple</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">.</span><span class="n">state</span> <span class="o">&lt;&lt;</span> <span class="sc">'\n'</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>  </div>
+  <p>(with the C++17 if statement initializer)</p>
+
+  <p>at() will throw an exception if the element is not found.</p>
+
+  <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">map</span><span class="p">.</span><span class="n">at</span><span class="p">(</span><span class="s">"Apple"</span><span class="p">).</span><span class="n">num</span> <span class="o">&lt;&lt;</span> <span class="sc">'\n'</span><span class="p">;</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">map</span><span class="p">.</span><span class="n">at</span><span class="p">(</span><span class="s">"Apple"</span><span class="p">).</span><span class="n">state</span> <span class="o">&lt;&lt;</span> <span class="sc">'\n'</span><span class="p">;</span>
+</code></pre></div>  </div>
+  <p>This will crash your program with a std::out_of_range exception. You might feel temped to catch this exception to check whether the element existed. Don’t do this. It is very bad practice to use exceptions for control flow. On top of that exception are dead slow when they are being thrown.</p>
+</blockquote>
+
+<h2 id="reference">Reference</h2>
+<p>[1] Default value of static std::unordered_map - https://stackoverflow.com/questions/51667662/default-value-of-static-stdunordered-map</p>
+
+		</div>
+	</div>
+
+	<div class="contact-agileinfo" id="contact">
+
+		<div class="contact-agileinfo-content">
+			<div class="container">
+				<!-- Comment Area -->
+
+				
+
+				<div class="contact-agileinfo-address">
+					<div class="contact-agileinfo-icons">
+						<div class="contact-icons-info">
+							<h3>Comments</h3>
+						</div>
+					</div>
+				</div>
+				<div id="disqus_thread"></div>
+					<script>
+						/**
+						*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+						*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+						
+						var disqus_config = function () {
+						this.page.url = 'http://localhost:4000/2020/12/06/HashMap.html';  // Replace PAGE_URL with your page's canonical URL variable
+						this.page.identifier = '/2020/12/06/HashMap.html'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+						};
+						
+						(function() { // DON'T EDIT BELOW THIS LINE
+						var d = document, s = d.createElement('script');
+						s.src = 'https://razzorleaf.disqus.com/embed.js';
+						s.setAttribute('data-timestamp', +new Date());
+						(d.head || d.body).appendChild(s);
+						})();
+					</script>
+				<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+			                
+				
+
+			</div>
+		</div>
+	</div>
+
+	
+<div class="footer text-center">
+    &copy; 2019 TangerineSoda. All Rights Reserved | Design by  <a href="https://twitter.com/Timothy_OwO"> Timothyhay</a>
+</div>
+
+
+	<style type="text/css">
+		#toTop {
+	    display: none;
+	    text-decoration: none;
+	    position: fixed;
+	    bottom: 20px;
+	    right: 2%;
+	    overflow: hidden;
+	    z-index: 999;
+	    width: 32px;
+	    height: 32px;
+	    border: none;
+	    text-indent: 100%;
+	    background: url("/images/arrow.png") no-repeat 0px 0px;
+	}
+	</style>
+
+	<!--javascript-->
+	<script src="/js/jquery-1.11.3.min.js"></script>
+	<script src="/js/bootstrap.js"></script>
+	<script src="/js/smoothscroll.js"></script>
+	<script src="/js/jquery.easing.min.js"></script>
+	<script src="/js/grayscale.js"></script>
+	<script src="/js/move-top.js"></script>
+	<!--//javascript-->
+	<!-- js for gallery -->
+	<script type="text/javascript" src="/js/jquery.chocolat.js"></script>
+
+	<script>
+	$(function(){
+	                $('#gal').Chocolat({
+	                    imageSize: 'contain'
+	                });
+	            });
+	</script>
+	<script type="text/javascript">
+	$(document).ready(function() {
+	var defaults = {
+	containerID: 'toTop', // fading element id
+	containerHoverID: 'toTopHover', // fading element hover id
+	scrollSpeed: 1200,
+	easingType: 'linear' 
+	};
+
+	$().UItoTop({ easingType: 'easeOutQuart' });
+
+	});
+	</script>
+	<!-- //js for gallery -->	
+
+</body>
+</html>

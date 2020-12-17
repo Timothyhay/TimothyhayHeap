@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>吃西瓜书 - SodaFridge</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<!--css-->
+<link href="/css/bootstrap.min.css" rel="stylesheet">
+<link href="/css/chocolat.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/style.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/syntax.css" media="all" rel="stylesheet" type="text/css"  />
+<link href="/css/blog.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/fonts.css" rel="stylesheet" type="text/css" media="all">
+<!--//css-->
+
+<!--icon-->
+<link rel="shortcut icon" href="/images/favicon.ico" />
+
+<!--google fonts-->
+<!--
+<link href="//fonts.googleapis.com/css?family=Poppins:200,200i,300,400,500,500i,600,700,700i" rel="stylesheet">
+<link href="//fonts.googleapis.com/css?family=Nunito:400,700,700i,800i,900" rel="stylesheet">
+-->
+<!--//google fonts-->
+</head>
+<body>
+
+	<div class="top nav">
+		<nav class="navbar navbar-default">
+		  <div class="container">
+		    <!-- Brand and toggle get grouped for better mobile display -->
+		    <div class="navbar-header">
+		     	<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+		        	<span class="sr-only">Toggle navigation</span>
+		        	<span class="icon-bar"></span>
+		        	<span class="icon-bar"></span>
+		        	<span class="icon-bar"></span>
+		      	</button>
+		    	<a class="navbar-brand" href="/">HayHeapStudio</a>
+		    </div>
+
+		    <!-- Collect the nav links, forms, and other content for toggling -->
+		    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+		    	<ul class="nav navbar-nav navbar-right">
+					<li><a href="/" class="page-scroll">Home</a></li>
+					<li><a href="/profile.html" class="page-scroll">Biocard</a></li>
+					<li><a href="/status.html" class="page-scroll">Status</a></li>
+		        	<li><a href="/articlelist.html" class="page-scroll">All Articles</a></li>
+		        </ul>
+		    </div><!-- /.navbar-collapse -->
+		  </div><!-- /.container-fluid -->
+		</nav>
+	</div>
+
+
+	<div class="services-deeperwiderspace" id="daily">
+		<div class="contact-agileinfo-info text-center">
+			<h2>吃西瓜书</h2>
+			<label></label>
+			<h6>27 Jul 2020  Note and Machine-Learning</h6>
+		</div>
+
+		<div class="container" id="blogpage">
+			<h2 id="chapter-1-绪论">Chapter 1   绪论</h2>
+
+<ul>
+  <li>聚类 · 把训练集中的数据分成若干组，每组叫一个簇(cluster)；这些自动形成的簇可能对应一些潜在的概念划分，如“浅色瓜/深色瓜”。</li>
+  <li>根据训练数据是否有标记信息，学习任务被分为监督学习和无监督学习</li>
+  <li>概念学习研究太少了。因为要学得泛化性能好且语义明确的概念太困难了，现实中常用的大多数是产生黑箱模型。</li>
+  <li>
+    <p>机器学习算法在学习过程中对某种类型假设的偏好称为偏好或归纳偏好(inductive bias)。</p>
+  </li>
+  <li>奥卡姆剃刀(Occam’s razor) · 若有多个假设与观察一致，选择最简单的那个。自然认为平滑曲线更简单（更易于描述）。</li>
+</ul>
+
+<p>但奥卡姆剃刀并非唯一可行原则，有时无法判断两种假设谁更简单。</p>
+
+<p>奥卡姆剃刀也并非科学研究中唯一可行的假设选择原则，例如古希腊哲学家伊壁鸠鲁的多释原则(principle of multiple explanations)，主张保留与经验观察一致的所有假设，这与集成学习(ensemble learning)方面的研究更加吻合。</p>
+
+<ul>
+  <li>对任意一个学习算法A1，若在某些问题上比学习算法A2好，则必有另一些问题A2效果比A1好。</li>
+  <li>没有免费的午餐定理(No Free Lunch Theorem, NFL) · 所有问题出现机会相同/所有问题同等重要时，无论学习算法如何，他们的期望性能相同/总误差相同。</li>
+</ul>
+
+<p>现实中只关注试图解决的具体问题，所以不适用。学习算法的优劣脱离具体问题毫无意义，其自身归纳偏好与问题是否相配往往起到决定性作用。</p>
+
+<ul>
+  <li>深度学习技术涉及到的模型复杂度高，以至于下功夫调参，把参数调节好，性能往往就好。</li>
+  <li>神经网络在二十世纪八十年代中期和深度学习在二十一世纪初的走红都和计算能力、存储效率的显著提高相关联。</li>
+</ul>
+
+<h2 id="chapter-2-模型评估与选择">Chapter 2   模型评估与选择</h2>
+
+		</div>
+	</div>
+
+	<div class="contact-agileinfo" id="contact">
+
+		<div class="contact-agileinfo-content">
+			<div class="container">
+				<!-- Comment Area -->
+
+				
+
+				<div class="contact-agileinfo-address">
+					<div class="contact-agileinfo-icons">
+						<div class="contact-icons-info">
+							<h3>Comments</h3>
+						</div>
+					</div>
+				</div>
+				<div id="disqus_thread"></div>
+					<script>
+						/**
+						*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+						*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+						
+						var disqus_config = function () {
+						this.page.url = 'http://localhost:4000/2020/07/27/WatermelonNote.html';  // Replace PAGE_URL with your page's canonical URL variable
+						this.page.identifier = '/2020/07/27/WatermelonNote.html'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+						};
+						
+						(function() { // DON'T EDIT BELOW THIS LINE
+						var d = document, s = d.createElement('script');
+						s.src = 'https://razzorleaf.disqus.com/embed.js';
+						s.setAttribute('data-timestamp', +new Date());
+						(d.head || d.body).appendChild(s);
+						})();
+					</script>
+				<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+			                
+				
+
+			</div>
+		</div>
+	</div>
+
+	
+<div class="footer text-center">
+    &copy; 2019 TangerineSoda. All Rights Reserved | Design by  <a href="https://twitter.com/Timothy_OwO"> Timothyhay</a>
+</div>
+
+
+	<style type="text/css">
+		#toTop {
+	    display: none;
+	    text-decoration: none;
+	    position: fixed;
+	    bottom: 20px;
+	    right: 2%;
+	    overflow: hidden;
+	    z-index: 999;
+	    width: 32px;
+	    height: 32px;
+	    border: none;
+	    text-indent: 100%;
+	    background: url("/images/arrow.png") no-repeat 0px 0px;
+	}
+	</style>
+
+	<!--javascript-->
+	<script src="/js/jquery-1.11.3.min.js"></script>
+	<script src="/js/bootstrap.js"></script>
+	<script src="/js/smoothscroll.js"></script>
+	<script src="/js/jquery.easing.min.js"></script>
+	<script src="/js/grayscale.js"></script>
+	<script src="/js/move-top.js"></script>
+	<!--//javascript-->
+	<!-- js for gallery -->
+	<script type="text/javascript" src="/js/jquery.chocolat.js"></script>
+
+	<script>
+	$(function(){
+	                $('#gal').Chocolat({
+	                    imageSize: 'contain'
+	                });
+	            });
+	</script>
+	<script type="text/javascript">
+	$(document).ready(function() {
+	var defaults = {
+	containerID: 'toTop', // fading element id
+	containerHoverID: 'toTopHover', // fading element hover id
+	scrollSpeed: 1200,
+	easingType: 'linear' 
+	};
+
+	$().UItoTop({ easingType: 'easeOutQuart' });
+
+	});
+	</script>
+	<!-- //js for gallery -->	
+
+</body>
+</html>

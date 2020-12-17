@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>colab里的numpy笔记 - SodaFridge</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<!--css-->
+<link href="/css/bootstrap.min.css" rel="stylesheet">
+<link href="/css/chocolat.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/style.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/syntax.css" media="all" rel="stylesheet" type="text/css"  />
+<link href="/css/blog.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/fonts.css" rel="stylesheet" type="text/css" media="all">
+<!--//css-->
+
+<!--icon-->
+<link rel="shortcut icon" href="/images/favicon.ico" />
+
+<!--google fonts-->
+<!--
+<link href="//fonts.googleapis.com/css?family=Poppins:200,200i,300,400,500,500i,600,700,700i" rel="stylesheet">
+<link href="//fonts.googleapis.com/css?family=Nunito:400,700,700i,800i,900" rel="stylesheet">
+-->
+<!--//google fonts-->
+</head>
+<body>
+
+	<div class="top nav">
+		<nav class="navbar navbar-default">
+		  <div class="container">
+		    <!-- Brand and toggle get grouped for better mobile display -->
+		    <div class="navbar-header">
+		     	<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+		        	<span class="sr-only">Toggle navigation</span>
+		        	<span class="icon-bar"></span>
+		        	<span class="icon-bar"></span>
+		        	<span class="icon-bar"></span>
+		      	</button>
+		    	<a class="navbar-brand" href="/">HayHeapStudio</a>
+		    </div>
+
+		    <!-- Collect the nav links, forms, and other content for toggling -->
+		    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+		    	<ul class="nav navbar-nav navbar-right">
+					<li><a href="/" class="page-scroll">Home</a></li>
+					<li><a href="/profile.html" class="page-scroll">Biocard</a></li>
+					<li><a href="/status.html" class="page-scroll">Status</a></li>
+		        	<li><a href="/articlelist.html" class="page-scroll">All Articles</a></li>
+		        </ul>
+		    </div><!-- /.navbar-collapse -->
+		  </div><!-- /.container-fluid -->
+		</nav>
+	</div>
+
+
+	<div class="services-deeperwiderspace" id="daily">
+		<div class="contact-agileinfo-info text-center">
+			<h2>colab里的numpy笔记</h2>
+			<label></label>
+			<h6>01 Sep 2020  Skill, Note, and Python</h6>
+		</div>
+
+		<div class="container" id="blogpage">
+			<h2 id="from-cs5242-neural-networks-and-deep-learning----lecture1-colab">From CS5242 Neural Networks and Deep Learning -  Lecture1 colab</h2>
+
+<hr />
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>np.random.seed(1234)
+x = np.random.normal(loc=0, scale=1, size=(3, 1))
+A = np.random.normal(loc=0, scale=1, size=(2, 3))
+u = np.matmul(A, x)
+b = np.random.normal(loc=0, scale=1, size=(2, 1))
+y = np.linalg.norm(u - b, ord=2) ** 2
+</code></pre></div></div>
+
+<h2 id="numpymatmul">numpy.matmul</h2>
+
+<hr />
+
+<p>numpy.matmul(x1, x2, /, out=None, *, casting=’same_kind’, order=’K’, dtype=None, subok=True[, signature, extobj]) = &lt;ufunc ‘matmul’&gt;</p>
+
+<p>Matrix product of two arrays. 两个numpy array矩阵相乘。</p>
+
+<h2 id="parameters">Parameters</h2>
+<p><strong>x1, x2: array_like</strong></p>
+
+<p>Input arrays, scalars not allowed.</p>
+
+<p><strong>out: ndarray, optional</strong>
+A location into which the result is stored. If provided, it must have a shape that matches the signature (n,k),(k,m)-&gt;(n,m). If not provided or None, a freshly-allocated array is returned.</p>
+
+<p><strong>**kwargs</strong>
+For other keyword-only arguments, see the ufunc docs.</p>
+
+<p>New in version 1.16: Now handles ufunc kwargs</p>
+
+<h2 id="returns">Returns</h2>
+<p><strong>y: ndarray</strong></p>
+
+<p>The matrix product of the inputs. This is a scalar only when both x1, x2 are 1-d vectors.</p>
+
+<h2 id="raises">Raises</h2>
+<p>ValueError
+If the last dimension of a is not the same size as the second-to-last dimension of b.</p>
+
+<p>If a scalar value is passed in.</p>
+
+<p><br /></p>
+<h2 id="numpyndarrayt">numpy.ndarray.T</h2>
+
+<hr />
+
+<p>ndarray.T</p>
+
+<p>The transposed array. 转置矩阵。</p>
+
+<p>Same as self.transpose().</p>
+
+<h2 id="examples">Examples</h2>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt;&gt;&gt; x = np.array([[1.,2.],[3.,4.]])
+&gt;&gt;&gt; x
+array([[ 1.,  2.],
+       [ 3.,  4.]])
+&gt;&gt;&gt; x.T
+array([[ 1.,  3.],
+       [ 2.,  4.]])
+
+&gt;&gt;&gt; x = np.array([1.,2.,3.,4.])
+&gt;&gt;&gt; x
+array([ 1.,  2.,  3.,  4.])
+&gt;&gt;&gt; x.T
+array([ 1.,  2.,  3.,  4.])
+</code></pre></div></div>
+
+<h2 id="numpylinalgnorm">numpy.linalg.norm</h2>
+
+<hr />
+
+<p>numpy.linalg.norm(x, ord=None, axis=None, keepdims=False)</p>
+
+<p>Matrix or vector norm. 求矩阵或向量的范数。</p>
+
+<p>This function is able to return one of eight different matrix norms, or one of an infinite number of vector norms (described below), depending on the value of the ord parameter.</p>
+
+<h2 id="parameters-1">Parameters</h2>
+<p><strong>x: array_like</strong></p>
+
+<p>Input array. If axis is None, x must be 1-D or 2-D, unless ord is None. If both axis and ord are None, the 2-norm of x.ravel will be returned.
+<br /></p>
+
+<p><strong>ord: {non-zero int, inf, -inf, ‘fro’, ‘nuc’}, optional</strong></p>
+
+<p>Order of the norm (see table under Notes). inf means numpy’s inf object. The default is None.
+<br /></p>
+
+<p><strong>axis: {None, int, 2-tuple of ints}, optional.</strong></p>
+
+<p>If axis is an integer, it specifies the axis of x along which to compute the vector norms. If axis is a 2-tuple, it specifies the axes that hold 2-D matrices, and the matrix norms of these matrices are computed. If axis is None then either a vector norm (when x is 1-D) or a matrix norm (when x is 2-D) is returned. The default is None.</p>
+
+<p>New in version 1.8.0.
+<br /></p>
+
+<p><strong>keepdims: bool, optional</strong></p>
+
+<p>If this is set to True, the axes which are normed over are left in the result as dimensions with size one. With this option the result will broadcast correctly against the original x.</p>
+
+<p><br /></p>
+
+<p><strong>Returns</strong></p>
+
+<p>nfloat or ndarray
+Norm of the matrix or vector(s).
+<br /></p>
+
+<h2 id="notes">Notes</h2>
+
+<p>For values of ord &lt; 1, the result is, strictly speaking, not a mathematical ‘norm’, but it may still be useful for various numerical purposes.</p>
+
+<p>The following norms can be calculated:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ord		norm for matrices			 norm for vectors
+None	Frobenius norm	 			 2-norm
+'fro'	Frobenius norm				 –
+'nuc'	nuclear norm				 –
+inf		max(sum(abs(x), axis=1))	 max(abs(x))
+-inf	min(sum(abs(x), axis=1))	 min(abs(x))
+0		–							 sum(x != 0)
+1		max(sum(abs(x), axis=0))	 as below
+-1		min(sum(abs(x), axis=0))	 as below
+2		2-norm (largest sing. value) as below
+-2		smallest singular value		 as below
+other	–					sum(abs(x)**ord)**(1./ord)
+</code></pre></div></div>
+
+<h2 id="from-cs5340---assignment-1">From CS5340 - Assignment 1</h2>
+
+<hr />
+
+<h2 id="numpynuion1d">numpy.nuion1d</h2>
+
+<hr />
+
+<p>计算两个函数的并集，唯一化并排序。</p>
+
+<h2 id="numpyargmax">numpy.argmax</h2>
+
+<hr />
+
+<p>numpy.argmax(a, axis=None, out=None)</p>
+
+<p>Returns the indices of the maximum values along an axis.</p>
+
+<h2 id="parameters-2">Parameters</h2>
+<p><strong>a: array_like</strong>
+Input array.</p>
+
+<p><strong>axis: int, optional</strong>
+By default, the index is into the flattened array, otherwise along the specified axis. 为0代表列方向，为1代表行方向。返回每行/列最大值索引。</p>
+
+<p><strong>out: array, optional</strong>
+If provided, the result will be inserted into this array. It should be of the appropriate shape and dtype.</p>
+
+<p><strong>Returns</strong>
+index_arrayndarray of ints
+Array of indices into the array. It has the same shape as a.shape with the dimension along axis removed.</p>
+
+<h2 id="example">Example</h2>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt;&gt;&gt; a = np.arange(6).reshape(2,3) + 10
+&gt;&gt;&gt; a
+array([[10, 11, 12],
+       [13, 14, 15]])
+&gt;&gt;&gt; np.argmax(a)
+5
+&gt;&gt;&gt; np.argmax(a, axis=0)
+array([1, 1, 1])
+&gt;&gt;&gt; np.argmax(a, axis=1)
+array([2, 2])
+</code></pre></div></div>
+
+<h2 id="npprod">np.prod()</h2>
+
+<p>计算所有元素的乘积，对于有多个维度的数组可以指定轴，如axis=1指定计算每一行的乘积</p>
+
+<p>[None, :] 
+None整体作为数组元素处理。表示该维不进行切片，而是将该维
+所以，[:,None]的效果就是将二维数组按每行分割，最后形成一个三维数组</p>
+
+<p>其中: 是特殊的。它会构造一个 slice 对象。完整的语法是：start:stop:step，省略的部分取默认值 None。省略 step 时也可以省掉它前边的冒号。</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>arr = np.arange(12).reshape((3, 4))
+out:
+array([[ 0, 1, 2, 3],
+		[ 4, 5, 6, 7],
+		[ 8, 9, 10, 11]])
+
+arr[i, :] #取第i行数据
+arr[i:j, :] #取第i行到第j行的数据
+
+arr[:,0] # 取第0列的数据，以行的形式返回的
+out:
+array([0, 4, 8])
+
+arr[:,:1] # 取第0列的数据，以列的形式返回的
+out:
+array([[0],
+		[4],
+		[8]])
+</code></pre></div></div>
+
+<p>删除numpy array里的指定元素：</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import numpy as np
+
+&gt;&gt;&gt; a = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+&gt;&gt;&gt; b = np.array([3,4,7])
+&gt;&gt;&gt; c = np.setdiff1d(a,b)
+&gt;&gt;&gt; c
+array([1, 2, 5, 6, 8, 9])
+</code></pre></div></div>
+
+<h2 id="from-cs5242-neural-networks-and-deep-learning----assignment-1">From CS5242 Neural Networks and Deep Learning -  Assignment 1</h2>
+
+<hr />
+<p>numpy.reshape(a, newshape, order=’C’)[source]
+Gives a new shape to an array without changing its data.</p>
+
+<p>Parameters</p>
+
+<p>a: array_like
+Array to be reshaped.</p>
+
+<p>newshape: int or tuple of ints
+The new shape should be compatible with the original shape. If an integer, then the result will be a 1-D array of that length. One shape dimension can be -1. In this case, the value is inferred from the length of the array and remaining dimensions.</p>
+
+<p>order{‘C’, ‘F’, ‘A’}, optional
+Read the elements of a using this index order, and place the elements into the reshaped array using this index order. ‘C’ means to read / write the elements using C-like index order, with the last axis index changing fastest, back to the first axis index changing slowest. ‘F’ means to read / write the elements using Fortran-like index order, with the first index changing fastest, and the last index changing slowest. Note that the ‘C’ and ‘F’ options take no account of the memory layout of the underlying array, and only refer to the order of indexing. ‘A’ means to read / write the elements in Fortran-like index order if a is Fortran contiguous in memory, C-like order otherwise.</p>
+
+<p>Returns
+reshaped_arrayndarray
+This will be a new view object if possible; otherwise, it will be a copy. Note there is no guarantee of the memory layout (C- or Fortran- contiguous) of the returned array.</p>
+
+<p>reshape前后数组元素数量相等。当reshape的其中一个参数为-1时，会根据另一个参数计算另一个维度的参数值。</p>
+
+<p>Example:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt;&gt;&gt; z = np.array([[1, 2, 3, 4],[5, 6, 7, 8],[9, 10, 11, 12],[13, 14, 15, 16]])
+ 
+&gt;&gt;&gt; print(z)
+[[ 1  2  3  4]
+ [ 5  6  7  8]
+ [ 9 10 11 12]
+ [13 14 15 16]]
+&gt;&gt;&gt; print(z.shape)
+(4, 4)
+&gt;&gt;&gt; print(z.reshape(-1))
+[ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16]
+&gt;&gt;&gt; print(z.reshape(-1,1))  #我们不知道z的shape属性是多少，
+                            #但是想让z变成只有一列，行数不知道多少，
+                            #通过`z.reshape(-1,1)`，Numpy自动计算出有16行，
+                            #新的数组shape属性为(16, 1)，与原来的(4, 4)配套。
+[[ 1]
+ [ 2]
+ [ 3]
+ [ 4]
+ [ 5]
+ [ 6]
+ [ 7]
+ [ 8]
+ [ 9]
+ [10]
+ [11]
+ [12]
+ [13]
+ [14]
+ [15]
+ [16]]
+&gt;&gt;&gt; print(z.reshape(2,-1))
+[[ 1  2  3  4  5  6  7  8]
+ [ 9 10 11 12 13 14 15 16]]
+</code></pre></div></div>
+
+<p>Official Document’s Example:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&gt;&gt;&gt; a = np.array([[1,2,3], [4,5,6]])
+
+&gt;&gt;&gt; np.reshape(a, (3,-1))       # the unspecified value is inferred to be 2
+array([[1, 2],
+       [3, 4],
+       [5, 6]])
+</code></pre></div></div>
+
+<h2 id="关于npsum的axis参数表示的方向">关于np.sum()的axis参数表示的方向</h2>
+
+<p>Consider a less trivial two-dimensional case:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>In [20]: b = np.array([[1,2,3],[4,5,6]])
+
+In [21]: b
+Out[21]: 
+array([[1, 2, 3],
+       [4, 5, 6]])
+
+In [22]: b.shape
+Out[22]: (2, 3) The first axis is the "rows". Sum along the rows:
+
+In [23]: b.sum(axis=0)
+Out[23]: array([5, 7, 9]) The second axis are the "columns". Sum along the columns:
+
+In [24]: b.sum(axis=1)
+Out[24]: array([ 6, 15])
+</code></pre></div></div>
+
+<h2 id="关于矩阵里的乘法">关于矩阵里的乘法</h2>
+
+<ul>
+  <li>矩阵乘法: np.dot()</li>
+</ul>
+
+<p><code class="highlighter-rouge">np.dot(A, B)</code>：对于二维矩阵，做矩阵乘法。对于一维矩阵，计算两者的内积。</p>
+
+<ul>
+  <li>element-wise product: np.multiply() or *</li>
+</ul>
+
+<p>实现对应元素相乘，可以通过<code class="highlighter-rouge">np.multiply()</code>或者<code class="highlighter-rouge">*</code>。他们完全等效。</p>
+
+		</div>
+	</div>
+
+	<div class="contact-agileinfo" id="contact">
+
+		<div class="contact-agileinfo-content">
+			<div class="container">
+				<!-- Comment Area -->
+
+				
+
+				<div class="contact-agileinfo-address">
+					<div class="contact-agileinfo-icons">
+						<div class="contact-icons-info">
+							<h3>Comments</h3>
+						</div>
+					</div>
+				</div>
+				<div id="disqus_thread"></div>
+					<script>
+						/**
+						*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+						*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+						
+						var disqus_config = function () {
+						this.page.url = 'http://localhost:4000/2020/09/01/NumpyNote1.html';  // Replace PAGE_URL with your page's canonical URL variable
+						this.page.identifier = '/2020/09/01/NumpyNote1.html'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+						};
+						
+						(function() { // DON'T EDIT BELOW THIS LINE
+						var d = document, s = d.createElement('script');
+						s.src = 'https://razzorleaf.disqus.com/embed.js';
+						s.setAttribute('data-timestamp', +new Date());
+						(d.head || d.body).appendChild(s);
+						})();
+					</script>
+				<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+			                
+				
+
+			</div>
+		</div>
+	</div>
+
+	
+<div class="footer text-center">
+    &copy; 2019 TangerineSoda. All Rights Reserved | Design by  <a href="https://twitter.com/Timothy_OwO"> Timothyhay</a>
+</div>
+
+
+	<style type="text/css">
+		#toTop {
+	    display: none;
+	    text-decoration: none;
+	    position: fixed;
+	    bottom: 20px;
+	    right: 2%;
+	    overflow: hidden;
+	    z-index: 999;
+	    width: 32px;
+	    height: 32px;
+	    border: none;
+	    text-indent: 100%;
+	    background: url("/images/arrow.png") no-repeat 0px 0px;
+	}
+	</style>
+
+	<!--javascript-->
+	<script src="/js/jquery-1.11.3.min.js"></script>
+	<script src="/js/bootstrap.js"></script>
+	<script src="/js/smoothscroll.js"></script>
+	<script src="/js/jquery.easing.min.js"></script>
+	<script src="/js/grayscale.js"></script>
+	<script src="/js/move-top.js"></script>
+	<!--//javascript-->
+	<!-- js for gallery -->
+	<script type="text/javascript" src="/js/jquery.chocolat.js"></script>
+
+	<script>
+	$(function(){
+	                $('#gal').Chocolat({
+	                    imageSize: 'contain'
+	                });
+	            });
+	</script>
+	<script type="text/javascript">
+	$(document).ready(function() {
+	var defaults = {
+	containerID: 'toTop', // fading element id
+	containerHoverID: 'toTopHover', // fading element hover id
+	scrollSpeed: 1200,
+	easingType: 'linear' 
+	};
+
+	$().UItoTop({ easingType: 'easeOutQuart' });
+
+	});
+	</script>
+	<!-- //js for gallery -->	
+
+</body>
+</html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>All about Linked List - SodaFridge</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<!--css-->
+<link href="/css/bootstrap.min.css" rel="stylesheet">
+<link href="/css/chocolat.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/style.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/syntax.css" media="all" rel="stylesheet" type="text/css"  />
+<link href="/css/blog.css" rel="stylesheet" type="text/css" media="all">
+<link href="/css/fonts.css" rel="stylesheet" type="text/css" media="all">
+<!--//css-->
+
+<!--icon-->
+<link rel="shortcut icon" href="/images/favicon.ico" />
+
+<!--google fonts-->
+<!--
+<link href="//fonts.googleapis.com/css?family=Poppins:200,200i,300,400,500,500i,600,700,700i" rel="stylesheet">
+<link href="//fonts.googleapis.com/css?family=Nunito:400,700,700i,800i,900" rel="stylesheet">
+-->
+<!--//google fonts-->
+</head>
+<body>
+
+	<div class="top nav">
+		<nav class="navbar navbar-default">
+		  <div class="container">
+		    <!-- Brand and toggle get grouped for better mobile display -->
+		    <div class="navbar-header">
+		     	<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+		        	<span class="sr-only">Toggle navigation</span>
+		        	<span class="icon-bar"></span>
+		        	<span class="icon-bar"></span>
+		        	<span class="icon-bar"></span>
+		      	</button>
+		    	<a class="navbar-brand" href="/">HayHeapStudio</a>
+		    </div>
+
+		    <!-- Collect the nav links, forms, and other content for toggling -->
+		    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+		    	<ul class="nav navbar-nav navbar-right">
+					<li><a href="/" class="page-scroll">Home</a></li>
+					<li><a href="/profile.html" class="page-scroll">Biocard</a></li>
+					<li><a href="/status.html" class="page-scroll">Status</a></li>
+		        	<li><a href="/articlelist.html" class="page-scroll">All Articles</a></li>
+		        </ul>
+		    </div><!-- /.navbar-collapse -->
+		  </div><!-- /.container-fluid -->
+		</nav>
+	</div>
+
+
+	<div class="services-deeperwiderspace" id="daily">
+		<div class="contact-agileinfo-info text-center">
+			<h2>All about Linked List</h2>
+			<label></label>
+			<h6>08 Dec 2020  LeetCode and Note</h6>
+		</div>
+
+		<div class="container" id="blogpage">
+			<p>Basic Operations:</p>
+<h2 id="merge---21-merge-two-sorted-lists">Merge - 21. Merge Two Sorted Lists</h2>
+
+<p>Check out the definition of linked list in C++ &amp; Python first!</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cm">/**
+ * Definition for singly-linked list.
+ */</span>
+<span class="k">struct</span> <span class="n">ListNode</span> <span class="p">{</span>
+    <span class="kt">int</span> <span class="n">val</span><span class="p">;</span>
+    <span class="n">ListNode</span> <span class="o">*</span><span class="n">next</span><span class="p">;</span>
+    <span class="n">ListNode</span><span class="p">()</span> <span class="o">:</span> <span class="n">val</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">next</span><span class="p">(</span><span class="nb">nullptr</span><span class="p">)</span> <span class="p">{}</span>
+    <span class="n">ListNode</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">)</span> <span class="o">:</span> <span class="n">val</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">next</span><span class="p">(</span><span class="nb">nullptr</span><span class="p">)</span> <span class="p">{}</span>
+    <span class="n">ListNode</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="n">ListNode</span> <span class="o">*</span><span class="n">next</span><span class="p">)</span> <span class="o">:</span> <span class="n">val</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">next</span><span class="p">(</span><span class="n">next</span><span class="p">)</span> <span class="p">{}</span>
+<span class="p">};</span>
+
+<span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="n">ListNode</span><span class="o">*</span> <span class="n">mergeTwoLists</span><span class="p">(</span><span class="n">ListNode</span><span class="o">*</span> <span class="n">l1</span><span class="p">,</span> <span class="n">ListNode</span><span class="o">*</span> <span class="n">l2</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">l1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">l2</span><span class="p">;</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">l2</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">l1</span><span class="p">;</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">l1</span><span class="o">-&gt;</span><span class="n">val</span> <span class="o">&lt;</span> <span class="n">l2</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">){</span>
+            <span class="n">l1</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">mergeTwoLists</span><span class="p">(</span><span class="n">l1</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">,</span> <span class="n">l2</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">l1</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">l2</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">mergeTwoLists</span><span class="p">(</span><span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">);</span>
+            <span class="k">return</span> <span class="n">l2</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<p>Implementation with Python:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1"># Definition for singly-linked list.
+</span><span class="k">class</span> <span class="nc">ListNode</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="nb">next</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="bp">self</span><span class="o">.</span><span class="nb">next</span> <span class="o">=</span> <span class="nb">next</span>
+
+<span class="k">class</span> <span class="nc">Solution</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">mergeTwoLists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">l1</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">l2</span>
+        <span class="k">elif</span> <span class="n">l2</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">l1</span>
+        <span class="k">elif</span> <span class="n">l1</span><span class="o">.</span><span class="n">val</span> <span class="o">&lt;</span> <span class="n">l2</span><span class="o">.</span><span class="n">val</span><span class="p">:</span>
+            <span class="n">l1</span><span class="o">.</span><span class="nb">next</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mergeTwoLists</span><span class="p">(</span><span class="n">l1</span><span class="o">.</span><span class="nb">next</span><span class="p">,</span> <span class="n">l2</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">l1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">l2</span><span class="o">.</span><span class="nb">next</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mergeTwoLists</span><span class="p">(</span><span class="n">l1</span><span class="p">,</span> <span class="n">l2</span><span class="o">.</span><span class="nb">next</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">l2</span>
+</code></pre></div></div>
+
+<p>And a tip:</p>
+
+<blockquote>
+  <p>Practically-speaking, there is not much difference since custom comparison operators are rare. But you should use is None as a general rule.</p>
+
+  <p>Also, is None is a bit (~50%) faster than == None :)</p>
+</blockquote>
+
+<p>This recursion approach will take O(m+n) time &amp; space complexity, linear in the combined size of the lists.</p>
+
+<p>We can also use single iteration to implement this. Use pointer <code class="highlighter-rouge">prev</code> to points to the current node for which we are considering adjusting its next pointer.
+We increment <code class="highlighter-rouge">prev</code> to keep it one step behind one of our list heads.</p>
+
+<div class="hovereffect">
+    <div class="illustration">
+        <a class="chocolat-image" href="/images/illustration/2020-12-08/linkedlist.png"><img src="/images/illustration/2020-12-08/linkedlist.png" class="img-responsive" alt="LinkedList" /></a>
+        <h6>Iteration Approach. Credit: LeetCode</h6>
+    </div>
+</div>
+
+<p>p.s. There’s a bug in this figure. When <code class="highlighter-rouge">l1.val == l2.val</code>, in this question we actually choose l2 as <code class="highlighter-rouge">prev.next</code>.</p>
+
+<p>More specifically, <code class="highlighter-rouge">if (l1.val &lt; l2.val) {prev-&gt;next = l1; l1 = l1.next;}</code>.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ListNode</span><span class="o">*</span> <span class="nf">mergeTwoLists</span><span class="p">(</span><span class="n">ListNode</span><span class="o">*</span> <span class="n">l1</span><span class="p">,</span> <span class="n">ListNode</span><span class="o">*</span> <span class="n">l2</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Here, head node rather than head pointer.</span>
+    <span class="c1">// If both head &amp; prev are nullptr, then they</span>
+    <span class="n">ListNode</span> <span class="n">head</span> <span class="o">=</span> <span class="n">ListNode</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+    <span class="n">ListNode</span><span class="o">*</span> <span class="n">prev</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">head</span><span class="p">;</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">l1</span> <span class="o">&amp;&amp;</span> <span class="n">l2</span><span class="p">){</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">l1</span><span class="o">-&gt;</span><span class="n">val</span> <span class="o">&lt;=</span> <span class="n">l2</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">){</span>
+            <span class="n">prev</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">l1</span><span class="p">;</span>
+            <span class="n">l1</span> <span class="o">=</span> <span class="n">l1</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="n">prev</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">l2</span><span class="p">;</span>
+            <span class="n">l2</span> <span class="o">=</span> <span class="n">l2</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="n">prev</span> <span class="o">=</span> <span class="n">prev</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">prev</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">l1</span> <span class="o">?</span> <span class="n">l1</span> <span class="o">:</span> <span class="n">l2</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">head</span><span class="p">.</span><span class="n">next</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<h3 id="an-interesting-issue">An interesting issue:</h3>
+
+<p>What if we define <code class="highlighter-rouge">head</code> as head pointer rather than a node?</p>
+
+<p>Then we will get this:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Line 18: Char 23: runtime error: member access within null pointer of type 'ListNode' (solution.cpp)
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior prog_joined.cpp:27:23
+</code></pre></div></div>
+
+<p>Because when <code class="highlighter-rouge">head</code> is a nullptr, <code class="highlighter-rouge">prev</code> will also be a nullptr. So <code class="highlighter-rouge">prev-&gt;next</code> is inaccessible. 
+Because nullptr have no members.</p>
+
+<p>When we let <code class="highlighter-rouge">ListNode head = ListNode(-1);</code> or  <code class="highlighter-rouge">ListNode head = NULL;</code>. It has members <code class="highlighter-rouge">val(-1 or 0)</code> and <code class="highlighter-rouge">next(NULL)</code>. In such case we can manipulate <code class="highlighter-rouge">prev-&gt;next</code>.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Solution</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">mergeTwoLists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">l1</span><span class="p">:</span> <span class="n">ListNode</span><span class="p">,</span> <span class="n">l2</span><span class="p">:</span> <span class="n">ListNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ListNode</span><span class="p">:</span>
+        <span class="n">head</span> <span class="o">=</span> <span class="n">ListNode</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">prev</span> <span class="o">=</span> <span class="n">head</span>
+        <span class="k">while</span> <span class="n">l1</span> <span class="ow">and</span> <span class="n">l2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">l1</span><span class="o">.</span><span class="n">val</span> <span class="o">&lt;</span> <span class="n">l2</span><span class="o">.</span><span class="n">val</span><span class="p">:</span>
+                <span class="n">prev</span><span class="o">.</span><span class="nb">next</span> <span class="o">=</span> <span class="n">l1</span>
+                <span class="n">l1</span> <span class="o">=</span> <span class="n">l1</span><span class="o">.</span><span class="nb">next</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">prev</span><span class="o">.</span><span class="nb">next</span> <span class="o">=</span> <span class="n">l2</span>
+                <span class="n">l2</span> <span class="o">=</span> <span class="n">l2</span><span class="o">.</span><span class="nb">next</span>
+            <span class="n">prev</span> <span class="o">=</span> <span class="n">prev</span><span class="o">.</span><span class="nb">next</span>
+        <span class="k">if</span> <span class="n">l1</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">prev</span><span class="o">.</span><span class="nb">next</span> <span class="o">=</span> <span class="n">l2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">prev</span><span class="o">.</span><span class="nb">next</span> <span class="o">=</span> <span class="n">l1</span>
+        <span class="k">return</span> <span class="n">head</span><span class="o">.</span><span class="nb">next</span>
+</code></pre></div></div>
+
+<p>Time complexity: O(n+m). The while loop runs for a number of iterations equal to the sum of the lengths of the two lists.</p>
+
+<p>Space complexity: O(1). The iterative approach only allocates a few pointers, so it has a constant overall memory footprint.</p>
+
+<h2 id="merge---23-merge-k-sorted-lists">Merge - 23. Merge k Sorted Lists</h2>
+
+<p>About how to write a customized comparing function to use in the third param of <code class="highlighter-rouge">priority_queue</code>.
+This priority queue actually stores only heads of each linked list, whose <code class="highlighter-rouge">next</code> may have another ListNode.</p>
+
+<p>When a <code class="highlighter-rouge">head</code> was pop out, since each linked list was sorted, we let <code class="highlighter-rouge">head = head-&gt;next</code> to maintain this place with 
+the next valid and reasonable value.</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">struct</span> <span class="n">cmp</span> <span class="p">{</span>
+    <span class="kt">bool</span> <span class="k">operator</span><span class="p">()(</span><span class="n">ListNode</span><span class="o">*</span> <span class="n">a</span><span class="p">,</span> <span class="n">ListNode</span><span class="o">*</span> <span class="n">b</span><span class="p">){</span>
+        <span class="c1">// Small -&gt; Large</span>
+        <span class="k">return</span> <span class="n">a</span><span class="o">-&gt;</span><span class="n">val</span> <span class="o">&gt;</span> <span class="n">b</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="n">ListNode</span><span class="o">*</span> <span class="n">mergeKLists</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">ListNode</span><span class="o">*&gt;&amp;</span> <span class="n">lists</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">priority_queue</span><span class="o">&lt;</span><span class="n">ListNode</span><span class="o">*</span><span class="p">,</span> <span class="n">vector</span><span class="o">&lt;</span><span class="n">ListNode</span><span class="o">*&gt;</span><span class="p">,</span> <span class="n">cmp</span><span class="o">&gt;</span> <span class="n">q</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">it</span> <span class="o">:</span> <span class="n">lists</span><span class="p">)</span>
+            <span class="c1">// Use if (it) to avoid push empty vector [[]], or head-&gt;next will be nullptr while q is not empty (has [])</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">it</span><span class="p">)</span>
+                <span class="n">q</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">it</span><span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">q</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span>
+            <span class="k">return</span> <span class="nb">nullptr</span><span class="p">;</span>
+        <span class="n">ListNode</span> <span class="n">result</span><span class="p">;</span>
+        <span class="n">ListNode</span><span class="o">*</span> <span class="n">head</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">result</span><span class="p">;</span>
+        <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">q</span><span class="p">.</span><span class="n">empty</span><span class="p">()){</span>
+            <span class="n">head</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">q</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
+            <span class="n">head</span> <span class="o">=</span> <span class="n">head</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+            <span class="n">q</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">head</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">)</span>
+                <span class="n">q</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">head</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">.</span><span class="n">next</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<h2 id="reverse---206-reverse-linked-list">Reverse - 206. Reverse Linked List</h2>
+
+<p>Change the current node’s next pointer to point to its previous element.</p>
+
+<p>Since a node does not have reference to its previous node, we must store its previous element <code class="highlighter-rouge">prev</code> beforehand.</p>
+
+<p>Also need another pointer to store the next node <code class="highlighter-rouge">nxt</code> before changing the reference.</p>
+
+<p>Finally return the new head reference at the end(the final <code class="highlighter-rouge">prev</code>, rather than final <code class="highlighter-rouge">curr</code>. The later one is NULL).</p>
+
+<p>Implementation:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="n">ListNode</span><span class="o">*</span> <span class="n">reverseList</span><span class="p">(</span><span class="n">ListNode</span><span class="o">*</span> <span class="n">head</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">ListNode</span><span class="o">*</span> <span class="n">prev</span> <span class="o">=</span> <span class="nb">nullptr</span><span class="p">;</span>
+        <span class="n">ListNode</span><span class="o">*</span> <span class="n">curr</span> <span class="o">=</span> <span class="n">head</span><span class="p">;</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">curr</span><span class="p">){</span>
+            <span class="n">ListNode</span><span class="o">*</span> <span class="n">next</span> <span class="o">=</span> <span class="n">curr</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span> <span class="c1">// Step 1.</span>
+            <span class="n">curr</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">prev</span><span class="p">;</span>           <span class="c1">// Step 2.</span>
+            <span class="n">prev</span> <span class="o">=</span> <span class="n">curr</span><span class="p">;</span>                 <span class="c1">// Step 3.</span>
+            <span class="n">curr</span> <span class="o">=</span> <span class="n">next</span><span class="p">;</span>                 <span class="c1">// Step 4.</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">prev</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">class</span> <span class="nc">Solution</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">reverseList</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">head</span><span class="p">:</span> <span class="n">ListNode</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ListNode</span><span class="p">:</span>
+        <span class="n">prev</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">curr</span> <span class="o">=</span> <span class="n">head</span>
+        <span class="k">while</span> <span class="n">curr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">nxt</span> <span class="o">=</span> <span class="n">curr</span><span class="o">.</span><span class="nb">next</span>
+            <span class="n">curr</span><span class="o">.</span><span class="nb">next</span> <span class="o">=</span> <span class="n">prev</span>
+            <span class="n">prev</span> <span class="o">=</span> <span class="n">curr</span>
+            <span class="n">curr</span> <span class="o">=</span> <span class="n">nxt</span>
+        <span class="k">return</span> <span class="n">prev</span>
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="reference">Reference</h2>
+<p>[1] What is the difference between “is None” and “==None” - https://stackoverflow.com/questions/3257919/what-is-the-difference-between-is-none-and-none</p>
+
+		</div>
+	</div>
+
+	<div class="contact-agileinfo" id="contact">
+
+		<div class="contact-agileinfo-content">
+			<div class="container">
+				<!-- Comment Area -->
+
+				
+
+				<div class="contact-agileinfo-address">
+					<div class="contact-agileinfo-icons">
+						<div class="contact-icons-info">
+							<h3>Comments</h3>
+						</div>
+					</div>
+				</div>
+				<div id="disqus_thread"></div>
+					<script>
+						/**
+						*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+						*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+						
+						var disqus_config = function () {
+						this.page.url = 'http://localhost:4000/2020/12/08/LinkedList.html';  // Replace PAGE_URL with your page's canonical URL variable
+						this.page.identifier = '/2020/12/08/LinkedList.html'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+						};
+						
+						(function() { // DON'T EDIT BELOW THIS LINE
+						var d = document, s = d.createElement('script');
+						s.src = 'https://razzorleaf.disqus.com/embed.js';
+						s.setAttribute('data-timestamp', +new Date());
+						(d.head || d.body).appendChild(s);
+						})();
+					</script>
+				<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+			                
+				
+
+			</div>
+		</div>
+	</div>
+
+	
+<div class="footer text-center">
+    &copy; 2019 TangerineSoda. All Rights Reserved | Design by  <a href="https://twitter.com/Timothy_OwO"> Timothyhay</a>
+</div>
+
+
+	<style type="text/css">
+		#toTop {
+	    display: none;
+	    text-decoration: none;
+	    position: fixed;
+	    bottom: 20px;
+	    right: 2%;
+	    overflow: hidden;
+	    z-index: 999;
+	    width: 32px;
+	    height: 32px;
+	    border: none;
+	    text-indent: 100%;
+	    background: url("/images/arrow.png") no-repeat 0px 0px;
+	}
+	</style>
+
+	<!--javascript-->
+	<script src="/js/jquery-1.11.3.min.js"></script>
+	<script src="/js/bootstrap.js"></script>
+	<script src="/js/smoothscroll.js"></script>
+	<script src="/js/jquery.easing.min.js"></script>
+	<script src="/js/grayscale.js"></script>
+	<script src="/js/move-top.js"></script>
+	<!--//javascript-->
+	<!-- js for gallery -->
+	<script type="text/javascript" src="/js/jquery.chocolat.js"></script>
+
+	<script>
+	$(function(){
+	                $('#gal').Chocolat({
+	                    imageSize: 'contain'
+	                });
+	            });
+	</script>
+	<script type="text/javascript">
+	$(document).ready(function() {
+	var defaults = {
+	containerID: 'toTop', // fading element id
+	containerHoverID: 'toTopHover', // fading element hover id
+	scrollSpeed: 1200,
+	easingType: 'linear' 
+	};
+
+	$().UItoTop({ easingType: 'easeOutQuart' });
+
+	});
+	</script>
+	<!-- //js for gallery -->	
+
+</body>
+</html>
