@@ -63,8 +63,8 @@ paginate: true
         <p>3{{site.paginate_path }}</p>
         <p>4{{ paginator.previous_page_path | prepend: site.baseurl }}</p>
         <p>5{{site.paginate_path | prepend: site.baseurl}}</p>
-        <p>6{{ paginator.previous_page_path | prepend: site.baseurl | replace: '//', '/' }}"</p>
-        <p>7{{ site.paginate_path | prepend: site.baseurl | replace: '//', '/' | replace: ':num', page }}</p>
+        <p>6{{ paginator.previous_page_path | prepend: site.baseurl | replace: '//', '/' }}</p>
+
         <div class="pagination">
             {% if paginator.previous_page %}
             <a href="{{ paginator.previous_page_path | prepend: site.baseurl | replace: '//', '/' }}">&laquo; Prev</a>
