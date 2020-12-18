@@ -78,6 +78,12 @@ label {
     display: block;
 }
 
+.nav>li>em{
+    position: relative;
+    display: block;
+    padding: 10px 11px;
+}
+
 @media screen and (max-width: 600px){
     .stream-warpper{float: left; flex-direction: column;}
     #tag-title{display: none;}

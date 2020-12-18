@@ -58,16 +58,10 @@ paginate: true
 
         <label></label>
         {% if paginator.total_pages > 1 %}
-        <p>1{{ paginator.previous_page_path}}</p>
-        <p>2{{site.baseurl }}</p>
-        <p>3{{site.paginate_path }}</p>
-        <p>4{{ paginator.previous_page_path | prepend: site.baseurl }}</p>
-        <p>5{{site.paginate_path | prepend: site.baseurl}}</p>
-        <p>6{{ paginator.previous_page_path | prepend: site.baseurl | replace: '//', '/' }}</p>
-
         <div class="pagination">
+            <ul class="nav navbar-nav" >
             {% if paginator.previous_page %}
-            <a href="{{ paginator.previous_page_path | prepend: site.baseurl | replace: '//', '/' }}">&laquo; Prev</a>
+                <li><a href="{{ paginator.previous_page_path | prepend: site.baseurl | replace: '//', '/' }}">&laquo; Prev</a></li>
             {% endif %}
 
             {% for page in (1..paginator.total_pages) %}
@@ -76,17 +70,18 @@ paginate: true
                     {% assign baseurl = "/" %}
                 {% endif %}
                 {% if page == paginator.page %}
-                    <em>{{ page }}&nbsp;</em>
+                <li><em>{{ page }}&nbsp;</em></li>
                 {% elsif page == 1 %}
-                    <a href="{{ "articlelist" | prepend: baseurl }}">{{ page }}&nbsp;</a>
+                <li><a href="{{ "articlelist" | prepend: baseurl }}">{{ page }}&nbsp;</a></li>
                 {% else %}
-                    <a href="{{ site.paginate_path | prepend: baseurl | replace: '//', '/' | replace: ':num', page }}">{{ page }}&nbsp;</a>
+                <li><a href="{{ site.paginate_path | prepend: baseurl | replace: '//', '/' | replace: ':num', page }}">{{ page }}&nbsp;</a></li>
                 {% endif %}
             {% endfor %}
 
             {% if paginator.next_page %}
-            <a href="{{ paginator.next_page_path | prepend: site.baseurl | replace: '//', '/' }}">Next &raquo;</a>
+                <li><a href="{{ paginator.next_page_path | prepend: site.baseurl | replace: '//', '/' }}">Next &raquo;</a></li>
             {% endif %}
+            </ul>
         </div>
         {% endif %}
     </div>
