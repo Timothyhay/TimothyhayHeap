@@ -78,7 +78,7 @@ paginate: true
                 {% if page == paginator.page %}
                     <em>{{ page }}&nbsp;</em>
                 {% elsif page == 1 %}
-                    <a href="{{ paginator.previous_page_path | prepend: baseurl | replace: '//', '/' }}">{{ page }}&nbsp;</a>
+                    <a href="{{ "articlelist" | prepend: baseurl }}">{{ page }}&nbsp;</a>
                 {% else %}
                     <a href="{{ site.paginate_path | prepend: baseurl | replace: '//', '/' | replace: ':num', page }}">{{ page }}&nbsp;</a>
                 {% endif %}
