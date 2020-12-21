@@ -281,3 +281,14 @@ class Solution(object):
 <code>sort(nums.begin(), nums.end(), greater<int>());</code>
 
 
+<h2>Binary Search</h2>
+{% highlight python %}
+def lower_bound(array, first, last, value):  # 求非降序范围[first, last)内第一个不小于value的值的位置
+    while first &lt; last: # 搜索区间[first, last)不为空
+        mid = first + (last - first) // 2  # 防溢出
+        if array[mid] &lt; value:
+            first = mid + 1
+        else:
+            last = mid
+    return first  # last也行，因为[first, last)为空的时候它们重合
+{% endhighlight %}
