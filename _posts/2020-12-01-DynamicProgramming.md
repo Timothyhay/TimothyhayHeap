@@ -6,6 +6,7 @@ tags: LeetCode Note
 ---
 
 > Those who cannot remember the past are condemned to repeat it.
+>
 > —— George Santayana
 
 
@@ -32,6 +33,8 @@ tags: LeetCode Note
 
 <p>Most of the contents come from its LeetCode solution[1].</p>
 
+<br />
+
 ### Approach 1: Backtracking ###
 ```cpp
 // TLE - TC O(2^n) - Approach 1: Backtracking
@@ -56,6 +59,7 @@ Time complexity : O(2^n). There are 2^n (upper bound) ways of jumping from the f
 
 Space complexity : O(n). Recursion requires additional memory for the stack frames.
 
+<br />
 
 ### Approach 2: Dynamic Programming Top-down ###
 
@@ -102,10 +106,13 @@ Time complexity : O(n^2). For every element in the array, say i, we are looking 
 
 Space complexity : O(2n) = O(n). First n originates from recursion. Second n comes from the usage of the memo table.
 
+<br />
+
 ### Approach 3: Dynamic Programming Bottom-up ###
 
 Top-down to bottom-up conversion is done by eliminating recursion. In practice, this achieves better performance as we no longer have the method stack overhead and might even benefit from some caching. More importantly, this step opens up possibilities for future optimization. The recursion is usually eliminated by trying to reverse the order of the steps from the top-down approach.
 
+<br />
 
 ##  Reference ##
 [1] jump-game/solution - https://leetcode.com/problems/jump-game/solution/
