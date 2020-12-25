@@ -1,6 +1,6 @@
 ---
 layout: blogpage
-title: 为这个薄情世界里的美好干杯
+title: 为这个薄情世界里的所有美好干杯
 comments: true
 tags: Life-Fragments
 ---
