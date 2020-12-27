@@ -112,6 +112,59 @@ Space complexity : O(2n) = O(n). First n originates from recursion. Second n com
 
 Top-down to bottom-up conversion is done by eliminating recursion. In practice, this achieves better performance as we no longer have the method stack overhead and might even benefit from some caching. More importantly, this step opens up possibilities for future optimization. The recursion is usually eliminated by trying to reverse the order of the steps from the top-down approach.
 
+```cpp
+// TLE - Approach 3: Dynamic Programming Bottom-up
+class Solution {
+public:
+    bool canJump(vector<int>& nums) {
+        map<int, int> memo;
+        for(int i = 0; i < nums.size(); ++i){
+            // -1: Unknown, 1: True, 0: False
+            memo[i] = -1;
+        }
+        memo[nums.size()-1] = 1;
+        for(int i = nums.size() - 2; i >= 0; --i){
+            for (int j = i + 1; j <= i + nums[i] && j < nums.size(); ++j) {
+                if (memo[j] == 1){
+                    memo[i] = 1;
+                    break;
+                }
+            }
+        }
+        return memo[0] == 1;
+    }
+
+};
+```
+
+We start from the right of the array, every time we will query a position to our right, that position has already be determined as being GOOD or BAD. 
+
+This means we don't need to recurse anymore, as we will always hit the memo table
+
+### Approach 4: Dynamic Programming Bottom-up ###
+
+```cpp
+// AC - Approach 4: Greedy
+class Solution {
+public:
+    bool canJump(vector<int>& nums) {
+        int lastJmpPos = nums.size() - 1;
+        for (int i = nums.size() - 2; i >= 0; --i){
+            if (nums[i] + i >= lastJmpPos)
+                lastJmpPos = i;
+        }
+        return lastJmpPos == 0;
+    }
+
+};
+```
+
+Only Need: 
+
+Time complexity : O(n). We are doing a single pass through the nums array, hence nn steps, where nn is the length of array nums.
+     
+Space complexity : O(1). We are not using any extra memory.
+
 <br />
 
 ##  Reference ##
