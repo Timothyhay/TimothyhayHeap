@@ -141,6 +141,8 @@ We start from the right of the array, every time we will query a position to our
 
 This means we don't need to recurse anymore, as we will always hit the memo table
 
+<br />
+
 ### Approach 4: Dynamic Programming Bottom-up ###
 
 ```cpp
