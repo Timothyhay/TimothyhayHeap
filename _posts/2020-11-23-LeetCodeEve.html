@@ -250,6 +250,38 @@ a.push(b);
     swap - Swap contents (public member function )
 </blockquote>
 
+<h2>128. Longest Consecutive Sequence</h2>
+<p class="tag">Union Find / Hash Set</p>
+
+<p>Use <code>s.find()</code> to search elem in set.</p>
+<div>
+{% highlight cpp %}
+class Solution {
+public:
+    int longestConsecutive(vector<int>& nums) {
+        // Convert vector to set
+        set<int> s(nums.begin(), nums.end());
+        int max_streak = 0;
+
+        if (s.size() == 1)
+            return 1;
+        for (auto it : s) {
+            if (s.find(it-1) == s.end()){
+                int curt =  it;
+                int streak = 1;
+                while (s.find(++curt) != s.end()){
+                    ++streak;
+                }
+                max_streak = max(max_streak, streak);
+            }
+        }
+        return max_streak;
+    }
+};
+{% endhighlight %}
+</div>
+
+
 <h2>136. Single Number</h2>
 <p class="tag">Bit Manipulation / Hash Map</p>
 <p>A XOR trick to solve this:</p>
