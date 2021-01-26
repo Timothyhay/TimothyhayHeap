@@ -13,7 +13,7 @@ tags: Spark Skill Python
 
 The following content are basically practiced in PySpark.
 
-# RDD
+## RDD
 
  Basic Methods
 
@@ -54,7 +54,7 @@ where <f> is the transformation function that could return multiple elements to 
     filtered = words_filter.collect()
     print("Fitered RDD -> %s" % (filtered))  # Fitered RDD -> [('Mojito', 6)]
 
-## RDD Actions 
+### RDD Actions 
 
 - collect()
 
@@ -64,11 +64,11 @@ where <f> is the transformation function that could return multiple elements to 
 
 返回指定数目的记录。
 
-# Pair RDD
+## Pair RDD
 
 Pair RDD is nothing but RDD containing a key-value pair. 
 
-## Convert a DataFrame back to normal RDD 
+### Convert a DataFrame back to normal RDD 
 
     rdd = df.rdd
 
@@ -86,7 +86,7 @@ Try this:
     
 have the regular RDD format.
 
-## Actions of Pair RDD - 
+### Actions of Pair RDD - 
 
 Pair RDD 包含一些特有的函数。
 
@@ -98,7 +98,7 @@ reduceByKey用指定的函数来合并相同key对应的value值。
 
 sortByKey转换是对RDD的key列进行排序。
 
-# Reference
+## Reference
 
 [1] 大数据入门与实战-PySpark的使用教程 - https://www.jianshu.com/p/5a42fe0eed4d
 
