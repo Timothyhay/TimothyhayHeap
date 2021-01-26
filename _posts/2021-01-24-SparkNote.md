@@ -15,8 +15,6 @@ The following content are basically practiced in PySpark.
 
 ## RDD
 
- Basic Methods
-
 - sparkContext.parallelize()
  
 用于并行化驱动程序中的现有集合。
@@ -25,6 +23,8 @@ The following content are basically practiced in PySpark.
 
     drinks = [("HoneyLemon", 1.5), ("Mojito", 6), ("TehC", 2)]
     rdd = sc.parallelize(drinks)
+
+### RDD Transformation
 
 - foreach(func)
 
@@ -86,7 +86,7 @@ Try this:
     
 have the regular RDD format.
 
-### Actions of Pair RDD - 
+### Actions of Pair RDD
 
 Pair RDD 包含一些特有的函数。
 
@@ -104,5 +104,4 @@ sortByKey转换是对RDD的key列进行排序。
 
 [2] PySpark flatMap() Transformation - https://sparkbyexamples.com/pyspark/pyspark-flatmap-transformation/
 
-[2] How to convert a DataFrame back to normal RDD in pyspark?
- - https://stackoverflow.com/questions/29000514/how-to-convert-a-dataframe-back-to-normal-rdd-in-pyspark
+[3] How to convert a DataFrame back to normal RDD in pyspark? - https://stackoverflow.com/questions/29000514/how-to-convert-a-dataframe-back-to-normal-rdd-in-pyspark
