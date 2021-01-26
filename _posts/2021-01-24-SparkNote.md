@@ -101,6 +101,7 @@ sortByKey转换是对RDD的key列进行排序。
 ## Demo Code
 
 ```python
+
 # -*- coding:utf-8 -*-
 from pyspark import SparkContext
 sc = SparkContext("local", "Scratch")
@@ -205,7 +206,8 @@ if __name__ == '__main__':
 	rdd2 = sc.parallelize([("Amazon", 2), ("IBM", 5)])
 	rdd_joined = join(rdd1,rdd2)
 	groupbykey(rdd_joined)
-	reducebykey(rdd_joined)```
+	reducebykey(rdd_joined)
+```
 
 
 ## Reference
