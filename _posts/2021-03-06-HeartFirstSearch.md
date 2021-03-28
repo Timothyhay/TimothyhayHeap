@@ -82,7 +82,7 @@ BIZ旁边的SPREAD。是家沙拉好吃、炸鸡饭好吃、甜点也好吃的�
 
 <div class="hovereffect" id="gal">
     <div class="illustration" >
-        <a class="chocolat-image"  href="/images/illustration/2021-03-06/6.jpg"><img src="/images/illustration/2021-03-06/6.jpg"> </a>
+        <a class="chocolat-image"  href="/images/illustration/2021-03-06/6.jpg"><img src="/images/illustration/2021-03-06/6.jpg" class="img-responsive"> </a>
         <h6>可颂真好吃</h6>
     </div>
 </div>
@@ -104,7 +104,7 @@ SuperSnack 的特点就是，他们家的Snack一点也不够丰富... 但是价
 
 <div class="hovereffect" id="gal">
     <div class="illustration" >
-        <a class="chocolat-image"  href="/images/illustration/2021-03-06/7.jpg"><img src="/images/illustration/2021-03-06/7.jpg"> </a>
+        <a class="chocolat-image"  href="/images/illustration/2021-03-06/7.jpg"><img src="/images/illustration/2021-03-06/7.jpg" class="img-responsive"> </a>
         <h6>豆奶冰淇淋</h6>
     </div>
 </div>
@@ -120,7 +120,7 @@ SuperSnack 的特点就是，他们家的Snack一点也不够丰富... 但是价
 
 <div class="hovereffect" id="gal">
     <div class="illustration" >
-        <a class="chocolat-image"  href="/images/illustration/2021-03-06/8.jpg"><img src="/images/illustration/2021-03-06/8.jpg"> </a>
+        <a class="chocolat-image"  href="/images/illustration/2021-03-06/8.jpg"><img src="/images/illustration/2021-03-06/8.jpg" class="img-responsive"> </a>
         <h6>中规中矩的广式糖水</h6>
     </div>
 </div>
@@ -141,7 +141,7 @@ SuperSnack 的特点就是，他们家的Snack一点也不够丰富... 但是价
 
 <div class="hovereffect" id="gal">
     <div class="illustration" >
-        <a class="chocolat-image"  href="/images/illustration/2021-03-06/9.jpg"><img src="/images/illustration/2021-03-06/9.jpg"> </a>
+        <a class="chocolat-image"  href="/images/illustration/2021-03-06/9.jpg"><img src="/images/illustration/2021-03-06/9.jpg" class="img-responsive"> </a>
         <h6>也就内样</h6>
     </div>
 </div>
@@ -160,7 +160,7 @@ SuperSnack 的特点就是，他们家的Snack一点也不够丰富... 但是价
 
 <div class="hovereffect" id="gal">
     <div class="illustration" >
-        <a class="chocolat-image"  href="/images/illustration/2021-03-06/10.jpg"><img src="/images/illustration/2021-03-06/10.jpg"> </a>
+        <a class="chocolat-image"  href="/images/illustration/2021-03-06/10.jpg"><img src="/images/illustration/2021-03-06/10.jpg" class="img-responsive"> </a>
         <h6>阿秋还是行的</h6>
     </div>
 </div>
