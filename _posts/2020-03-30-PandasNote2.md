@@ -1,6 +1,6 @@
 ---
 layout: blogpage
-title: 看一眼Shopee面试都做什么数据分析
+title: 看一眼Shopee面试分析的数据都长什么样
 comments: true
 tags: Skill Python
 ---
