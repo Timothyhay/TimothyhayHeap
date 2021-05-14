@@ -169,5 +169,33 @@ Space complexity : O(1). We are not using any extra memory.
 
 <br />
 
+## Other Examples ##
+
+When need to consider a buy-sell situation, where sell action must be after the buy action, use a `for` loop with `if-else` stmt to avoid a O(n^2) check.
+
+```cpp
+// 121. Best Time to Buy and Sell Stock
+class Solution {
+public:
+    int maxProfit(vector<int>& prices) {
+        int minprice = INT_MAX, maxprofit = 0;
+        for (int i = 0; i < prices.size(); ++i) {
+            if (prices[i] < minprice )
+                minprice = prices[i];
+            if (maxprofit < prices[i] - minprice)
+                maxprofit = prices[i] - minprice;
+        }
+        return maxprofit;
+    }
+};
+```
+
+`#include <climits>` when you need `INT_MAX`. But here it can actually be replaced by `prices[0]`.
+
+
+
+
+
+
 ##  Reference ##
 [1] jump-game/solution - https://leetcode.com/problems/jump-game/solution/
