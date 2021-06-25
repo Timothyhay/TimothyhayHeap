@@ -2,7 +2,7 @@
 layout: blogpage
 title: Using GSL on Windows
 comments: true
-tags: Note
+tags: Note Skill
 ---
 
 This is a tutorial about how to install and use GSL on Windows in the most simplest way(After I tried so many approaches).
