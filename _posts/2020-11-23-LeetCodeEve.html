@@ -8,6 +8,9 @@ tags: LeetCode Note
 <p>既然开始刷题了，就要刷个明白！所以..！一边做，一边记录 Python 和 C++ 的语法/算法技巧吧 ~</p>
 <p style="font-weight: bold">总结一下LeetCode里得到的经验！( ´ ▽ ` )</p>
 
+<p>首先加上 <code>from typing import List </code></p>
+
+
 <h2>2. Add Two Numbers</h2>
 <p class="tag"># Linklist / Pointer</p>
 
@@ -302,9 +305,21 @@ class Solution(object):
         """
         a = 0
         for i in nums:
-        a ^= i
+            a ^= i
         return a
 {% endhighlight %}
+
+<h2>338. Counting Bits</h2>
+<p class="tag">Bit Manipulation</p>
+<p>Bitwise operator has the same priority with math ones.</p>
+
+{% highlight python %}
+for i in range(1, n+1):
+    ans[i] = ans[i >> 1] + (i & 1)
+{% endhighlight %}
+
+<p>So () between <code>(i & 1)</code> is necessary.</p>
+
 
 <h2>215. Kth Largest Element in an Array</h2>
 <p class="tag"><i class="fas fa-tags"></i> Heap / Sort</p>
@@ -324,3 +339,6 @@ def lower_bound(array, first, last, value):  # 求非降序范围[first, last)�
             last = mid
     return first  # last也行，因为[first, last)为空的时候它们重合
 {% endhighlight %}
+
+
+
