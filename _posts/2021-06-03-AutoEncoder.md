@@ -5,6 +5,8 @@ comments: true
 tags: Deep-Learning
 ---
 
+[Under Editing]
+
 Each convolution layer consists of several convolution channels (aka. depth or filters). In practice, they are a number such as 64, 128, 256, 512 etc. This is equal to number of channels in the output of a convolutional layer. kernel_size, on the other hand, is the size of these convolution filters. In practice, they take values such as 3x3 or 1x1 or 5x5. To abbreviate, they can be written as 1 or 3 or 5 as they are mostly square in practice.
 
 Edit
