@@ -361,6 +361,21 @@ b) Knowledge source selection: Source-LDA is designed to be used only with a cor
 知识源选择：Source-LDA 设计为仅用于具有已知超主题集的语料库，其中包含大部分标记。 这种情况的一个例子是由临床患者笔记组成的语料库。 由于有广泛的知识来源，基本上包括所有医学主题，Source-LDA 可用于发现和标记这些现有主题。 在收集主题超集不是那么容易的情况下，传统方法可能更有用。
 
 
+## LDA & pLSA ##
+
+We generalize PLSA by changing the fixed dd to a Dirichlet prior.
+
+The generative process for each word w_jw 
+j
+​
+  (from a vocab of size VV) in document d_id 
+i
+​
+  is as follow:
+
+  
+
+
 ## Reference - This post ##
 
 [1] Wood, Justin, et al. "Source-LDA: Enhancing probabilistic topic models using prior knowledge sources." 2017 IEEE 33rd International Conference on Data Engineering (ICDE). IEEE, 2017. 
