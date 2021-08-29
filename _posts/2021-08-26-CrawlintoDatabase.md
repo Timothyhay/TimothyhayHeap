@@ -75,6 +75,7 @@ myquery = {"_id": Binary((x.get('_id').bytes), 3)
 附上 `SUBTYPE` 参数含义：
 
 Constants
+
 | Constant Name |	Value |	Description |
 | ---- | ---- | ---- |
 | Binary.SUBTYPE_DEFAULT |	0 |	Default BSON type| 
