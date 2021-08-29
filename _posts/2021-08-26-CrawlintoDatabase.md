@@ -75,15 +75,15 @@ myquery = {"_id": Binary((x.get('_id').bytes), 3)
 附上 `SUBTYPE` 参数含义：
 
 Constants
-|Constant Name |	Value |	Description|
-|----|----|----|
-|Binary.SUBTYPE_DEFAULT |	0 |	Default BSON type|
-|Binary.SUBTYPE_FUNCTION	|1|	Function BSON type|
-|Binary.SUBTYPE_BYTE_ARRAY	|2|	Byte Array BSON type|
-|Binary.SUBTYPE_UUID_OLD	|3|	OLD UUID BSON type|
-|Binary.SUBTYPE_UUID|	4	|UUID BSON type|
-|Binary.SUBTYPE_MD5	|5|	MD5 BSON type|
-|Binary.SUBTYPE_USER_DEFINED	|128|	User BSON type|
+| Constant Name |	Value |	Description |
+| ---- | ---- | ---- |
+| Binary.SUBTYPE_DEFAULT |	0 |	Default BSON type| 
+| Binary.SUBTYPE_FUNCTION	| 1 |	Function BSON type |
+| Binary.SUBTYPE_BYTE_ARRAY	| 2 |	Byte Array BSON type |
+| Binary.SUBTYPE_UUID_OLD	| 3 |	OLD UUID BSON type |
+| Binary.SUBTYPE_UUID |	4	| UUID BSON type |
+| Binary.SUBTYPE_MD5	| 5 |	MD5 BSON type |
+| Binary.SUBTYPE_USER_DEFINED	| 128 |	User BSON type |
 
 
 ### When soup can not handle Xpath ###
