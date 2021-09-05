@@ -89,4 +89,9 @@ Constants
 
 ### When soup can not handle Xpath ###
 
+在碰到request包无法解决的问题的时候，可以换用selenium开一个浏览器试试，不仅是真实浏览器访问，还能调用更多API。
+
+比如Xpath选择器。
+
+
 TBC
