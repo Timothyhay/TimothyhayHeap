@@ -93,5 +93,6 @@ Constants
 
 比如Xpath选择器。
 
+如果使用selenium进行登录操作，就不需要额外进行存取cookie这样的事了。因为浏览器环境自然会保留登录状态。
 
 TBC
