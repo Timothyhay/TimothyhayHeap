@@ -11,10 +11,14 @@ Note about how to use `map()` and `reduce()` in Python Standard Library. May add
 ## Overview
 
 [○ ○ ○ ○ ○ ○ ○]
-        ↓ map
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓ map
+
 [□ □ □ □ □ □ □]
-        ↓ reduce
-        ☆
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓ reduce
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;☆
 
 ## Anonymous Function lambda 
 
@@ -113,4 +117,5 @@ The code would result in:
 ## Reference
 
 [1] https://zhuanlan.zhihu.com/p/77311224
+
 [2] https://stackabuse.com/map-filter-and-reduce-in-python-with-examples/
