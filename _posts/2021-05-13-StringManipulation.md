@@ -61,3 +61,5 @@ When char from s1 == char from s2, note in the charCount matrix and move the ptr
     [0, 0, 0, 1, 0, 0],
     [0, 0, 0, 0, 2, 0],
     [0, 0, 0, 0, 0, 3]]
+
+
