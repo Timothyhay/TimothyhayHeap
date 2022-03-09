@@ -9,6 +9,7 @@ tags: LeetCode Note
 >
 > —— George Santayana
 
+Dynamic programming is a method by which a solution is determined based on solving successively similar but smaller problems. This technique is used in algorithmic tasks in which the solution of a bigger problem is relatively easy to find, if we have solutions for its sub-problems.
 
 <p>Usually, solving and fully understanding a dynamic programming problem is a 4 step process:</p>
 
@@ -198,4 +199,5 @@ public:
 
 
 ##  Reference ##
-[1] jump-game/solution - https://leetcode.com/problems/jump-game/solution/
+[1] Chapter 17 Dynamic programming - https://codility.com/media/train/15-DynamicProgramming.pdf
+[2] jump-game/solution - https://leetcode.com/problems/jump-game/solution/
