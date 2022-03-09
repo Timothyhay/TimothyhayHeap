@@ -82,3 +82,42 @@ def binSearchLast(nums, target):
 # binSearchLast([5,7,7,8,8,8,8,10], 8)
 # Out[22]: 6
 ```
+
+*34. Find First and Last Position of Element in Sorted Array* is a appliance of this(Upper/Lower bounds).
+
+```python
+
+class Solution:
+    def searchRange(self, nums: List[int], target: int) -> List[int]:
+        if len(nums) == 0:
+            return [-1, -1]
+
+        posFirst = -1
+        posLast = -1
+
+        start = 0
+        end = len(nums) - 1
+        while start <= end:
+            mid = start + (end - start) // 2
+            if nums[mid] >= target:
+                end = mid - 1
+            else:
+                start = mid + 1
+        if start >= len(nums) or nums[start] != target:
+            return [-1, -1]
+        else:
+            posFirst = start
+
+        start = 0
+        end = len(nums) - 1
+        while start <= end:
+            mid = start + (end - start) // 2
+            if nums[mid] <= target:
+                start = mid + 1
+            else:
+                end = mid - 1
+        posLast = end
+        
+        return [posFirst, posLast]
+
+```

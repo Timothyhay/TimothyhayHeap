@@ -363,6 +363,15 @@ b) Knowledge source selection: Source-LDA is designed to be used only with a cor
 
 ## LDA & pLSA ##
 
+### 词袋模型 Bag Of Words
+
+> LDA 是一个词袋模型。词袋模型，指仅考虑一个词汇出现与否，而不考虑其出现的顺序。与词袋模型相对的一个模型是n-gram，n-gram考虑了词汇出现的先后顺序。
+
+
+
+
+
+
 We generalize PLSA by changing the fixed dd to a Dirichlet prior.
 
 The generative process for each word w_jw 
@@ -373,9 +382,74 @@ i
 ​
   is as follow:
 
+
+### PLSA模型
+
+Unigram Model模型中，没有考虑主题词这个概念。我们人写文章时，写的文章都是关于某一个主题的，当然，也有很少一部分词汇会涉及到其他主题。所以，PLSA认为生成一篇文档的生成过程如下：
+
+1. 现有两种类型的骰子，一种是doc-topic骰子，每个doc-topic骰子有K个面，每个面一个topic的编号；一种是topic-word骰子，每个topic-word骰子有V个面，每个面对应一个词；
+
+2. 现有K个topic-word骰子，每个骰子有一个编号，编号从1到K；
+
+3. 生成每篇文档之前，先为这篇文章制造一个特定的doc-topic骰子，重复如下过程生成文档中的词：
+
+3.1 投掷这个doc-topic骰子，得到一个topic编号z；
+
+3.2 选择K个topic-word骰子中编号为z的那个，投掷这个骰子，得到一个词；
+
+
+PLSA 和 LDA 的区别
+首先，我们来看看PLSA和LDA生成文档的方式。在PLSA中，生成文档的方式如下：
+
+1. 按照概率[公式]选择一篇文档[公式]
+2. 根据选择的文档[公式]，从从主题分布中按照概率[公式]选择一个隐含的主题类别[公式]
+3. 根据选择的主题[公式], 从词分布中按照概率[公式]选择一个词[公式]
+LDA 中，生成文档的过程如下：
+
+1. 按照先验概率[公式]选择一篇文档[公式]
+2. 从Dirichlet分布[公式]中取样生成文档[公式]的主题分布[公式]，主题分布[公式]由超参数为[公式]的Dirichlet分布生成
+3. 从主题的多项式分布[公式]中取样生成文档[公式]第 j 个词的主题[公式]
+4. 从Dirichlet分布[公式]中取样生成主题[公式]对应的词语分布[公式]，词语分布[公式]由参数为[公式]的Dirichlet分布生成
+5. 从词语的多项式分布[公式]中采样最终生成词语[公式]
+可以看出，LDA 在 PLSA 的基础上，为主题分布和词分布分别加了两个 Dirichlet 先验。
+
+LDA Training
+根据上一小节中的公式，我们的目标有两个：
+
+1. 估计模型中的参数[公式] 和 [公式] ；
+2. 对于新来的一篇文档，我们能够计算这篇文档的 topic 分布[公式]。
+训练的过程：
+
+1. 对语料库中的每篇文档中的每个词汇[公式]，随机的赋予一个topic编号z
+2. 重新扫描语料库，对每个词[公式]，使用Gibbs Sampling公式对其采样，求出它的topic，在语料中更新
+3. 重复步骤2，直到Gibbs Sampling收敛
+4. 统计语料库的topic-word共现频率矩阵，该矩阵就是LDA的模型；
+根据这个topic-word频率矩阵，我们可以计算每一个p(word|topic)概率，从而算出模型参数 [公式] , 这就是那 K 个 topic-word 骰子。而语料库中的文档对应的骰子参数 [公式] 在以上训练过程中也是可以计算出来的，只要在 Gibbs Sampling 收敛之后，统计每篇文档中的 topic 的频率分布，我们就可以计算每一个 p(topic|doc) 概率，于是就可以计算出每一个 [公式] 。由于参数 [公式] 是和训练语料中的每篇文档相关的，对于我们理解新的文档并无用处，所以工程上最终存储 LDA 模型时候一般没有必要保留。通常，在 LDA 模型训练的过程中，我们是取 Gibbs Sampling 收敛之后的 n 个迭代的结果进行平均来做参数估计，这样模型质量更高。
+
+
+
+3.3.6 LDA Inference
+有了 LDA 的模型，对于新来的文档 doc, 我们只要认为 Gibbs Sampling 公式中的 [公式] 部分是稳定不变的，是由训练语料得到的模型提供的，所以采样过程中我们只要估计该文档的 topic 分布 [公式] 就好了. 具体算法如下：
+
+1. 对当前文档中的每个单词[公式], 随机初始化一个topic编号z;
+2. 使用Gibbs Sampling公式，对每个词[公式], 重新采样其topic；
+3. 重复以上过程，知道Gibbs Sampling收敛；
+4. 统计文档中的topic分布，该分布就是[公式]
+
+
+4 Tips
+懂 LDA 的面试官通常会询问求职者，LDA 中主题数目如何确定？
+
+在 LDA 中，主题的数目没有一个固定的最优解。模型训练时，需要事先设置主题数，训练人员需要根据训练出来的结果，手动调参，有优化主题数目，进而优化文本分类结果。
+
+
   
 
 
 ## Reference - This post ##
 
 [1] Wood, Justin, et al. "Source-LDA: Enhancing probabilistic topic models using prior knowledge sources." 2017 IEEE 33rd International Conference on Data Engineering (ICDE). IEEE, 2017. 
+
+[2] LDA主题模型简介 https://www.jianshu.com/p/24b1bca1629f
+
+[3] 一文详解LDA主题模型 https://zhuanlan.zhihu.com/p/31470216
