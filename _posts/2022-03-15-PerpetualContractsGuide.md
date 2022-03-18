@@ -52,14 +52,15 @@ This is in contrast to a Futures Contract which may trade at significantly diffe
 
 这与期货合约形成对比，期货合约可能因基差而以显着不同的价格交易。
 
+<br/>
 
 - Each perpetual contract has its own details which can be found in its Contract Specifications. These details include: 
 
 每个永续合约都有自己的详细信息，可以在其合约规范中找到。这些详情包括：
 
-    Reference Index / 参考索引
-    Funding Rate / 资金费率
-    Maximum Leverage / 最大杠杆
+        - Reference Index / 参考索引
+        - Funding Rate / 资金费率
+        - Maximum Leverage / 最大杠杆
 
 <br /><br />
 
