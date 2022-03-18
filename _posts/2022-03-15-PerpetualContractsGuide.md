@@ -7,6 +7,7 @@ tags: Crypto Note
 
 This is a reading note about Contracts Guide from BitMEX[1]. I took notes on strange concepts here 😶!
 
+
 永续合约(Perpetual Contracts)是一种特殊的期货合约。 与传统合约(traditional <ins>Futures Contract</ins>)不同，永续合约没有到期日，用户可以选择一直持仓。
 
 在展开说明之前，其中的期货合约(Futures Contract) 中的到期日具体指什么？
@@ -39,17 +40,19 @@ For traders choosing to go to settlement, the form of delivery will be highly de
 
 The Perpetual Contract is similar to a traditional Futures Contract, but has a few differences:
 
-- There is no expiry or settlement (subject to the Early Settlement).  <br/>不存在到期与结算。
+- There is no expiry or settlement (subject to the Early Settlement).  不存在到期与结算。
 
 - Perpetual Contracts mimic a margin-based<1> spot market<2> and hence trade close to the underlying reference Index Price. <br/>
 永续合约模拟基于保证金的现货市场，因此交易价格接近基础参考指数价格(underlying reference Index Price)。
     - The Funding mechanism is used to tether contracts to their underlying spot price. <br/>
     资金机制用于将合约与其基础现货价格挂钩。
     - This is in contrast to a Futures Contract which may trade at significantly different prices due to basis<3>. <br/>这与期货合约形成对比，期货合约可能因基差而以显着不同的价格交易。
-- Each perpetual contract has its own details which can be found in its Contract Specifications. These details include:
-    - Reference Index
-    - Funding Rate
-    - Maximum Leverage
+
+- Each perpetual contract has its own details which can be found in its Contract Specifications. These details include: <br/>
+每个永续合约都有自己的详细信息，可以在其合约规范中找到。这些详情包括：
+    - Reference Index / 参考索引
+    - Funding Rate / 资金费率
+    - Maximum Leverage / 最大杠杆
 
 <1> 这里的 margin 指保证金。
 
@@ -65,7 +68,15 @@ The Perpetual Contract is similar to a traditional Futures Contract, but has a f
 
 > 在「逆價市場」（Inverted Market / Backwardation Market）中，係指當供給嚴重不足之下，可能會出現現貨價格較期貨價格高，即基差為正值的不正常情況。
 
+*BitMEX下的做法
 
+### Leverage
+Perpetual contracts do not require traders to post 100% of collateral as margin, because of this you can trade with leverage of up to 100x on some of BitMEX’s contracts. All margin on BitMEX is denominated in Bitcoin, allowing traders to speculate on the future value of its products only using Bitcoin.
+
+### Payout
+BitMEX offers perpetual contracts that have inverse, linear and quanto payouts. This document explains the key differences between these payouts, and some implications for traders.
+
+The product suits traders who prefer to hold positions for a long time and do not want their positions to fluctuate in value due to large swings in basis.
 
 [1] Perpetual Contracts Guide - https://www.bitmex.com/app/perpetualContractsGuide#Funding
 > BitMEX is a P2P crypto-products trading platform. 
