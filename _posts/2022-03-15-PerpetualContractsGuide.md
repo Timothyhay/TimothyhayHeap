@@ -44,12 +44,15 @@ The Perpetual Contract is similar to a traditional Futures Contract, but has a f
 
 - Perpetual Contracts mimic a margin-based<1> spot market<2> and hence trade close to the underlying reference Index Price. <br/>
 永续合约模拟基于保证金的现货市场，因此交易价格接近基础参考指数价格(underlying reference Index Price)。
-    - The Funding mechanism is used to tether contracts to their underlying spot price. <br/>
+
+The Funding mechanism is used to tether contracts to their underlying spot price. <br/>
     资金机制用于将合约与其基础现货价格挂钩。
-    - This is in contrast to a Futures Contract which may trade at significantly different prices due to basis<3>. <br/>这与期货合约形成对比，期货合约可能因基差而以显着不同的价格交易。
+
+This is in contrast to a Futures Contract which may trade at significantly different prices due to basis<3>. <br/>这与期货合约形成对比，期货合约可能因基差而以显着不同的价格交易。
 
 - Each perpetual contract has its own details which can be found in its Contract Specifications. These details include: <br/>
 每个永续合约都有自己的详细信息，可以在其合约规范中找到。这些详情包括：
+
     - Reference Index / 参考索引
     - Funding Rate / 资金费率
     - Maximum Leverage / 最大杠杆
