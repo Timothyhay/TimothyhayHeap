@@ -49,17 +49,20 @@ The Funding mechanism is used to tether contracts to their underlying spot price
 资金机制用于将合约与其基础现货价格挂钩。
 
 This is in contrast to a Futures Contract which may trade at significantly different prices due to basis<3>. 
+
 这与期货合约形成对比，期货合约可能因基差而以显着不同的价格交易。
 
 - Each perpetual contract has its own details which can be found in its Contract Specifications. These details include: 
 
 每个永续合约都有自己的详细信息，可以在其合约规范中找到。这些详情包括：
 
-    - Reference Index / 参考索引
-    - Funding Rate / 资金费率
-    - Maximum Leverage / 最大杠杆
+- Reference Index / 参考索引
+- Funding Rate / 资金费率
+- Maximum Leverage / 最大杠杆
 
-<br />
+<br /><br />
+
+注释 / Notation:
 
 <1> 这里的 margin 指保证金。
 
@@ -75,15 +78,32 @@ This is in contrast to a Futures Contract which may trade at significantly diffe
 
 > 在「逆價市場」（Inverted Market / Backwardation Market）中，係指當供給嚴重不足之下，可能會出現現貨價格較期貨價格高，即基差為正值的不正常情況。
 
-*BitMEX下的做法
+## * BitMEX 平台的做法
 
-### Leverage
+### Leverage 杠杆
 Perpetual contracts do not require traders to post 100% of collateral as margin, because of this you can trade with leverage of up to 100x on some of BitMEX’s contracts. All margin on BitMEX is denominated in Bitcoin, allowing traders to speculate on the future value of its products only using Bitcoin.
 
-### Payout
-BitMEX offers perpetual contracts that have inverse, linear and quanto payouts. This document explains the key differences between these payouts, and some implications for traders.
+永续合约不需要交易者将 100% 的抵押品作为保证金，因此您可以在 BitMEX 的某些合约上使用高达 100 倍的杠杆进行交易。 BitMEX 的所有保证金均以比特币计价，允许交易者仅使用比特币来推测其产品的未来价值。
+
+### Payout 支付
+BitMEX offers perpetual contracts that have inverse, linear and quanto<4> payouts. This document explains the key differences between these payouts, and some implications for traders.
 
 The product suits traders who prefer to hold positions for a long time and do not want their positions to fluctuate in value due to large swings in basis.
+
+BitMEX 提供具有反向、线性和 quanto 支付的永续合约。本文件解释了这些支出之间的主要区别，以及对交易者的一些影响。
+
+该产品适合喜欢长期持有头寸且不希望头寸因基差大幅波动而波动的交易者。
+
+<br /><br />
+
+注释 / Notation:
+
+<4> Quanto[6] 是 Quantity Adjusting Option 的简称，指：标的物（underlying）是以货币A计价，但是以货币B来结算的现金交割型衍生性金融商品。如果某投资人想要投资国外商品，例如美国投资人要投资日经指数，最好的方式是投资CME的日经指数Nikkei 225期货。当Nikkei 225指数变动1点（1日元），期货的价值会变动500美元。如此一来可以<ins>投资海外商品，又可以规避汇率风险。</ins>Quanto期货或选择权其实是一般的期货或选择权再加上一组远期汇率合约。
+
+A quanto[7] is a type of derivative in which the underlying is denominated in one currency, but the instrument itself is settled in another currency at some rate. Such products are attractive for speculators and investors who wish to <ins>have exposure to a foreign asset, but without the corresponding exchange rate risk.</ins>
+
+
+## Reference
 
 [1] Perpetual Contracts Guide - https://www.bitmex.com/app/perpetualContractsGuide#Funding
 > BitMEX is a P2P crypto-products trading platform. 
@@ -94,3 +114,7 @@ The product suits traders who prefer to hold positions for a long time and do no
 [3] https://wiki.mbalib.com/wiki/%E6%9C%9F%E8%B4%A7%E4%BF%9D%E8%AF%81%E9%87%91
 
 [5] 基差 - https://www.moneydj.com/kmdj/wiki/wikiviewer.aspx?keyid=e6856deb-5ca2-4968-bff1-7f4c12e0d10a
+
+[6] 什么是 Quanto - https://zhidao.baidu.com/question/24572297.html
+
+[7] Quanto From Wikipedia, the free encyclopedia - https://en.wikipedia.org/wiki/Quanto
