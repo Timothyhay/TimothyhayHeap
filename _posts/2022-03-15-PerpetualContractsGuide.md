@@ -39,22 +39,33 @@ For traders choosing to go to settlement, the form of delivery will be highly de
 
 The Perpetual Contract is similar to a traditional Futures Contract, but has a few differences:
 
-- There is no expiry or settlement (subject to the Early Settlement).  不存在到期与结算。
+- There is no expiry or settlement (subject to the Early Settlement).  <br/>不存在到期与结算。
 
-- Perpetual Contracts mimic a margin-based* spot market and hence trade close to the underlying reference Index Price. 
-
-永续合约模拟基于保证金的现货市场，因此交易价格接近基础参考指数价格。
-    - 资金机制用于将合约与其基础现货价格挂钩。
-    - 这与期货合约形成对比，期货合约可能因基差而以显着不同的价格交易。
-    - The Funding mechanism is used to tether contracts to their underlying spot price.
-    - This is in contrast to a Futures Contract which may trade at significantly different prices due to basis.
+- Perpetual Contracts mimic a margin-based<1> spot market<2> and hence trade close to the underlying reference Index Price. <br/>
+永续合约模拟基于保证金的现货市场，因此交易价格接近基础参考指数价格(underlying reference Index Price)。
+    - The Funding mechanism is used to tether contracts to their underlying spot price. <br/>
+    资金机制用于将合约与其基础现货价格挂钩。
+    - This is in contrast to a Futures Contract which may trade at significantly different prices due to basis<3>. <br/>这与期货合约形成对比，期货合约可能因基差而以显着不同的价格交易。
 - Each perpetual contract has its own details which can be found in its Contract Specifications. These details include:
     - Reference Index
     - Funding Rate
     - Maximum Leverage
 
-* 这里的 margin 指保证金。
-是指期货结算会员按照结算规则存入制定账户的一定数量的资金或缴存符合标准的一定数量的
+<1> 这里的 margin 指保证金。
+
+**期货保证金(Futures Margin)** 是指期货结算会员按照结算规则存入制定账户的一定数量的资金或缴存符合标准的一定数量的有价证券，以作为期货交易的结算和履约的保证。
+
+<2> 现货市场(Spot Markets) 是指市场上的买卖双方成交后须在若干个交易日内办理交割的金融市场。
+
+<3> 这里的 basis 指基差[5]，基差(Basis)是某一特定商品于某一特定的时间和地点的现货价格与期货价格之差。即 **基差 = 现货价格 - 期货价格**
+
+另外：
+
+> 在「正常市場」（Normal Market / Contango Market）中，基差為負值，即期貨價格高於現貨價格。由於在正常情形下，期貨價格包含了儲存、保存、持有和利息等成本。因此，期貨價格高於現貨價格為正常市場下所發生的情形。
+
+> 在「逆價市場」（Inverted Market / Backwardation Market）中，係指當供給嚴重不足之下，可能會出現現貨價格較期貨價格高，即基差為正值的不正常情況。
+
+
 
 [1] Perpetual Contracts Guide - https://www.bitmex.com/app/perpetualContractsGuide#Funding
 > BitMEX is a P2P crypto-products trading platform. 
@@ -63,3 +74,5 @@ The Perpetual Contract is similar to a traditional Futures Contract, but has a f
 [2] Get to Know Futures Expiration and Settlement - https://www.cmegroup.com/cn-s/education/learn-about-trading/courses/introduction-to-futures/get-to-know-futures-expiration-and-settlement.html
 
 [3] https://wiki.mbalib.com/wiki/%E6%9C%9F%E8%B4%A7%E4%BF%9D%E8%AF%81%E9%87%91
+
+[5] 基差 - https://www.moneydj.com/kmdj/wiki/wikiviewer.aspx?keyid=e6856deb-5ca2-4968-bff1-7f4c12e0d10a
