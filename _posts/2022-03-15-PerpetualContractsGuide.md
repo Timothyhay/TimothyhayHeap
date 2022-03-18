@@ -5,8 +5,8 @@ comments: true
 tags: Crypto Note
 ---
 
-This is a reading note about Contracts Guide from BitMEX[1]. I took notes on strange concepts here 😶!
-
+This is a reading note about Contracts Guide from BitMEX[1] (A P2P crypto-products trading platform). I took notes on strange concepts here 😶!
+ 
 
 永续合约(Perpetual Contracts)是一种特殊的期货合约。 与传统合约(traditional <ins>Futures Contract</ins>)不同，永续合约没有到期日，用户可以选择一直持仓。
 
@@ -52,13 +52,14 @@ This is in contrast to a Futures Contract which may trade at significantly diffe
 
 这与期货合约形成对比，期货合约可能因基差而以显着不同的价格交易。
 
+
 - Each perpetual contract has its own details which can be found in its Contract Specifications. These details include: 
 
 每个永续合约都有自己的详细信息，可以在其合约规范中找到。这些详情包括：
 
-- Reference Index / 参考索引
-- Funding Rate / 资金费率
-- Maximum Leverage / 最大杠杆
+    - Reference Index / 参考索引
+    - Funding Rate / 资金费率
+    - Maximum Leverage / 最大杠杆
 
 <br /><br />
 
@@ -106,12 +107,10 @@ A quanto[7] is a type of derivative in which the underlying is denominated in on
 ## Reference
 
 [1] Perpetual Contracts Guide - https://www.bitmex.com/app/perpetualContractsGuide#Funding
-> BitMEX is a P2P crypto-products trading platform. 
-
 
 [2] Get to Know Futures Expiration and Settlement - https://www.cmegroup.com/cn-s/education/learn-about-trading/courses/introduction-to-futures/get-to-know-futures-expiration-and-settlement.html
 
-[3] https://wiki.mbalib.com/wiki/%E6%9C%9F%E8%B4%A7%E4%BF%9D%E8%AF%81%E9%87%91
+[3] MBA智库 期货保证金 - https://wiki.mbalib.com/wiki/%E6%9C%9F%E8%B4%A7%E4%BF%9D%E8%AF%81%E9%87%91
 
 [5] 基差 - https://www.moneydj.com/kmdj/wiki/wikiviewer.aspx?keyid=e6856deb-5ca2-4968-bff1-7f4c12e0d10a
 
