@@ -41,15 +41,15 @@ The Perpetual Contract is similar to a traditional Futures Contract, but has a f
 
 - There is no expiry or settlement (subject to the Early Settlement).  不存在到期与结算。
 
-- Perpetual Contracts mimic a margin-based<1> spot market<2> and hence trade close to the underlying reference Index Price.
+- Perpetual Contracts mimic a *margin-based<1> spot market<2>* and hence trade close to the underlying reference Index Price.
 
-永续合约模拟基于保证金的现货市场，因此交易价格接近基础参考指数价格(underlying reference Index Price)。
+永续合约模拟基于保证金的现货市场，因此交易价格接近标的物参考指数价格(underlying reference Index Price)。
 
 The Funding mechanism is used to tether contracts to their underlying spot price. 
 
-资金机制用于将合约与其基础现货价格挂钩。
+资金机制用于将合约与其标的物现货价格挂钩。
 
-This is in contrast to a Futures Contract which may trade at significantly different prices due to basis<3>. 
+This is in contrast to a Futures Contract which may trade at significantly different prices due to *basis<3>*. 
 
 这与期货合约形成对比，期货合约可能因基差而以显着不同的价格交易。
 
@@ -80,6 +80,8 @@ This is in contrast to a Futures Contract which may trade at significantly diffe
 > 在「正常市場」（Normal Market / Contango Market）中，基差為負值，即期貨價格高於現貨價格。由於在正常情形下，期貨價格包含了儲存、保存、持有和利息等成本。因此，期貨價格高於現貨價格為正常市場下所發生的情形。
 
 > 在「逆價市場」（Inverted Market / Backwardation Market）中，係指當供給嚴重不足之下，可能會出現現貨價格較期貨價格高，即基差為正值的不正常情況。
+
+The funding mechanism will be explained later. 🍃
 
 ## * BitMEX 平台的做法
 
@@ -119,13 +121,46 @@ A quanto[7] is a type of derivative in which the underlying is denominated in on
 
 ## What is an Inverse Contract?
 
-An inverse contract is worth a fixed amount of the quote currency. In the case of the XBTUSD perpetual, each contract is worth $1 of Bitcoin at any price. XBTUSD is an inverse contract because it is quoted as XBT/USD but the underlying is USD/XBT or 1 / (XBT/USD). It is quoted as an inverse to facilitate hedging US Dollar amounts while the spot market convention is to quote the number of US Dollars per Bitcoin.
+<ins>An inverse contract is worth a fixed amount of the quote currency.</ins> In the case of the XBTUSD perpetual, each contract is worth $1 of Bitcoin at any price. XBTUSD is an inverse contract because it is quoted as XBT/USD but the underlying is USD/XBT or 1 / (XBT/USD). It is quoted as an inverse to facilitate hedging US Dollar amounts while the spot market convention is to quote the number of US Dollars per Bitcoin.
+
+<ins>反向合约价值固定金额的报价货币。</ins>对于 XBTUSD 永续合约来说，每份合约在任何价格都价值 1 美元的比特币。 XBTUSD 是反向合约，因为它以 XBT/USD 报价，但标的为 USD/XBT 或 1 / (XBT/USD)。它被引用为倒数以促进对冲美元金额，而现货市场惯例是引用每个比特币的美元数量。
 
 This product is suitable for traders who want to go long or short US Dollars against Bitcoin.
 
+该产品适合想要做多或做空美元兑比特币的交易者。
+
 ## What is a Linear Contract?
 
-A linear payout is the simplest to describe, and is used for many swaps. The price of a linear contract is expressed as the price of the underlying against the base currency.
+A linear payout is the simplest to describe, and is used for many *swaps<6>*. The price of a linear contract is expressed as the price of the underlying against the base currency.
+
+线性支付是最容易描述的，并且用于许多掉期。线性合约的价格表示为标的物相对于基础货币的价格。
+
+<6> Swap[9] 这里译为掉期，
+掉期是指在外汇市场上买进即期外汇的同时又卖出同种货币的远期外汇，或者卖出即期外汇的同时又买进同种货币的远期外汇。（掉期交易（Swap Transaction）是指交易雙方約定在未來某一時期相互交換某種資產的交易形式。）也就是说在同一笔交易中将一笔即期和一笔远期业务合在一起做，或者说在一笔业务中将借贷业务合在一起做。
+
+
+## Mechanics of Perpetual Markets
+
+需要清楚的期货市场机制！
+
+When trading perpetual contracts, a trader needs to be aware of several mechanics of the futures market. The key components a trader needs to be aware of are:
+
+**Multiplier**: How much is one contract worth? You can see this information under the Contract Specifications for each instrument. 
+
+一份合约值多少钱。
+
+**Position Marking**: Perpetual contracts are marked according to the Fair Price Marking method. The mark price determines Unrealised PNL and liquidations.
+
+永续合约按照公允价格标记方法进行标记。标记价格决定未实现的盈亏和清算。
+
+**Initial and Maintenance Margin**: These key margin levels determine how much leverage one can trade with and at what point liquidation occurs.
+
+这些关键的保证金水平决定了一个人可以交易多少杠杆以及在什么时候发生清算。
+
+**Funding**: Any position in a perpetual swap that is open when Funding occurs (every 8 hours) will pay or receive funding.
+
+在资金(Funding)发生时（每 8 小时）打开的永久掉期中的任何头寸都将支付或接收资金。
+
 
 
 ## Reference
@@ -142,4 +177,6 @@ A linear payout is the simplest to describe, and is used for many swaps. The pri
 
 [7] Quanto From Wikipedia, the free encyclopedia - https://en.wikipedia.org/wiki/Quanto
 
-[8] https://en.wikipedia.org/wiki/Position_(finance)
+[8] Position From Wikipedia, the free encyclopedia -  https://en.wikipedia.org/wiki/Position_(finance)
+
+[9] Swap - Baidu Baike - https://baike.baidu.com/item/%E6%8E%89%E6%9C%9F/3048850
