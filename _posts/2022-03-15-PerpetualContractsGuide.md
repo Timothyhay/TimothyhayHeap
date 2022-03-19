@@ -161,6 +161,8 @@ When trading perpetual contracts, a trader needs to be aware of several mechanic
 
 在 Funding 发生时（每 8 小时）打开的永久掉期中的任何头寸都将支付或接收资金。
 
+<br />
+
 ### Funding
 
 Funding occurs every 8 hours at 04:00 UTC, 12:00 UTC and 20:00 UTC. You will **only pay or receive funding if you hold a position at one of these times.** If you close your position prior to the funding exchange then you will not pay or receive funding.
@@ -169,7 +171,7 @@ Funding occurs every 8 hours at 04:00 UTC, 12:00 UTC and 20:00 UTC. You will **o
 
 The funding you pay or receive is calculated as:
 
-    Funding = Mark Value * Funding Rate
+        Funding = Mark Value * Funding Rate
 
 Your Mark Value is irrespective of leverage. For example, if you hold 100 XBTUSD contracts, <ins>funding is charged/received on the notional value of those contracts</ins>, and is not based on how much margin you have assigned to the position.
 
@@ -178,6 +180,8 @@ Your Mark Value is irrespective of leverage. For example, if you hold 100 XBTUSD
 When the `Funding Rate` is positive, longs pay shorts. When it is negative, shorts pay longs. 
 
 当资金费率为正时，多头支付空头。当它为负时，空头支付多头。
+
+<br />
 
 #### Funding Rate Calculations
 
@@ -241,12 +245,10 @@ BitMEX 对资金费率设置上限，以确保仍然可以使用最大杠杆。
 为实现设有两个上限：
 
 1. <ins>The absolute Funding Rate is **capped at** 75% of the Initial Margin - Maintenance Margin. </ins>If the Initial Margin is 1% and the Maintenance Margin is 0.5%, the maximum Funding Rate will be 75% * (1% - 0.5%)= 0.375%.
-
-绝对资金费率**上限** = （初始保证金 - 维持保证金）* 75%
+（绝对资金费率**上限** = （初始保证金 - 维持保证金）* 75%）
 
 2. The Funding Rate may not change by more than 75% of the Maintenance Margin between Funding Intervals.
-
-资金费率在资金间隔之间的变化不得超过维持保证金的 75%。
+（资金费率在资金间隔之间的变化不得超过维持保证金的 75%。）
 
 
 
