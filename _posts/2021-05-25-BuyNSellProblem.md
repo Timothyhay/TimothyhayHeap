@@ -1,8 +1,8 @@
 ---
 layout: blogpage
-title: LeetCode 用 Cheatsheet
+title: Buy and Sell Series Probelm
 comments: true
-tags: Python
+tags: LeetCode Python
 ---
 
 
