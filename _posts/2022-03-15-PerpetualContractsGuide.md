@@ -5,7 +5,7 @@ comments: true
 tags: Crypto Note
 ---
 
-This is a reading note about Contracts Guide from BitMEX[1] (A P2P crypto-products trading platform). I took notes on strange concepts here 😶!
+This is a reading note about Contracts Guide from BitMEX[1] (A P2P crypto-products trading platform). I took notes on strange concepts here 😶! 
  
 
 永续合约(Perpetual Contracts)是一种特殊的期货合约。 与传统合约(traditional <ins>Futures Contract</ins>)不同，永续合约没有到期日，用户可以选择一直持仓。
@@ -159,7 +159,96 @@ When trading perpetual contracts, a trader needs to be aware of several mechanic
 
 **Funding**: Any position in a perpetual swap that is open when Funding occurs (every 8 hours) will pay or receive funding.
 
-在资金(Funding)发生时（每 8 小时）打开的永久掉期中的任何头寸都将支付或接收资金。
+在 Funding 发生时（每 8 小时）打开的永久掉期中的任何头寸都将支付或接收资金。
+
+### Funding
+
+Funding occurs every 8 hours at 04:00 UTC, 12:00 UTC and 20:00 UTC. You will **only pay or receive funding if you hold a position at one of these times.** If you close your position prior to the funding exchange then you will not pay or receive funding.
+
+只有在 Funding 发生时持有头寸会支付或接收资金。如果在资金交换之前平仓，那么你将不会支付或接收资金。
+
+The funding you pay or receive is calculated as:
+
+    Funding = Mark Value * Funding Rate
+
+Your Mark Value is irrespective of leverage. For example, if you hold 100 XBTUSD contracts, <ins>funding is charged/received on the notional value of those contracts</ins>, and is not based on how much margin you have assigned to the position.
+
+你的标记值与杠杆无关。e.g.,如果你持有 100 张 XBTUSD 合约，则<ins>根据这些合约的名义价值收取/收取资金</ins>，而不是基于您分配给该头寸的保证金多少。
+
+When the `Funding Rate` is positive, longs pay shorts. When it is negative, shorts pay longs. 
+
+当资金费率为正时，多头支付空头。当它为负时，空头支付多头。
+
+#### Funding Rate Calculations
+
+The Funding Rate is comprised of two main parts: the Interest Rate and the Premium / Discount. This rate aims to keep the traded price of the perpetual contract in line with the underlying reference price. In this way, the contract mimics how margin-trading markets work as <ins>buyers and sellers of the contract exchange interest payments periodically.</ins>
+
+资金费率由两个主要部分组成：利率和溢价/折扣。该利率旨在使永续合约的交易价格与标的参考价格保持一致。通过这种方式，合约模仿了保证金交易市场的运作方式，因为<ins>合约的买卖双方定期交换利息。</ins>
+
+**Interest Rate Component**
+
+Every contract traded on BitMEX consists of two instruments: a Base currency and a Quote currency. For example, on XBTUSD, the Base currency is XBT while the quote currency is USD. The Interest Rate is a **function** of interest rates between these two currencies:
+
+在 BitMEX 上交易的每份合约都包含两种工具：基础货币和报价货币。例如，在 XBTUSD 上，基础货币是 XBT，而报价货币是美元。利率是这两种货币之间利率的**函数**：
+
+    Interest Rate (I) = (Interest Quote Index - Interest Base Index) / Funding Interval
+
+    where
+        Interest Base Index = The Interest Rate for borrowing the Base currency
+        Interest Quote Index = The Interest Rate for borrowing the Quote currency
+        Funding Interval = 3 (Since funding occurs every 8 hours)
+
+Note: Under each Contract Specification page, the source borrow market is stated for each Interest Index.
+在每个合约规范页面下，都会针对每个利息指数说明来源借入市场。
+
+
+**Premium / Discount Component**
+
+The perpetual contract may trade at a significant premium or discount to the Mark Price. In those situations, a **Premium Index** will be used to raise or lower the next Funding Rate to levels consistent with where the contract is trading. Each contract’s Premium Index is available on the specific instrument’s Contract Specifications page and is calculated as follows:
+
+永续合约可能以相对于标记价格显着溢价或折价进行交易。在这些情况下，**溢价指数**将用于将下一个资金费率提高或降低到与合约交易时一致的水平。每个合约的溢价指数可在特定工具的合约规格页面上找到，计算如下：
+
+    Premium Index (P) = 
+        (Max(0, Impact Bid Price - Mark Price) - Max(0, Mark Price - Impact Ask Price)) / Spot Price + Fair Basis used in Mark Price
+
+
+#### Final Funding Rate Calculation
+
+BitMEX calculates the Premium Index (P) and Interest Rate (I) every minute and then performs a 8-Hour Time-Weighted-Average-Price (TWAP) over the series of minute rates.
+
+The Funding Rate is next calculated with the 8-Hour Interest Rate Component and the 8-Hour Premium / Discount Component. A +/-0.05% dampener is added.
+
+BitMEX 每分钟计算溢价指数 (P) 和利率 (I)，然后对一系列分钟利率执行 8 小时时间加权平均价格 (TWAP)。
+
+接下来资金费率使用 8 小时利率成分(Interest Rate Component)和 8 小时溢价/折扣成分(Premium / Discount Component)计算。添加了一个 +/-0.05% 的阻尼(dampener)。
+
+    Funding Rate (F) = 
+        Premium Index (P) + clamp(Interest Rate (I) - Premium Index (P), 0.05%, -0.05%)
+
+Hence, if (I - P) is within +/-0.05% then F = P + (I - P) = I. In other words, the Funding Rate will equal the Interest Rate. 
+
+(I - P) 在 +/-0.05% 之内时认为资金费率(Funding Rate) 和利率(Interest Rate)相等。
+
+This calculated Funding Rate is then applied to a trader’s XBT Position Value to determine the Funding Amount to be paid or received at the Funding Timestamp.
+
+然后将计算出的资金费率应用于交易者的 XBT 头寸价值，以确定在进行 Funding 的时间戳时支付或接收的资金金额。
+
+**Funding Rate Caps 资金费率上限**
+
+BitMEX imposes caps on the Funding Rate to ensure the maximum leverage can still be utilized. To do this, two caps are imposed:
+
+BitMEX 对资金费率设置上限，以确保仍然可以使用最大杠杆。
+为实现设有两个上限：
+
+1. <ins>The absolute Funding Rate is **capped at** 75% of the Initial Margin - Maintenance Margin. </ins>If the Initial Margin is 1% and the Maintenance Margin is 0.5%, the maximum Funding Rate will be 75% * (1% - 0.5%)= 0.375%.
+
+绝对资金费率**上限** = （初始保证金 - 维持保证金）* 75%
+
+2. The Funding Rate may not change by more than 75% of the Maintenance Margin between Funding Intervals.
+
+资金费率在资金间隔之间的变化不得超过维持保证金的 75%。
+
+
 
 
 
