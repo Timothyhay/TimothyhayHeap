@@ -7,7 +7,7 @@ tags: Python LeetCode
 
 ## 定义一个装满0的定长数组 
 
-b = [0 for _ in range(N)]
+    b = [0 for _ in range(N)]
 
 
 
@@ -15,23 +15,23 @@ Use Data Structure in Python!
 
 ## Stack / 使用普通列表实现栈
 
->>> s = []
->>> s.append('eat')
->>> s.append('sleep')
->>> s.append('code')
+    >>> s = []
+    >>> s.append('eat')
+    >>> s.append('sleep')
+    >>> s.append('code')
 
->>> s
-['eat', 'sleep', 'code']
+    >>> s
+    ['eat', 'sleep', 'code']
 
->>> s.pop()
-'code'
->>> s.pop()
-'sleep'
->>> s.pop()
-'eat'
+    >>> s.pop()
+    'code'
+    >>> s.pop()
+    'sleep'
+    >>> s.pop()
+    'eat'
 
->>> s.pop()
-IndexError: "pop from empty list"
+    >>> s.pop()
+    IndexError: "pop from empty list"
 
 
     from collections import deque
@@ -42,46 +42,46 @@ deque 类实现了一个双端队列，支持在O(1)时间（非均摊）中从�
 
 Python 的deque 对象以双向链表实现。这为插入和删除元素提供了出色且一致的性能，但是随机访问位于栈中间元素的性能很差，耗时为O(n)。
 
->>> from collections import deque
->>> q = deque()
->>> q.append('eat')
->>> q.append('sleep')
->>> q.append('code')
+    >>> from collections import deque
+    >>> q = deque()
+    >>> q.append('eat')
+    >>> q.append('sleep')
+    >>> q.append('code')
 
->>> q
-deque(['eat', 'sleep', 'code'])
+    >>> q
+    deque(['eat', 'sleep', 'code'])
 
->>> q.popleft()
-'eat'
->>> q.popleft()
-'sleep'
->>> q.popleft()
-'code'
+    >>> q.popleft()
+    'eat'
+    >>> q.popleft()
+    'sleep'
+    >>> q.popleft()
+    'code'
 
->>> q.popleft()
+    >>> q.popleft()
 
 
 ## Priority Queue / 优先队列
 
-from queue import PriorityQueue
+    from queue import PriorityQueue
 
-q = PriorityQueue()
+    q = PriorityQueue()
 
-q.put((2, 'code'))
-q.put((1, 'eat'))
-q.put((3, 'sleep'))
+    q.put((2, 'code'))
+    q.put((1, 'eat'))
+    q.put((3, 'sleep'))
 
-while not q.empty():
-    next_item = q.get()
-    print(next_item)
+    while not q.empty():
+        next_item = q.get()
+        print(next_item)
 
-    # 结果：
-    # (1, 'eat')
-    # (2, 'code')
-    # (3, 'sleep')
+        # 结果：
+        # (1, 'eat')
+        # (2, 'code')
+        # (3, 'sleep')
 
-    # Get Top
-    q.queue[0]
+        # Get Top
+        q.queue[0]
 
 e.g. 
 
