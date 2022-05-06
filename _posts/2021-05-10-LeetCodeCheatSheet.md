@@ -84,7 +84,7 @@ Python 的deque 对象以双向链表实现。这为插入和删除元素提供�
         q.queue[0]
 
 e.g. 
-
+```python
     def maxEvents(self, events: List[List[int]]) -> int:
         
         class Event(object):
@@ -120,6 +120,19 @@ e.g.
             day += 1
 
         return attend
+```
+
+## Customize Sort Function / 自定义 sort() 函数
+
+```python
+    # Sort by multiple keys - case sensitive
+    from operator import itemgetter
+    mylist = sorted(mylist, key=itemgetter('name', 'age'))
+
+    # Sort by multiple keys - case insensitive
+    mylist = sorted(mylist, key=lambda k: (k['name'].lower(), k['age']))
+    mylist = sorted(mylist, key=lambda k: (k['name'].lower(), -k['age']))
+```
 
 ## Bit Operation / 位运算 ##
 
