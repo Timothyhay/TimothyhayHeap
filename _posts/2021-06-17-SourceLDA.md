@@ -25,10 +25,7 @@ align well with our prior knowledge in the subject domains.
 Currently, two approaches to solve this issue exist. The first is a post-processing procedure that assigns each topic with a label from the prior knowledge base that is semantically closest to the word distribution of the topic. 
 The second is a supervised topic modeling approach that restricts the topics to a predefined set whose word distributions are provided beforehand. 
 
-Neither approach is ideal, as the former may produce labels that do not
-accurately describe the word distributions, and the latter lacks
-the ability to detect unknown topics that are crucial to enrich our
-knowledge base. 
+Neither approach is ideal, as the former may produce labels that do not accurately describe the word distributions, and the latter lacks the ability to detect unknown topics that are crucial to enrich our knowledge base. 
 
 目前存在有两种解决此问题的方法，第一种是分配每个话题给一个从先验知识中得知的语义上最接近该话题的单词分布的标签的后处理过程。
 
