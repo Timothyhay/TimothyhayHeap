@@ -100,6 +100,57 @@ To do this, setting inf = float('inf'). Use pd.cut with bins of [-inf,139.99,199
 	
 	pima1.Glucose = pd.cut(pima.Glucose, [-inf, 139.99, 199.99, inf], labels=['Normal', 'Prediabetes', 'Diabetes'])
 
+
+
+## Ex. Pandas Tutorial ##
+
+### Series
+
+Pandas Series 类似表格中的一个**列（column）**，类似于一维数组，可以保存任何数据类型。
+
+Series 由索引（index）和列组成，函数如下：
+
+	pandas.Series( data, index, dtype, name, copy)
+
+- data：一组数据(ndarray 类型)。
+- index：数据索引标签，如果不指定，默认从 0 开始。
+- dtype：数据类型，默认会自己判断。
+- name：设置名称。
+- copy：拷贝数据，默认为 False。
+
+基本用法：
+
+```py
+
+a = [1, 2, 3]
+myvar = pd.Series(a)
+# 不适用索引
+print(myvar[1])
+
+a = ["Google", "Runoob", "Wiki"]
+myvar = pd.Series(a, index = ["x", "y", "z"])
+
+# 使用索引
+print(myvar["y"])
+
+# 使用键值对初始化，key 成为 index
+sites = {1: "Google", 2: "Runoob", 3: "Wiki"}
+myvar = pd.Series(sites)
+```
+
+### DataFrame
+
+	pandas.DataFrame( data, index, columns, dtype, copy)
+
+- data：一组数据(ndarray、series, map, lists, dict 等类型)。
+- index：索引值，或者可以称为行标签。
+- columns：列标签，默认为 RangeIndex (0, 1, 2, …, n) 。
+- dtype：数据类型。
+- copy：拷贝数据，默认为 False。
+
+
+
+
 Reference:
 ----------
 [1]pandas.cut - https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.cut.html

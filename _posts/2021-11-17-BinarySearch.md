@@ -9,6 +9,19 @@ BinarySearch is a O(logN) searching method, but need to be applied in ordered ar
 
 The Original BinarySearch, and finding the First & Last index of target element:
 
+    var search = function(nums, target) {
+        let lo = 0, hi = nums.length-1;
+        while (lo < hi) {
+            let mid = lo + Math.floor((hi-lo+1)/2);
+            if (nums[mid] > target) {
+                hi = mid - 1
+            } else {
+                lo = mid; 
+            }
+        }
+        return nums[lo]==target?lo:-1;
+    };
+
 ```python
 
 # Original Method - Can only handle for array of elements occur once
