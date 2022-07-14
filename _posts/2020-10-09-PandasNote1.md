@@ -297,9 +297,9 @@ result = pd.merge(left, right, on=['key1', 'key2'],
                   how='right')
 ```
 
-输出行列相关：
+## 输出行列相关
 
-```
+```py
 print(w_a_con.head())
 print('Shape of the dataframe: ',w_a_con.shape) # (100, 5)
 print('Number of rows: ',w_a_con.shape[0])   # 100
@@ -307,7 +307,35 @@ print('Number of column: ',w_a_con.shape[1]) # 5
 print("Extract Column Names:")
 print(w_a_con.columns)
 
+print("The world alcohol consumption details in the year 1985:")
+print(w_a_con[w_a_con['Year']==1985].head(10))
+
 ```
+
+## Group By
+
+```py
+print("Split the said data on 'salesman_id', 'customer_id' wise:")
+result = df.groupby(['salesman_id', 'customer_id'])
+for name, group in result:
+    print("\nGroup:")
+    print(name)
+    print(group)
+
+# Droping last n record
+n = 2
+print("Droping last two records:")    
+result1 = df.drop(df.groupby(['salesman_id', 'customer_id']).tail(n).index, axis=0)
+
+```
+
+# Sort
+
+```py
+# dataFrame中排序的方法
+df = df.sort_values(by="Count_AnimalName",ascending=False)
+```
+
 
 
 Reference:
