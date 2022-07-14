@@ -7,6 +7,19 @@ tags: Note
 
 为了周一的分享来写一写Source-LDA的笔记。
 
+困惑度用于衡量语言模型时，可能和人类直觉判断不同。
+
+## Perplexity is not strongly correlated to human judgment
+
+[Chang09] have shown that, surprisingly, predictive likelihood (or equivalently, perplexity) and human judgment are often not correlated, and even sometimes slightly anti-correlated.
+
+They ran a large scale experiment on the Amazon Mechanical Turk platform. For each topic, they took the top five words (ordered by frequency p(w|k)=ϕkw) of that topic and added a random sixth word. Then, they presented these lists of six words to participants asking them to identify the intruder word.
+
+If every participant could identify the intruder, then we could conclude that the topic is good at describing an idea. If on the other hand, many people identified one of the topic top five word as the intruder, it means that they could not see the logic in the association of words, and we can conclude the topic was not good enough.
+
+It's important to understand what this experiment is proving. The result proves that, given a topic, the five words that have the largest frequency p(w|k)=ϕkw withing their topic are usually not good at describing one coherent idea; at least not good enough to be able to recognize an intruder.
+
+
 翻译一下论文[1]先！
 
 ## Abstract ##
