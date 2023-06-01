@@ -63,7 +63,8 @@
 		</div>
 
 		<div class="container" id="blogpage">
-			{{ content }}
+
+			{{ {% include toc.html html=content %} content }}
 		</div>
 	</div>
 
