@@ -10,13 +10,12 @@ tags: Life-Fragments
 <script type="text/javascript">
 	const ap = new APlayer({
     container: document.getElementById('aplayer'),
-    fixed: true,
     audio: [
     {
         name: 'アドベンチャー',
         artist: 'YOASOBI',
         url: '/music/Adventure.mp3',
-        cover: '/images/album/Adventure.jpg',
+        cover: '/images/album/Adventure.jpg'
     }]
 });
 </script>
