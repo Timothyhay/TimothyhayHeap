@@ -4,9 +4,8 @@ title: 你有没有为一个主题乐园很认真地做一次攻略
 comments: true
 tags: Life-Fragments
 ---
-
 <div id="aplayer"></div>
-<script src="js/APlayer.min.js"></script>
+<script src="/js/APlayer.min.js"></script>
 <script type="text/javascript">
 	const ap = new APlayer({
     container: document.getElementById('aplayer'),
