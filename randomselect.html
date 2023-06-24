@@ -1,0 +1,38 @@
+<style>
+    .name {
+        width: 400px;
+        height: 300px;
+        background-color: rgb(126, 232, 211);
+        margin: 100px auto 10px auto;
+        color: #fff;
+        font-size: 30px;
+        line-height: 300px;
+        text-align: center;
+    }
+    button {
+        display: block;
+        width: 80px;
+        height: 40px;
+        background-color: rgb(115, 223, 189);
+        color: #fff;
+        margin: 0 auto;
+    }
+</style>
+<body>
+    <div id="focus">
+        <div class="name">总之随便吃点</div>
+        <button>选一个！</button>
+    </div>
+    <script>
+        var arr = ["酒精", "饺子", "粥", "提子", "宝宝番茄", "螺蛳粉", "薯片", "汉堡", "串串", "塔可"]
+        var btn = document.querySelector('button')
+        var uname = document.querySelector('.name')
+        var num;
+        btn.onclick = function () {
+            num = parseInt(Math.random() * arr.length);//生成0-9的随机数
+            uname.innerHTML = arr[num]
+        }
+
+    </script>
+</body>
+
