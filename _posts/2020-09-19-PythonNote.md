@@ -111,8 +111,59 @@ Example:
 	1
 	0
 
-## 生成器与迭代器
+## generator(生成器)与迭代器
 
+如果列表元素可以按照某种算法推算出来，那我们是否可以在循环的过程中不断推算出后续的元素呢？这样就不必创建完整的list，从而节省大量的空间，在Python中，这种一边循环一边计算的机制，称为生成器：generator
+
+　　生成器是一个特殊的程序，可以被用作控制循环的迭代行为，python中生成器是迭代器的一种，使用yield返回值函数，每次调用yield会暂停，而可以使用next()函数和send()函数恢复生成器。
+
+　　生成器类似于返回值为数组的一个函数，这个函数可以接受参数，可以被调用，但是，不同于一般的函数会一次性返回包括了所有数值的数组，生成器一次只能产生一个值，这样消耗的内存数量将大大减小，而且允许调用函数可以很快的处理前几个返回值，因此生成器看起来像是一个函数，但是表现得却像是迭代器
+
+要创建一个generator，有很多种方法，第一种方法很简单，只有把一个列表生成式的[]中括号改为（）小括号，就创建一个generator
+
+　　举例如下：
+
+
+	# 列表生成式
+	lis = [x*x for x in range(10)]
+	print(lis)
+	# 生成器
+	generator_ex = (x*x for x in range(10))
+	print(generator_ex)
+	
+	结果：
+	[0, 1, 4, 9, 16, 25, 36, 49, 64, 81]
+	<generator object <genexpr> at 0x000002A4CBF9EBA0>
+
+生成器为一个 generator 对象，同时是可迭代对象。generator保存的是算法，每次调用next(generaotr_ex)就计算出他的下一个元素的值，直到计算出最后一个元素，没有更多的元素时，抛出StopIteration的错误。
+
+generator和函数的执行流程，函数是顺序执行的，遇到return语句或者最后一行函数语句就返回。而变成generator的函数，在每次调用next()的时候执行，遇到yield语句返回，再次被next（）调用时候从上次的返回yield语句处急需执行，也就是用多少，取多少，不占内存。
+
+	def fib(max):
+		n,a,b =0,0,1
+		while n < max:
+			yield b
+			a,b =b,a+b
+			n = n+1
+		return 'done'
+	
+	a = fib(10)
+	print(fib(10))
+	print(a.__next__())
+	print(a.__next__())
+	print(a.__next__())
+	print("可以顺便干其他事情")
+	print(a.__next__())
+	print(a.__next__())
+	
+	结果：
+	<generator object fib at 0x0000023A21A34FC0>
+	1
+	1
+	2
+	可以顺便干其他事情
+	3
+	5
 
 ## lambda operator 的用法 ##
 
@@ -173,3 +224,5 @@ Reference:
 [3] https://medium.com/better-programming/lambda-map-and-filter-in-python-4935f248593
 
 [4] Python 直接赋值、浅拷贝和深度拷贝解析 - https://www.runoob.com/w3cnote/python-understanding-dict-copy-shallow-or-deep.html
+
+https://www.cnblogs.com/wj-1314/p/8490822.html
