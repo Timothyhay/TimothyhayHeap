@@ -113,7 +113,7 @@ Example:
 	1
 	0
 
-## generator(生成器)与迭代器
+## generator(生成器) 与 iterator(迭代器)
 
 将列表元素按照某种算法推算出来，在循环的过程中不断推算出后续的元素——就不必创建完整的list，从而节省大量的空间。在 Python 中，这种一边循环一边计算的机制，称为生成器：generator
 
@@ -277,7 +277,95 @@ Output:
 	('d = ', [1, 2, 3, 4, ['a', 'b']])
 
 
-Reference:
+## RegExp 正则表达式 in Python ##
+
+###  re.match
+
+re.match 尝试从字符串的起始位置匹配一个模式，匹配成功 re.match 方法返回一个匹配的对象，如果不是起始位置匹配成功的话返回 None。
+
+	re.match(pattern, string, flags=0)
+
+	print(re.match('123', '12345').span()) 
+	# (0, 3)
+	# re.match('123', '12345') is <re.Match object; span=(0, 3), match='123'>
+
+
+### re.search
+
+re.search 扫描整个字符串并返回第一个成功的匹配。
+
+
+	re.search(pattern, string, flags=0)
+
+re.match只匹配字符串的开始，如果字符串开始不符合正则表达式，则匹配失败，函数返回None；而re.search匹配整个字符串，直到找到一个匹配。
+
+
+### 检索和替换
+Python 的 re 模块提供了re.sub用于替换字符串中的匹配项。
+
+	re.sub(pattern, repl, string, count=0, flags=0)
+
+参数：
+
+- pattern : 正则中的模式字符串。
+- repl : 替换的字符串，也可为一个函数。
+- string : 要被查找替换的原始字符串。
+- count : 模式匹配后替换的最大次数，默认 0 表示替换所有的匹配。
+
+### re.compile 
+
+compile 函数用于编译正则表达式，生成一个正则表达式(Pattern)对象，供 match() 和 search() 这两个函数使用。
+
+
+	re.compile(pattern[, flags])
+
+参数：
+
+- pattern : 一个字符串形式的正则表达式
+- flags : 可选，表示匹配模式，比如忽略大小写，多行模式等，具体参数为：
+
+- - re.I 忽略大小写
+- - re.L 表示特殊字符集 \w, \W, \b, \B, \s, \S 依赖于当前环境
+- - re.M 多行模式
+- - re.S 即为 . 并且包括换行符在内的任意字符（. 不包括换行符）
+- - re.U 表示特殊字符集 \w, \W, \b, \B, \d, \D, \s, \S 依赖于 Unicode 字符属性数据库
+- - re.X 为了增加可读性，忽略空格和 # 后面的注释
+
+### findall
+
+在字符串中找到正则表达式所匹配的所有子串，并返回一个列表，如果有多个匹配模式，则返回元组列表，如果没有找到匹配的，则返回空列表。
+
+	findall(string[, pos[, endpos]])
+
+注意： match 和 search 是匹配一次 findall 匹配所有。
+
+### re.finditer
+
+和 findall 类似，在字符串中找到正则表达式所匹配的所有子串，并把它们作为一个迭代器返回。
+
+	re.finditer(pattern, string, flags=0)
+
+### re.split
+
+split 方法按照能够匹配的子串将字符串分割后返回列表。
+
+	re.split(pattern, string[, maxsplit=0, flags=0])
+
+参数：
+
+- pattern	匹配的正则表达式
+- string	要匹配的字符串。
+- maxsplit	分隔次数，maxsplit=1 分隔一次，默认为 0，不限制次数。
+- flags	标志位，用于控制正则表达式的匹配方式，如：是否区分大小写，多行匹配等等。
+
+
+	re.split('\W+', 'I, a robot, would like to be free.')
+	# ['I', 'a', 'robot', 'would', 'like', 'to', 'be', 'free', '']
+
+
+
+
+## Reference: ##
 ----------
 [1] Enumerate() in Python - https://www.tutorialspoint.com/enumerate-in-python
 
