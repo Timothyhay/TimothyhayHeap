@@ -5,6 +5,8 @@ comments: true
 tags: Skill Note Python
 ---
 
+## 内置函数 ##
+
 ## 枚举方法enumerate ##
 
 enumerate(X, [start=0])
@@ -113,16 +115,62 @@ Example:
 
 ## generator(生成器)与迭代器
 
-如果列表元素可以按照某种算法推算出来，那我们是否可以在循环的过程中不断推算出后续的元素呢？这样就不必创建完整的list，从而节省大量的空间，在Python中，这种一边循环一边计算的机制，称为生成器：generator
+将列表元素按照某种算法推算出来，在循环的过程中不断推算出后续的元素——就不必创建完整的list，从而节省大量的空间。在 Python 中，这种一边循环一边计算的机制，称为生成器：generator
 
-　　生成器是一个特殊的程序，可以被用作控制循环的迭代行为，python中生成器是迭代器的一种，使用yield返回值函数，每次调用yield会暂停，而可以使用next()函数和send()函数恢复生成器。
+A generator is simply a function which returns an object on which you can call next, such that for every call it returns some value, until it raises a StopIteration exception, signaling that all values have been generated. Such an object is called an iterator.
 
-　　生成器类似于返回值为数组的一个函数，这个函数可以接受参数，可以被调用，但是，不同于一般的函数会一次性返回包括了所有数值的数组，生成器一次只能产生一个值，这样消耗的内存数量将大大减小，而且允许调用函数可以很快的处理前几个返回值，因此生成器看起来像是一个函数，但是表现得却像是迭代器
+Normal functions return a single value using return, just like in Java. In Python, however, there is an alternative, called yield. Using yield anywhere in a function makes it a generator. Observe this code:
+
+	>>> def myGen(n):
+	...     yield n
+	...     yield n + 1
+	... 
+	>>> g = myGen(6)
+	>>> next(g)
+	6
+	>>> next(g)
+	7
+	>>> next(g)
+	Traceback (most recent call last):
+	File "<stdin>", line 1, in <module>
+	StopIteration
+
+As you can see, myGen(n) is a function which yields n and n + 1. Every call to next yields a single value, until all values have been yielded. for loops call next in the background, thus:
+
+	>>> for n in myGen(6):
+	...     print(n)
+	... 
+	6
+	7
+
+A generator is effectively a function that returns (data) before it is finished, but it pauses at that point, and you can resume the function at that point.
+
+	>>> def myGenerator():
+	...     yield 'These'
+	...     yield 'words'
+	...     yield 'come'
+	...     yield 'one'
+	...     yield 'at'
+	...     yield 'a'
+	...     yield 'time'
+
+	>>> myGeneratorInstance = myGenerator()
+	>>> next(myGeneratorInstance)
+	These
+	>>> next(myGeneratorInstance)
+	words
+
+生成器类似于返回值为数组的一个函数，这个函数可以接受参数，可以被调用，但是，不同于一般的函数会一次性返回包括了所有数值的数组，生成器一次只能产生一个值，这样消耗的内存数量将大大减小，而且允许调用函数可以很快的处理前几个返回值，因此生成器看起来像是一个函数，但是表现得却像是迭代器
 
 要创建一个generator，有很多种方法，第一种方法很简单，只有把一个列表生成式的[]中括号改为（）小括号，就创建一个generator
 
-　　举例如下：
+Generator Expression Syntax
+	
+The generator expression in Python has the following Syntax:
 
+	(expression for item in iterable)
+
+　　举例如下：
 
 	# 列表生成式
 	lis = [x*x for x in range(10)]
@@ -138,6 +186,8 @@ Example:
 生成器为一个 generator 对象，同时是可迭代对象。generator保存的是算法，每次调用next(generaotr_ex)就计算出他的下一个元素的值，直到计算出最后一个元素，没有更多的元素时，抛出StopIteration的错误。
 
 generator和函数的执行流程，函数是顺序执行的，遇到return语句或者最后一行函数语句就返回。而变成generator的函数，在每次调用next()的时候执行，遇到yield语句返回，再次被next（）调用时候从上次的返回yield语句处急需执行，也就是用多少，取多少，不占内存。
+
+带有yield的函数不再是一个普通的函数，而是一个生成器generator，可用于迭代。
 
 	def fib(max):
 		n,a,b =0,0,1
@@ -164,6 +214,18 @@ generator和函数的执行流程，函数是顺序执行的，遇到return语�
 	可以顺便干其他事情
 	3
 	5
+
+
+
+
+一个实现了iter方法的对象是可迭代的，一个实现next方法并且是可迭代的对象是迭代器。
+
+可以被next()函数调用并不断返回下一个值的对象称为迭代器：Iterator。
+
+所以一个实现了iter方法和next方法的对象就是迭代器。
+
+可以使用isinstance()判断一个对象是否是Iterator对象。
+生成器都是Iterator对象，但list、dict、str虽然是Iterable（可迭代对象），却不是Iterator（迭代器）。
 
 ## lambda operator 的用法 ##
 
@@ -225,4 +287,6 @@ Reference:
 
 [4] Python 直接赋值、浅拷贝和深度拷贝解析 - https://www.runoob.com/w3cnote/python-understanding-dict-copy-shallow-or-deep.html
 
-https://www.cnblogs.com/wj-1314/p/8490822.html
+[5] Understanding generators in Python - https://stackoverflow.com/questions/1756096/understanding-generators-in-python
+
+[6] python 生成器和迭代器有这篇就够了 - https://www.cnblogs.com/wj-1314/p/8490822.html
