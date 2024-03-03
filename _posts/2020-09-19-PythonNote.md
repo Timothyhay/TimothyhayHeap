@@ -361,9 +361,7 @@ split 方法按照能够匹配的子串将字符串分割后返回列表。
 
 	re.split('\W+', 'I, a robot, would like to be free.')
 	# ['I', 'a', 'robot', 'would', 'like', 'to', 'be', 'free', '']
-
-
-
+                               
 
 ## Reference: ##
 ----------
