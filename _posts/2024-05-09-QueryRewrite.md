@@ -61,7 +61,7 @@ Src: Query2doc: Query Expansion with Large Language Models
 
 提出了ITER-RETGEN方法，它使用生成的内容来指导检索。它在检索-读取-检索-读取流中迭代地实现“检索增强的生成”和“生成增强的检索”。
 
-在每次迭代t中，我们首先使用上一次迭代的生成yt-1，将其与q组合，并检索前k个段落。接下来，我们提示LLM生成输出yt，该输出yt将检索到的段落（表示为Dyt-1||q）和q合并到提示中。一共进行 T 次检索生成迭代 ，
+在每次迭代t中，我们首先使用上一次迭代的生成yt-1，将其与q组合，并检索前k个段落。接下来，我们提示LLM生成输出yt，该输出yt将检索到的段落（表示为 Dy_t-1 || q ）和q合并到提示中。一共进行 T 次检索生成迭代 ，
 
 Src: Enhancing Retrieval-Augmented Large Language Models with Iterative Retrieval-Generation Synergy
 
