@@ -9,9 +9,9 @@ Review of query rewite/reformatting methods to increase retrieval accuracy durin
 
 查询重写的意义：将用户查询的语义空间与文档的语义空间对齐，使LLM提供更准确的回答。
 
-## 借助 LLM 的方法
+## 1 借助 LLM 的方法
 
-## 1. HyDE
+### 1.1 HyDE
 
 假设文档嵌入（HyDE）方法：生成假设文档，以便最终查询向量v与向量空间中的实际文档尽可能紧密地对齐。
 
@@ -28,13 +28,13 @@ Review of query rewite/reformatting methods to increase retrieval accuracy durin
 
 Src: Precise Zero-Shot Dense Retrieval without Relevance Labels
 
-## 2. Rewrite with LLM
+### 1.2 Rewrite with LLM
 
 原始查询可能并不总是用于LLM检索的最佳查询。可以首先使用LLM来重写查询，然后再进行检索和生成答案，而非以原始查询中检索内容并生成答案。
 
 Src: Query Rewriting for Retrieval-Augmented Large Language Models
 
-## 3. Step-Back Prompting
+### 1.3 Step-Back Prompting
 
 一种提示技术，使LLM能够从包含特定细节的实例中抽象、提取高级概念和基本原理。其思想是将“step-back问题”定义为从原始问题派生出的更抽象的问题。
 
@@ -47,7 +47,7 @@ Src: Query Rewriting for Retrieval-Augmented Large Language Models
 2. 推理：LLM可以根据这些关于高级概念或原理的事实推导出原始问题的答案。我们称之为抽象推理。
 
 
-## 4. Query2doc
+### 1.4 Query2doc
 
 提出了Query2doc方法来进行query改写，它使用LLM的一些提示生成伪文档，然后将它们与原始查询组合以创建新的查询。
 
@@ -57,7 +57,7 @@ Query2doc和HyDE之间的另一个区别是，Query2doc训练有监督的密集�
 
 Src: Query2doc: Query Expansion with Large Language Models
 
-## 5. Iteration
+### 1.5 Iteration
 
 提出了ITER-RETGEN方法，它使用生成的内容来指导检索。它在检索-读取-检索-读取流中迭代地实现“检索增强的生成”和“生成增强的检索”。
 
@@ -65,25 +65,28 @@ Src: Query2doc: Query Expansion with Large Language Models
 
 Src: Enhancing Retrieval-Augmented Large Language Models with Iterative Retrieval-Generation Synergy
 
-## 基于知识体系的方法
+## 2 基于知识体系的方法
 
 通过query中词的同义词、上下位词替换改写query.
 
+e.g. query 替换例子
+> 苹果13手机多少钱 -> iphone13多少钱  
+> 新鲜水果->新鲜苹果 
 
-```
-苹果6手机多少钱 -> iphone6多少钱 
-新鲜水果->新鲜苹果 
-```
 
 同义词挖掘方法：如语料对齐挖掘，上下文挖掘等 
 
-语料对齐法：可以拿点击日志、session日志、anchor语料 挖掘到对齐语料。再使用机器翻译模型(比如 IBM Model1)等从对齐语料中挖掘同义词。 
+语料对齐法：可以拿点击日志、session日志、anchor语料 挖掘到对齐语料。再使用机器翻译模型(比如 IBM Model1)等从对齐语料中挖掘同义词。 （语料对齐+机器翻译：原理就是把原语言翻译成目标语言概率最大化。）
+
 
 上下文挖掘：简单来说就是同义词往往有着相似的上下文。通过计算词的上下文相似程度来挖掘同义词
 
 e.g. 
 > 折抵换购 iPhone XR 仅 RMB 176/月起  
 > 折抵换购 苹果 XR 仅 RMB 176/月起
+
+Ref: 宗成庆:《自然语言理解》讲义 11章
+
 
 ## 建立知识体系
 
@@ -93,10 +96,12 @@ e.g.
 
  ## 基于翻译思想
 
-  query 作为源语言，rewrite作为目标语言，训练翻译模型，将query通过推理翻译达到rewrite目的
+query 作为源语言，rewrite作为目标语言，训练翻译模型，将query通过推理翻译达到rewrite目的
 
-  语料对齐+机器翻译：原理就是把原语言翻译成目标语言概率最大化。这里需要单词对齐的方法。
+语料对齐+机器翻译：原理就是把原语言翻译成目标语言概率最大化。这里需要单词对齐的方法。
   
-  Ref: 宗成庆:《自然语言理解》讲义 11章
 
-Reference: https://zhuanlan.zhihu.com/p/685981587
+
+## Reference
+
+[1] https://zhuanlan.zhihu.com/p/685981587
