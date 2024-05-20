@@ -61,7 +61,8 @@ Src: Query2doc: Query Expansion with Large Language Models
 
 提出了ITER-RETGEN方法，它使用生成的内容来指导检索。它在检索-读取-检索-读取流中迭代地实现“检索增强的生成”和“生成增强的检索”。
 
-在每次迭代t中，我们首先使用上一次迭代的生成yt-1，将其与q组合，并检索前k个段落。接下来，我们提示LLM生成输出yt，该输出yt将检索到的段落（表示为 Dy_t-1 || q ）和q合并到提示中。一共进行 T 次检索生成迭代 ，
+在每次迭代t中，我们首先使用上一次迭代的生成yt-1，将其与q组合，并检索前k个段落。接下来，我们提示LLM生成输出yt，该输出yt将检索到的段落（表示为 Dy_t-1 || q ）和q合并到提示中。一共进行 T 次检索生成迭代。
+
 
 Src: Enhancing Retrieval-Augmented Large Language Models with Iterative Retrieval-Generation Synergy
 
@@ -86,6 +87,13 @@ e.g.
 > 折抵换购 苹果 XR 仅 RMB 176/月起
 
 Ref: 宗成庆:《自然语言理解》讲义 11章
+
+有关同义词替换，实际处理时需要注意语料内容。如果Query内容是有高度结构化要求的，则不宜进行替换（或删除）。这类语料包括成段的代码内容。
+所谓删除指的是：
+
+## 删除低权重token
+
+完成分词后，在原始知识库中计算各token权重（如以IDF作为指标），同时以原始query大致筛选出一部分目标文档。将低权重token去除，组成新的query再在更相关的目标文档进行二次检索，重新获得一组结果。
 
 
 ## 建立知识体系
