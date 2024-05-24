@@ -5,9 +5,15 @@ comments: true
 tags: RAG
 ---
 
-Review of query rewite/reformatting methods to increase retrieval accuracy during query stage.
+Review of query rewite methods to increase retrieval accuracy during query stage.
 
-查询重写的意义：将用户查询的语义空间与文档的语义空间对齐，使LLM提供更准确的回答。
+The significance of query rewriting: aligning the semantic space of a user query with the semantic space of a document - allows LLM to provide more accurate answers.
+
+查询改写的意义：将用户查询的语义空间与文档的语义空间对齐，使LLM提供更准确的回答。
+
+在搜索场景中，由于用户搜索词Query和检索文本Document之间存在大量表述不一的情况，在文本检索框架下，此类文本不匹配导致的漏召回问题严重影响着用户的体验。对这类问题业界一般有两种方案：用户端拓展用户的查询词——即查询改写，或Document端拓展文档关键词——即Document标签。考虑到RAG服务难以对用户入库知识做修改，笔者经手的服务也暂不聚焦在增加知识元数据的功能，这里主要收集前一种解决漏召回的方案：查询改写（Query Rewriting，或称为查询扩展Query Expansion）。查询改写的应用方式是对原始Query拓展出与用户需求关联度高的改写词，多个改写词与用户搜索词一起做检索，从而用更好的表述，帮用户搜到更多符合需求的内容。
+
+In the search scenario, due to the large number of inconsistent expressions between the user's search term Query and the retrieved text Document, under the text retrieval framework, the missed recall problem caused by such text mismatch seriously affects the user experience. The industry generally has two solutions for this kind of problem: the user side expands the user's query terms - that is, query rewriting, or the Document side expands the document keywords - that is, Document tags. Considering that it is difficult for the RAG service to modify the user's knowledge stored in the database, the services I handle do not focus on the function of adding knowledge metadata for the time being. Here we mainly collect the former solution to missing recall: Query Rewriting (also known as Query Rewriting / Query Expansion). The application method of query rewriting is to expand the original Query into rewritten words that are highly relevant to the user's needs. Multiple rewritten words are searched together with the user's search terms, so as to use better expressions to help users find more content that meets their needs. 
 
 ## 1 借助 LLM 的方法
 
@@ -113,3 +119,4 @@ query 作为源语言，rewrite作为目标语言，训练翻译模型，将quer
 ## Reference
 
 [1] https://zhuanlan.zhihu.com/p/685981587
+[2] 美团搜索中查询改写技术的探索与实践 - https://tech.meituan.com/2022/02/17/exploration-and-practice-of-query-rewriting-in-meituan-search.html
