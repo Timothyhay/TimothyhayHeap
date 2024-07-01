@@ -5,7 +5,7 @@ comments: true
 tags: Deep-Learning 
 ---
 
-# How to design a nice DSL
+## How to design a nice DSL
 
 1. Service Interaction 
 
@@ -28,3 +28,9 @@ tags: Deep-Learning
 限制：对原生 JavaScript 以白名单方式限制了不安全用法，去除无法解析的语句和测试 API 无关的内容；同时减少了解析时的语法树复杂程度。
 
 自动纠错：借助修改实例自动匹配规则进行纠错，在解析 AST 的过程中匹配规则，确保解析结果符合预期。
+
+## Fetch Rules to Build Prompts
+
+1. Dynamic Fetch
+
+2. Combine Context with User Intention
