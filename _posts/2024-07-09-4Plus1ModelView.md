@@ -9,9 +9,9 @@ tags: Note
 
 From Wikipedia:
 
-4+1 is a view model used for "describing the architecture of software-intensive systems, based on the use of multiple, concurrent views".The views are used to describe the system from the viewpoint of different stakeholders, such as end-users, developers, system engineers, and project managers. The four views of the model are **logical, development, process and physical view**. In addition, selected **use cases or scenarios** are used to illustrate the architecture serving as the 'plus one' view. Hence, the model contains 4+1 views:
+> 4+1 is a view model used for "describing the architecture of software-intensive systems, based on the use of multiple, concurrent views".[1]The views are used to describe the system from the viewpoint of different stakeholders, such as end-users, developers, system engineers, and project managers. The four views of the model are **logical, development, process and physical view**. In addition, selected **use cases or scenarios** are used to illustrate the architecture serving as the 'plus one' view. Hence, the model contains 4+1 views:
 
-4+1 是一种视图模型，用于“通过使用多个并列视图来描述软件密集型系统的架构”。 这些视图用于从不同利益相关者（如最终用户、开发人员、系统工程师和项目经理）的角度描述系统。该模型的 4 个视图是**逻辑视图、开发视图、过程视图和物理视图**。此外，选定的**用例或场景**用于说明作为“+1”视图的架构。因此，该模型包含 4+1 视图： 
+4+1 是一种视图模型，用于“通过使用多个并列视图来描述软件密集型系统的架构”。 这些视图用于从不同利益相关者（如最终用户、开发人员、系统工程师和项目经理）的角度描述系统。该模型的 4 个视图是**逻辑视图、开发视图、进程视图和物理视图**。此外，选定的**用例或场景**用于说明作为“+1”视图的架构。因此，该模型包含 4+1 视图： 
 
 
 **Logical view:** The logical view is concerned with the functionality that the system provides to end-users. **UML diagrams** are used to represent the logical view, and *include class diagrams, and state diagrams*.
@@ -21,7 +21,7 @@ From Wikipedia:
 
 **Process view**: The process view deals with the dynamic aspects of the system, explains the system processes and how they communicate, and focuses on the run time behavior of the system. The process view addresses concurrency, distribution, integrator, performance, and scalability, etc. **UML diagrams** to represent process view *include the sequence diagram, communication diagram, activity diagram.*
 
-**流程视图**：流程视图处理系统的动态方面，解释系统进程及其通信方式，并关注系统的运行时行为。流程视图涉及并发性、分布式、集成器、性能和可扩展性等。表示流程视图的 UML 图*包括序列图、通信图、活动图*。
+**进程视图**：进程视图处理系统的动态方面，解释系统进程及其通信方式，并关注系统的运行时行为。进程视图涉及并发性、分布式、集成器、性能和可扩展性等。表示进程视图的 UML 图*包括序列图、通信图、活动图*。
 
 
 **Development view**: The development view (aka the implementation view) illustrates a system from a programmer's perspective and is concerned with software management. **UML Diagrams** used to represent the development view *include the Package diagram and the Component diagram*.
@@ -42,3 +42,9 @@ From Wikipedia:
 The 4+1 view model is generic and is not restricted to any notation, tool or design method.
 
 4+1 视图模型是通用的，不限于任何符号、工具或设计方法。
+
+
+
+## Reference
+
+[1] 4+1 architectural view model - https://en.wikipedia.org/wiki/4%2B1_architectural_view_model
