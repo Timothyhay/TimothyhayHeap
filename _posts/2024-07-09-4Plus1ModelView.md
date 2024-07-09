@@ -9,7 +9,7 @@ tags: Note
 
 From Wikipedia:
 
-4+1 is a view model used for "describing the architecture of software-intensive systems, based on the use of multiple, concurrent views".[1] The views are used to describe the system from the viewpoint of different stakeholders, such as end-users, developers, system engineers, and project managers. The four views of the model are **logical, development, process and physical view**. In addition, selected **use cases or scenarios** are used to illustrate the architecture serving as the 'plus one' view. Hence, the model contains 4+1 views:
+4+1 is a view model used for "describing the architecture of software-intensive systems, based on the use of multiple, concurrent views".The views are used to describe the system from the viewpoint of different stakeholders, such as end-users, developers, system engineers, and project managers. The four views of the model are **logical, development, process and physical view**. In addition, selected **use cases or scenarios** are used to illustrate the architecture serving as the 'plus one' view. Hence, the model contains 4+1 views:
 
 4+1 是一种视图模型，用于“通过使用多个并列视图来描述软件密集型系统的架构”。 这些视图用于从不同利益相关者（如最终用户、开发人员、系统工程师和项目经理）的角度描述系统。该模型的 4 个视图是**逻辑视图、开发视图、过程视图和物理视图**。此外，选定的**用例或场景**用于说明作为“+1”视图的架构。因此，该模型包含 4+1 视图： 
 
