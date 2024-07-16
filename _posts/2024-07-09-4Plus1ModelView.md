@@ -45,8 +45,6 @@ The 4+1 view model is generic and is not restricted to any notation, tool or des
 
 ## 应用
 
-**Logical view:** 
-
 
 ## Reference
 
