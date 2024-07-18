@@ -46,6 +46,8 @@ The 4+1 view model is generic and is not restricted to any notation, tool or des
 ## 应用
 
 
+**逻辑视图**
+
 ## Reference
 
 [1] 4+1 architectural view model - https://en.wikipedia.org/wiki/4%2B1_architectural_view_model
