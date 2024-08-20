@@ -17,6 +17,13 @@ tags: Note
  can inject knowledge of dialogue domain ontologies into word vector space representations to facilitate the construction of semantic dictionaries which improve DST performance across two different dialogue domains. 
 反向拟合⽅法可以将对话领域本体的知识注⼊到词向量空间表示中，以促进语义词典的构建，从⽽提⾼跨两个不同对话领域的 DST 性能（dialogue state tracking task）。
 
+### 文中应用的下游任务举例
+
+The counter-fitting method can inject knowledge of dialogue domain ontologies into word vector space representations to facilitate the
+construction of semantic dictionaries which improve DST performance across two different dialogue domains.
+
+反拟合方法可以将对话域本体的知识注入到词向量空间表示中，以促进语义词典的构建，从而提高两个不同对话域的DST性能。
+
 ## 同类工作
 
 17 年之前没有太多利用约束关系的做法。
