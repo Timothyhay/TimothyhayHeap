@@ -26,9 +26,9 @@ construction of semantic dictionaries which improve DST performance across two d
 
 ## 同类工作
 
-17 年之前没有太多利用约束关系的做法。
+17 年之前没有太多利用约束关系的做法，大多数只是在过滤同/反义关系带来的噪声。
 
-之后：
+
 
 
 
@@ -37,3 +37,4 @@ construction of semantic dictionaries which improve DST performance across two d
 ## 潜在改进点
 
 能否通过更具体的方式注入领域本体的知识？既然本体的表现形式可以是图，是否可以将本体以图呈现，结构化地整合更多实际应用需要的关系进入向量空间？
+
