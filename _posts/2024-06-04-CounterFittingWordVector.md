@@ -38,3 +38,7 @@ construction of semantic dictionaries which improve DST performance across two d
 
 能否通过更具体的方式注入领域本体的知识？既然本体的表现形式可以是图，是否可以将本体以图呈现，结构化地整合更多实际应用需要的关系进入向量空间？
 
+
+## 如何应用
+
+用于查询改写 - 如何需要选择需要改写的词？词典类的改写发掘中有合适的方法吗
