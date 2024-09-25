@@ -24,9 +24,6 @@ construction of semantic dictionaries which improve DST performance across two d
 
 反拟合方法可以将对话域本体的知识注入到词向量空间表示中，以促进语义词典的构建，从而提高两个不同对话域的DST性能。
 
-## 同类工作
-
-17 年之前没有太多利用约束关系的做法，大多数只是在过滤同/反义关系带来的噪声。
 
 
 
