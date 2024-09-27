@@ -29,6 +29,11 @@ construction of semantic dictionaries which improve DST performance across two d
 
 ## 上游输入来源和方法
 
+- 关系：本体，同反义词词典
+
+- 向量：预训练词向量
+
+
 
 
 ## 潜在改进点
