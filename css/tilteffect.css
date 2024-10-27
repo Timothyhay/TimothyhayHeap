@@ -136,3 +136,8 @@
 	top: -10%;
 	left: -10%;
 }
+
+.grid__img--example-4 img {
+	width: 100%;
+	height: auto;
+}
