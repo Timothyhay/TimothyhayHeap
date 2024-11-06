@@ -246,77 +246,73 @@ comments: true
 	<label></label>
 	<h6>DROP ME A LINE</h6>
 	</div>
-		<div class="contact-agileinfo-content">
-			<div class="container">
+	<div class="contact-agileinfo-content">
+		<div class="container">
+			<div class="contact-agileinfo-address">
+				<div class="contact-agileinfo-icons">
+					<div class="contact-icons-info">
+						<h3>Comments</h3>
+					</div>
+				</div>
+			</div>
 
-				<div class="contact-agileinfo-address">
-					<div class="contact-agileinfo-icons">
-						<div class="contact-icons-info">
-							<h3>Comments</h3>
+			<!-- Comment Area -->
+			{% if page.comments %}
+			<div id="disqus_thread"></div>
+				<script>
+					/**
+					*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+					*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+
+					var disqus_config = function () {
+					this.page.url = '{{ page.url | absolute_url }}';  // Replace PAGE_URL with your page's canonical URL variable
+					this.page.identifier = '{{ page.url }}'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+					};
+
+					(function() { // DON'T EDIT BELOW THIS LINE
+					var d = document, s = d.createElement('script');
+					s.src = 'https://razzorleaf.disqus.com/embed.js';
+					s.setAttribute('data-timestamp', +new Date());
+					(d.head || d.body).appendChild(s);
+					})();
+				</script>
+			<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+
+			{% endif %}
+
+			<div class="contact-agileinfo-address">
+				<div class="row">
+					<div class="col-sm-6 col-md-4">
+						<div class="address">
+						</div>
+						<div class="contact-agileinfo-icons">
+							<div class="contact-icons-info">
+								<h3>Find me on ..</h3>
+							</div>
+							<ul>
+								<li><a href="https://twitter.com/Timothy_OwO"><i class="fa fa-twitter" aria-hidden="true"></i> @Timothy_OwO </a></li>
+								<li><a href="https://github.com/Timothyhay"><i class="fa fa-github" aria-hidden="true"></i> RazzorLeaf </a></li>
+							</ul>
 						</div>
 					</div>
 				</div>
-				
-				<!-- Comment Area -->
-				{% if page.comments %}
-				<div id="disqus_thread"></div>
-					<script>
-						/**
-						*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
-						*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
-						
-						var disqus_config = function () {
-						this.page.url = '{{ page.url | absolute_url }}';  // Replace PAGE_URL with your page's canonical URL variable
-						this.page.identifier = '{{ page.url }}'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
-						};
-						
-						(function() { // DON'T EDIT BELOW THIS LINE
-						var d = document, s = d.createElement('script');
-						s.src = 'https://razzorleaf.disqus.com/embed.js';
-						s.setAttribute('data-timestamp', +new Date());
-						(d.head || d.body).appendChild(s);
-						})();
-					</script>
-				<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-                            
+			</div>
 
-				{% endif %}
-
-				<div class="contact-agileinfo-address">
-					<div class="row">
-						<div class="col-sm-6 col-md-4">
-							<div class="address">
+			<div class="contact-agileinfo-address">
+				<div class="row">
+					<div class="col-sm-6 col-md-4">
+						<div class="address">
+						</div>
+						<div class="contact-agileinfo-icons">
+							<div class="contact-icons-info">
+								<h3>Links</h3>
 							</div>
-							<div class="contact-agileinfo-icons">
-								<div class="contact-icons-info">
-									<h3>Find me on ..</h3>
-								</div>
-								<ul>
-									<li><a href="https://twitter.com/Timothy_OwO"><i class="fa fa-twitter" aria-hidden="true"></i> @Timothy_OwO </a></li>
-									<li><a href="https://github.com/Timothyhay"><i class="fa fa-github" aria-hidden="true"></i> RazzorLeaf </a></li>
-								</ul>
-							</div>
+							<ul>
+								<li><a href="https://blog.cedard.top/"> 四方喫茶舘 - Cedar's Homepage</a> <br /> 一个懂历史的有趣音乐家，在学EE</li>
+							</ul>
 						</div>
 					</div>
 				</div>
-
-				<div class="contact-agileinfo-address">
-					<div class="row">
-						<div class="col-sm-6 col-md-4">
-							<div class="address">
-							</div>
-							<div class="contact-agileinfo-icons">
-								<div class="contact-icons-info">
-									<h3>Links</h3>
-								</div>
-								<ul>
-									<li><a href="https://blog.cedard.top/"> 四方喫茶舘 - Cedar's Homepage</a> <br /> 一个懂历史的有趣音乐家，在学EE</li>
-								</ul>
-							</div>
-						</div>
-					</div>
-				</div>
-
 			</div>
 		</div>
 	</div>
