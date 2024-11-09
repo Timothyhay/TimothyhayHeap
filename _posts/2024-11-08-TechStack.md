@@ -13,4 +13,6 @@ All the pages has been set up with the help of Jekyll framework.
 
 ## Visitor Counter
 
+<font color="blue">LeanCloud</font>
+
 ## CI/CD
