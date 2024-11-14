@@ -6,8 +6,8 @@ View &nbsp;<span id="" class="leancloud_visitors" data-flag-title=""> - </span>
 <script>
     // 第一个参数是appid，第二个参数是appkey，此处的只是示例
     AV.init({
-        appId: "${{ secrets.APP_ID }}",
-        appKey: "${{ secrets.APP_KEY }}",
+        appId: "{{site.lean_cloud.app_id}}",
+        appKey: "{{site.lean_cloud.app_key}}",
         serverURL: "https://jbr2na5y.api.lncldglobal.com"
     });
     // 自己创建的Class的名字

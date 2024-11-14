@@ -8,7 +8,7 @@ paginate: 12
 paginate_path: "articlelist/UwU/:num"
 lean_cloud:
     enabled: true
-    appId: ${{ secrets.APP_ID }}
-    appKey: ${{ secrets.APP_KEY }}
+    app_id: ${{ secrets.APP_ID }}
+    app_key: ${{ secrets.APP_KEY }}
 collections:
 - status
