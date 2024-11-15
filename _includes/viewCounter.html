@@ -1,15 +1,10 @@
 
 View &nbsp;<span id="" class="leancloud_visitors" data-flag-title=""> - </span>
 
-<!-- 同时兼容http与https -->
-<script src="//unpkg.com/leancloud-storage@4.12.2/dist/av-min.js"></script>
+<script src="//cdn1.lncld.net/static/js/2.5.0/av-min.js"></script>
 <script>
     // 第一个参数是appid，第二个参数是appkey，此处的只是示例
-    AV.init({
-        appId: "{{site.lean_cloud.app_id}}",
-        appKey: "{{site.lean_cloud.app_key}}",
-        serverURL: "https://jbr2na5y.api.lncldglobal.com"
-    });
+    AV.initialize("{{site.lean_cloud.app_id}}", "{{site.lean_cloud.app_key}}");
     // 自己创建的Class的名字
     var name='Counter';
     function createRecord(Counter){
