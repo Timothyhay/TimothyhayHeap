@@ -18,7 +18,7 @@ All the pages has been set up with the help of Jekyll framework.
 
 ### Visitor Counter
 
-实现了 Visitor Counter 的功能。
+借助这类工具通过 JS 存储访问数据，实现了 Visitor Counter 的功能。
 
 
 ## CI/CD
