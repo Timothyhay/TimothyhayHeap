@@ -28,3 +28,4 @@ All the pages has been set up with the help of Jekyll framework.
 GitHub Action **（居然）**自带一个 CI(continuous integration) 工作流！
 可以在这个 [文档](https://docs.github.com/en/actions/about-github-actions/about-continuous-integration-with-github-actions) 看到详情。
 借助这个功能可以让这个静态网站的部署和使用变得更灵活一些，一些稍微需要一些技巧的事情也可以借助这个完成。
+
