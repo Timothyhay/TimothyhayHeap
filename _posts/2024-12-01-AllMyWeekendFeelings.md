@@ -111,6 +111,8 @@ OutsideHour -0.150199  0.402214     1.000000
 
 接下来挖掘一下日记具体内容中包含的语义信息。尤其在我完全不记得以前写过了什么的现在，感觉像拿着刮刮乐的小朋友.. 希望能发现一些意外惊喜。
 
+### Tokenization
+
 在没有去除 stopwords 的情况下做了词频统计，因为这里可以发现一些更有趣的事：即使是记录心情，我的语言特征也很明显。比如“..”的写法真的已经用了十几年，被我用来作为一种淡淡的语气衔接标记，成为胜过“啊”/“emmm”等各种赛博逗号的挚爱用法。
 
 ![Top10FreqWords](/images/illustration/2024-12-05/Top10FreqWords.png)
@@ -123,11 +125,65 @@ OutsideHour -0.150199  0.402214     1.000000
 
 “自己”，在描述一切的时候讨论的最终目标。
 
-以及和探索过程有关的内容，“好吃” “二次元” 和“活动”
+以及和探索过程有关的内容，“好吃” “二次元” 和“活动”看起来像很多次日常的主题。
+
+
+完成分词后，可以尝试使用感兴趣的关键词针对性地判断特殊事件对心情的影响。这里我选择了出现次数相对多，又能说明问题的两个主题：工作与学习。
+
+
+![MoodByActivityKeywords.png](/images/illustration/2024-12-05/MoodByActivityKeywords.png)
+
+对我来说，工作之后在周末的学习通常是一些感兴趣的事情，往往是自驱的活动；但加班真的不是。虽然不代表加班一定会有坏心情，但加班给心情带来的波动方差很大。
+
+这里的活动关键词我还尝试了天气、运动类型的主题，发现自己其实不怎么提这些内容。尤其是天气这种事，对我完全没有影响.. 似乎只是生活背景色的一部分。毕竟我至今也没有装过天气预报的APP。
+
+### Sentiment Analysis
+
+情感分析是最开始打算做这个记录的时候就计划做的事，作为经典 NLP 任务实现起来有很多现成的轮子，而且也很有意思（NLP魂狠狠动了）。
+
+考虑到调用方便和准确度，这里同时使用 `SnowNLP().sentiments` 基于贝叶斯模型，和今天的第一梯队 LLM `gemini-2.5-flash-preview-04-17` 进行了日记`Description`字段的情感分析。贝叶斯模型的方法主要用于筛选情感相关的关键词，用于本阶段的其他实验中；LLM 方法生成的结果会更多给我自己参考。
+
+顺带一提，这里我使用的 prompt 如下：
+
+```python
+    system_prompt = dedent('''
+    你是能力极强的情感分析师。接下来你会收到用户关于某个休息日的描述，你需要分析用户的日程描述，给出一段简短的评价，以及一个由你决定的当日心情量化得分。
+    接收到的输入以一个JSON表示，包含的键与含义如下：
+    {
+        'Week': '记录所在周序号', 
+        'Title': '记录标题，通常无意义', 
+        'OutsideHour': '出门时长', 
+        'Mood': '用户的主观心情打分，是0~5之间的浮点数，越高表示记录时认为自己的心情越好', 
+        'Description': '当日日程的详细描述，你应当以此为主要依据来分析用户心情', 
+        'Created_time': '记录时间'
+    }
+
+    请注意：
+    1. 你的最终目的是积极地引导用户理解如何过上更快乐、更有意义的生活，因此你需要在评价中用温和的语气对用户进行正面引导，同时你的分析应当尽可能专业、详细。
+    2. 你仍然需要客观地根据'Description'字段内容给出一个客观的用户一日心情评价。这个评价不需要参考'Mood'字段，而应该由你的独立分析给出。这里的评分也应该是0~5之间的浮点数，越高表示你认为当日记录的心情越好。
+    ''').strip()
+
+
+response = client.models.generate_content(
+                model="gemini-2.5-flash-preview-04-17",
+                config=types.GenerateContentConfig(
+                    system_instruction=system_prompt,
+                    response_schema=SentimentEvaluation,
+                    response_mime_type="application/json",
+                ),
+                contents=str(record)
+            )
+```
+借助 Google `genai` 的
 
 
 ![MoodAndScoreDistribution.png](/images/illustration/2024-12-05/MoodAndScoreDistribution.png)
 
+
+
+## 4 
+
+使用了马卡龙配色。
 
 
 ## Reference
