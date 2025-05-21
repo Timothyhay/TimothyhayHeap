@@ -1,6 +1,6 @@
 ---
 layout: blogpage
-title: My Weekends Feels Like 3.53 in 2024
+title: My Weekends Feels Like.. 3.53 in 2024
 tags: Life-Fragments
 ---
 
