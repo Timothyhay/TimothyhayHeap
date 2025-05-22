@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZUTOMAYO Inspired Page</title>
+    <!-- Press Start 2P for Latin chars/logo, SimSun for Chinese -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/identity.css">
+</head>
+<body>
+<!-- MODIFIED: LOGO moved outside the sidebar for easier positioning -->
+<h1 class="main-logo">ZUTOMAYO</h1>
+<div class="container">
+    <nav class="sidebar">
+        <ul>
+            <li><a href="#">顶部</a></li>
+            <li><a href="#">消息</a></li>
+            <li><a href="#">居住</a></li>
+            <li><a href="#">发布</a></li>
+            <li><a href="#">游戏</a></li>
+            <li><a href="#">字体</a></li>
+            <li><a href="#">照片</a></li>
+            <li><a href="#">轮廓</a></li>
+            <li><a href="#">店铺</a></li>
+            <li><a href="#">优质的</a></li>
+            <li><a href="#">注册</a></li>
+            <li><a href="#">登录</a></li>
+            <li><a href="#">噪音</a></li>
+            <li><a href="#">接触</a></li>
+        </ul>
+        <div class="social-icons nav-item"> <!-- Also animate this block -->
+            <span>▶️</span> <span>🐦</span> <span>📷</span>
+        </div>
+        <div class="copyright nav-item"> <!-- And this -->
+            版权所有 2024@ZUTOMAYO
+        </div>
+        <div class="language-switcher nav-item"> <!-- And this -->
+            <select>
+                <option>Chinese (Simplified)</option>
+                <option>日本語</option>
+                <option>English</option>
+            </select>
+        </div>
+    </nav>
+
+    <main class="content-area" id="contentArea">
+        <!-- Dialogs will be injected here by JavaScript -->
+        <div class="background-art-placeholder">
+            <!-- You can put a complex background image here if you have one -->
+            <!-- For now, it's just styled with CSS -->
+        </div>
+    </main>
+</div>
+
+<!-- Dialog Template (hidden) -->
+<template id="dialogTemplate">
+    <div class="dialog-box">
+        <div class="dialog-title-bar">
+            <span class="dialog-title">Dialog Title</span>
+            <button class="dialog-close-button">X</button>
+        </div>
+        <div class="dialog-content">
+            <!-- Content goes here -->
+        </div>
+        <div class="dialog-buttons">
+            <button class="dialog-action-button">はい (Y)</button>
+            <button class="dialog-action-button">いいえ (N)</button>
+        </div>
+    </div>
+</template>
+
+<script src="js/identity.js"></script>
+</body>
+</html>
