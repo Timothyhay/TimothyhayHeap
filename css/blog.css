@@ -41,6 +41,10 @@ img{
     height: 40%;
 }
 
+p:has(img) {
+  margin: 20px 0; /* 上下各20px外边距，左右为0 */
+}
+
 /* 为md中的列表提供标注*/
 #blogpage ul li{
     list-style-type: square;
