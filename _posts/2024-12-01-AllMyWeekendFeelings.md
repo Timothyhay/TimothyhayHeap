@@ -375,7 +375,7 @@ p.s. 我尝试在图表中使用了马卡龙配色，这个配色方案是由 Gr
 
 ## Reference
 
-[1] Dr. Art Kohn Explains How to Achieve the Optimal Learning Experience with Boosts and Bursts - https://www.nasbaregistry.org/cpe-monitor-newsletters/dr-art-kohn-explains-how-to-achieve-the-optimal-learning-experience-with-boosts-and-bursts#:~:text=On%20average%2C%2050%20percent%20of%20information%20is%20forgotten,is%20more%20important%20than%20what%20you%20do%20during.
+[1] [Dr. Art Kohn Explains How to Achieve the Optimal Learning Experience with Boosts and Bursts](https://www.nasbaregistry.org/cpe-monitor-newsletters/dr-art-kohn-explains-how-to-achieve-the-optimal-learning-experience-with-boosts-and-bursts#:~:text=On%20average%2C%2050%20percent%20of%20information%20is%20forgotten,is%20more%20important%20than%20what%20you%20do%20during)
 
 [2] Notion API Reference - https://developers.notion.com/reference/intro#code-samples--sdks
 

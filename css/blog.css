@@ -61,3 +61,12 @@ code{
     color: #288adb;
     background-color: #ffffff85;
 }
+
+h4,
+h3,
+h4,
+h5,
+h6 {
+    margin: 20px; 
+    font-family: '39_smoothregular', sans-serif;
+}
