@@ -1,41 +1,54 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN"> <!-- Sets the language to Simplified Chinese -->
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZUTOMAYO Inspired Page</title>
-    <!-- Press Start 2P for Latin chars/logo, SimSun for Chinese -->
+    <meta charset="UTF-8"> <!-- Specifies character encoding -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Configures viewport for responsiveness -->
+    <title>ZUTOMAYO Inspired Page</title> <!-- Page title -->
+
+    <!-- Google Font for pixelated Latin characters (LOGO) -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <!-- Link to the external CSS stylesheet -->
     <link rel="stylesheet" href="css/identity.css">
 </head>
 <body>
-<!-- MODIFIED: LOGO moved outside the sidebar for easier positioning -->
+<!-- Main LOGO, positioned absolutely to overlap sidebar and content area -->
 <h1 class="main-logo">ZUTOMAYO</h1>
+
+<!-- Main container for sidebar and content area -->
 <div class="container">
+    <!-- Left navigation sidebar -->
     <nav class="sidebar">
+        <!-- Navigation list -->
         <ul>
-            <li><a href="#">顶部</a></li>
-            <li><a href="#">消息</a></li>
-            <li><a href="#">居住</a></li>
-            <li><a href="#">发布</a></li>
-            <li><a href="#">游戏</a></li>
-            <li><a href="#">字体</a></li>
-            <li><a href="#">照片</a></li>
-            <li><a href="#">轮廓</a></li>
-            <li><a href="#">店铺</a></li>
-            <li><a href="#">优质的</a></li>
-            <li><a href="#">注册</a></li>
-            <li><a href="#">登录</a></li>
-            <li><a href="#">噪音</a></li>
-            <li><a href="#">接触</a></li>
+            <!-- Each list item has 'nav-item' class for staggered animation -->
+            <li class="nav-item"><a href="#">顶部</a></li>
+            <li class="nav-item"><a href="#">消息</a></li>
+            <li class="nav-item"><a href="#">居住</a></li>
+            <li class="nav-item"><a href="#">发布</a></li>
+            <li class="nav-item"><a href="#">游戏</a></li>
+            <li class="nav-item"><a href="#">字体</a></li>
+            <li class="nav-item"><a href="#">照片</a></li>
+            <li class="nav-item"><a href="#">轮廓</a></li>
+            <li class="nav-item"><a href="#">店铺</a></li>
+            <li class="nav-item"><a href="#">优质的</a></li>
+            <li class="nav-item"><a href="#">注册</a></li>
+            <li class="nav-item"><a href="#">登录</a></li>
+            <li class="nav-item"><a href="#">噪音</a></li>
+            <li class="nav-item"><a href="#">接触</a></li>
         </ul>
-        <div class="social-icons nav-item"> <!-- Also animate this block -->
-            <span>▶️</span> <span>🐦</span> <span>📷</span>
+        <!-- Social media icons (also animated as a 'nav-item') -->
+        <div class="social-icons nav-item">
+            <span>▶️</span> <!-- Placeholder YouTube icon -->
+            <span>🐦</span> <!-- Placeholder Twitter icon -->
+            <span>📷</span> <!-- Placeholder Instagram icon -->
         </div>
-        <div class="copyright nav-item"> <!-- And this -->
+        <!-- Copyright notice (also animated) -->
+        <div class="copyright nav-item">
             版权所有 2024@ZUTOMAYO
         </div>
-        <div class="language-switcher nav-item"> <!-- And this -->
+        <!-- Language switcher dropdown (also animated) -->
+        <div class="language-switcher nav-item">
             <select>
                 <option>Chinese (Simplified)</option>
                 <option>日本語</option>
@@ -44,32 +57,36 @@
         </div>
     </nav>
 
+    <!-- Main content display area where dialogs will appear -->
     <main class="content-area" id="contentArea">
-        <!-- Dialogs will be injected here by JavaScript -->
+        <!-- Placeholder for a background image or art, styled via CSS -->
         <div class="background-art-placeholder">
-            <!-- You can put a complex background image here if you have one -->
-            <!-- For now, it's just styled with CSS -->
+            <!-- This div can be removed if the background-image on .content-area is sufficient -->
         </div>
     </main>
 </div>
 
-<!-- Dialog Template (hidden) -->
+<!-- HTML template for the dialog boxes (initially hidden) -->
 <template id="dialogTemplate">
     <div class="dialog-box">
+        <!-- Dialog title bar: draggable area and close button -->
         <div class="dialog-title-bar">
-            <span class="dialog-title">Dialog Title</span>
-            <button class="dialog-close-button">X</button>
+            <span class="dialog-title">Dialog Title</span> <!-- Title text -->
+            <button class="dialog-close-button">X</button> <!-- Close button -->
         </div>
+        <!-- Main content area of the dialog -->
         <div class="dialog-content">
-            <!-- Content goes here -->
+            <!-- Dynamic content will be injected here by JavaScript -->
         </div>
+        <!-- Button area at the bottom of the dialog -->
         <div class="dialog-buttons">
-            <button class="dialog-action-button">はい (Y)</button>
-            <button class="dialog-action-button">いいえ (N)</button>
+            <button class="dialog-action-button">はい (Y)</button> <!-- Yes button -->
+            <button class="dialog-action-button">いいえ (N)</button> <!-- No button -->
         </div>
     </div>
 </template>
 
+<!-- Link to the external JavaScript file -->
 <script src="js/identity.js"></script>
 </body>
 </html>
