@@ -45,7 +45,11 @@ html {
 
 body {
     font-family: var(--pixel-font-cjk); /* Default font for CJK text */
-    background-color: var(--pale-blue); /* Main page background color */
+    /* REMOVE: background-color: var(--pale-blue); */
+    background-image: url(/images/desktop.jpg); /* MOVED FROM .content-area */
+    background-size: cover;                     /* MOVED FROM .content-area */
+    background-position: center;                /* MOVED FROM .content-area */
+    background-attachment: fixed;               /* ADDED for seamless background */
     color: var(--dark-text);            /* Default text color */
     overflow: hidden;                   /* Prevent scrollbars on the body (main content is handled by its own containers) */
     font-size: 12px;                    /* Base font size for CJK text */
@@ -82,18 +86,54 @@ body {
 
 /* --- Sidebar Styling --- */
 .sidebar {
-    width: 220px;                       /* Fixed width for the sidebar */
-    background-color: var(--pale-green);/* Sidebar background color */
-    background-image: url(/images/navibar.jpg);
-    padding: 20px 15px;                 /* Default side/bottom padding */
-    padding-top: 45px;                  /* Increased top padding to ensure navigation items start below the logo */
+    width: 220px;
+    /* REMOVE a_previous_background_color: rgba(180, 248, 200, 0.75); */
+
+    /* --- NEW PIXELATED GRADIENT BACKGROUND --- */
+    /* Base color: --pale-green (rgb(180, 248, 200)) */
+    /* We'll create steps from this color with varying alpha to transparent at the top */
+    background: linear-gradient(
+            to top, /* Gradient direction: from bottom to top */
+
+                /* Step 1: Bottom - Most opaque (e.g., 85% opacity) */
+            /*rgba(180, 248, 200, 0.85) 0%,    !* Start of color *!*/
+            /*rgba(180, 248, 200, 0.85) 15%,   !* End of this 'pixel block' *!*/
+
+            /*    !* Step 2: Slightly less opaque (e.g., 70% opacity) *!*/
+            /*rgba(180, 248, 200, 0.70) 15.1%, !* Start of next color block *!*/
+            /*rgba(180, 248, 200, 0.70) 30%,   !* End of this 'pixel block' *!*/
+
+            /*    !* Step 3: (e.g., 55% opacity) *!*/
+            /*rgba(180, 248, 200, 0.55) 30.1%,*/
+            /*rgba(180, 248, 200, 0.55) 45%,*/
+
+            /*    !* Step 4: (e.g., 40% opacity) *!*/
+            /*rgba(180, 248, 200, 0.40) 45.1%,*/
+            /*rgba(180, 248, 200, 0.40) 60%,*/
+
+                /* Step 5: (e.g., 25% opacity) */
+            rgba(180, 248, 200, 0.25) 60.1%,
+            rgba(180, 248, 200, 0.25) 75%,
+
+                /* Step 6: (e.g., 10% opacity) */
+            rgba(180, 248, 200, 0.10) 75.1%,
+            rgba(180, 248, 200, 0.10) 90%,
+
+                /* Step 7: Top - Fully transparent */
+            rgba(180, 248, 200, 0.0) 90.1%,  /* Start of transparency */
+            rgba(180, 248, 200, 0.0) 100%    /* Ensure fully transparent to the top */
+    );
+    /* --- END OF GRADIENT --- */
+
+    padding: 20px 15px;
+    padding-top: 45px; /* Keep this padding to ensure content is below logo */
     display: flex;
-    flex-direction: column;             /* Stack sidebar items vertically */
-    border-right: 2px solid var(--dark-text); /* Border separating sidebar from content */
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* Subtle shadow for depth */
-    overflow-y: auto;                   /* Allow sidebar to scroll if content exceeds height */
-    position: relative;                 /* Establishes a stacking context */
-    z-index: 10;                        /* Below .main-logo, but above .content-area */
+    flex-direction: column;
+    /*border-right: 2px solid var(--dark-text);*/
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    overflow-y: auto;
+    position: relative;
+    z-index: 10;
 }
 
 /* Sidebar Navigation Item Animation */
@@ -149,11 +189,63 @@ body {
     cursor: pointer;                    /* Hand cursor */
 }
 
-.copyright { /* Copyright text */
-    font-size: 8px;                     /* Smaller font size */
+/* UPDATED STYLES for Pixel Clock */
+.pixel-clock {
+    font-family: var(--pixel-font-latin), var(--pixel-font-cjk);
+    font-size: 13px; /* Slightly adjusted base size if needed */
+    color: var(--dark-text);
     text-align: center;
-    margin-bottom: 15px;
-    color: #555;                        /* Darker gray for less emphasis */
+    padding: 8px 5px; /* Adjust padding */
+    margin-bottom: 10px;
+    line-height: 1.4; /* Adjust line height for multiple lines */
+}
+
+.pixel-clock div { /* Style for each line within the clock area */
+    margin-bottom: 3px; /* Small space between lines */
+}
+.pixel-clock div:last-child {
+    margin-bottom: 0; /* No margin for the last line */
+}
+
+#clock-year, #clock-week, #clock-hours, #clock-minutes, #clock-seconds {
+    display: inline-block;
+    min-width: 1.2em; /* Ensures consistent spacing for numbers */
+}
+#clock-week {
+    min-width: 1.5em; /* Week numbers can be two digits */
+}
+
+.cosmic-ray-info {
+    font-size: 11px; /* Slightly smaller for this less critical info */
+    /* You can add more specific styling if needed */
+    /* color: var(--pale-pink); /* Example: different color */
+}
+
+#cosmic-ray-intensity {
+    display: inline-block;
+    min-width: 2.5em; /* Space for a value like "XX.XX" */
+    font-weight: bold; /* Make the number stand out */
+}
+/* Styles for the copyright div, now positioned absolutely */
+.copyright {
+    position: fixed;
+    bottom: 10px;
+    right: 15px;
+    font-family: var(--pixel-font-cjk);
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    text-shadow:
+            1px 1px 0px rgba(0,0,0,0.7),
+            -1px -1px 0px rgba(0,0,0,0.7),
+            1px -1px 0px rgba(0,0,0,0.7),
+            -1px 1px 0px rgba(0,0,0,0.7);
+    z-index: 150; // Higher z-index if it needs to be above everything else fixed
+padding: 5px 8px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    max-width: 300px;
+    text-align: right;
 }
 
 .language-switcher select { /* Language dropdown styling */
@@ -171,11 +263,11 @@ body {
     flex-grow: 1;                       /* Takes up remaining horizontal space */
     position: relative;                 /* For absolute positioning of dialogs within this area */
     overflow: hidden;                   /* Clips dialogs if they go out of bounds */
-    background-color: var(--pale-blue); /* Fallback background color */
-    /* Placeholder background image, replace with actual art if available */
-    background-image: url(/images/desktop.jpg);
-    background-size: cover;             /* Covers the entire area */
-    background-position: center;        /* Centers the background image */
+    /* REMOVE: background-color: var(--pale-blue); */
+    /* REMOVE: background-image: url(/images/desktop.jpg); */
+    /* REMOVE: background-size: cover; */
+    /* REMOVE: background-position: center; */
+    background-color: transparent; /* ADDED: Make it transparent to show body's background */
     z-index: 5;                         /* Lowest stacking order among main layout blocks */
 }
 

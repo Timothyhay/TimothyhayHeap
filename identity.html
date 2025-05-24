@@ -33,9 +33,6 @@ layout: pixel
             <li class="nav-item"><a href="#">照片</a></li>
             <li class="nav-item"><a href="#">轮廓</a></li>
             <li class="nav-item"><a href="#">店铺</a></li>
-            <li class="nav-item"><a href="#">优质的</a></li>
-            <li class="nav-item"><a href="#">注册</a></li>
-            <li class="nav-item"><a href="#">登录</a></li>
             <li class="nav-item"><a href="#">噪音</a></li>
             <li class="nav-item"><a href="#">接触</a></li>
         </ul>
@@ -46,17 +43,32 @@ layout: pixel
             <span>📷</span> <!-- Placeholder Instagram icon -->
         </div>
         <!-- Copyright notice (also animated) -->
-        <div class="copyright nav-item">
-            版权所有 2024@ZUTOMAYO
-        </div>
+<!--        <div class="copyright nav-item">-->
+<!--            版权所有 2024@ZUTOMAYO-->
+<!--        </div>-->
+
         <!-- Language switcher dropdown (also animated) -->
-        <div class="language-switcher nav-item">
-            <select>
-                <option>Chinese (Simplified)</option>
-                <option>日本語</option>
-                <option>English</option>
-            </select>
+<!--        <div class="language-switcher nav-item">-->
+<!--            <select>-->
+<!--                <option>Chinese (Simplified)</option>-->
+<!--                <option>日本語</option>-->
+<!--                <option>English</option>-->
+<!--            </select>-->
+<!--        </div>-->
+        <!-- NEW: Pixel Clock - also a nav-item for animation -->
+        <div class="pixel-clock nav-item">
+            <div> <!-- Wrapper for date/time -->
+                <span id="clock-year">2024</span> - <!-- Year -->
+                W<span id="clock-week">00</span> <!-- Week Number -->
+            </div>
+            <div> <!-- Wrapper for time -->
+                <span id="clock-hours">00</span>:<span id="clock-minutes">00</span>:<span id="clock-seconds">00</span>
+            </div>
+            <div class="cosmic-ray-info"> <!-- Wrapper for cosmic ray info -->
+                Cosmic-ray Intensity: <span id="cosmic-ray-intensity">0.00</span> μSv/h
+            </div>
         </div>
+
     </nav>
 
     <!-- Main content display area where dialogs will appear -->
@@ -66,6 +78,13 @@ layout: pixel
             <!-- This div can be removed if the background-image on .content-area is sufficient -->
         </div>
     </main>
+
+    <!-- MOVED copyright div HERE, outside sidebar, inside container but after content-area -->
+    <!-- It will no longer be a .nav-item for sidebar animation -->
+    <div class="copyright">
+        © 2025 TangerineSoda. All Rights Reserved
+        Design by Timothyhay / Inspired from @ZUTOMAYO
+    </div>
 </div>
 
 <!-- HTML template for the dialog boxes (initially hidden) -->

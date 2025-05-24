@@ -193,6 +193,83 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("No dialog data available to spawn.");
     }
 
+    // --- NEW: Pixel Clock Functionality ---
+    // --- NEW/UPDATED: Pixel Clock Functionality ---
+    const yearElem = document.getElementById('clock-year');
+    const weekElem = document.getElementById('clock-week');
+    const hoursElem = document.getElementById('clock-hours');
+    const minutesElem = document.getElementById('clock-minutes');
+    const secondsElem = document.getElementById('clock-seconds');
+    const cosmicRayElem = document.getElementById('cosmic-ray-intensity');
+
+    // Function to get the ISO week number
+    // Source: https://stackoverflow.com/a/6117889/1238098
+    function getWeekNumber(d) {
+        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+        var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        return weekNo;
+    }
+
+    // Function to calculate fictional cosmic ray intensity
+    function calculateCosmicRayIntensity(now) {
+        // This is a completely arbitrary calculation for fun.
+        // Uses minutes, seconds, and a bit of randomization.
+        const minutes = now.getMinutes();
+        const seconds = now.getSeconds();
+
+        // Base value fluctuates with minutes
+        let baseIntensity = (minutes % 10) * 0.15; // 0 to 1.35
+
+        // Add fluctuation based on seconds (more chaotic)
+        let secondFluctuation = Math.sin(seconds * (Math.PI / 15)) * 0.5; // -0.5 to 0.5, cycles every 30s
+
+        // Add a very slow-changing component (e.g., based on hour)
+        let hourComponent = (now.getHours() % 6) * 0.05; // 0 to 0.25, changes every 6 hours
+
+        // Combine them and add some randomness
+        let intensity = baseIntensity + secondFluctuation + hourComponent + (Math.random() * 0.2 - 0.1);
+
+        // Ensure non-negative and apply a cap
+        intensity = Math.max(0.01, intensity); // Minimum 0.01
+        intensity = Math.min(5.0, intensity);  // Maximum 5.0
+
+        return intensity.toFixed(2); // Return as string with 2 decimal places
+    }
+
+
+    function updateClock() {
+        const now = new Date();
+
+        if (yearElem) {
+            yearElem.textContent = now.getFullYear();
+        }
+        if (weekElem) {
+            weekElem.textContent = String(getWeekNumber(now)).padStart(2, '0');
+        }
+        if (hoursElem) {
+            hoursElem.textContent = String(now.getHours()).padStart(2, '0');
+        }
+        if (minutesElem) {
+            minutesElem.textContent = String(now.getMinutes()).padStart(2, '0');
+        }
+        if (secondsElem) {
+            secondsElem.textContent = String(now.getSeconds()).padStart(2, '0');
+        }
+        if (cosmicRayElem) {
+            cosmicRayElem.textContent = calculateCosmicRayIntensity(now);
+        }
+    }
+
+    // Check if primary clock elements exist before setting interval
+    if (hoursElem && minutesElem && secondsElem) {
+        updateClock(); // Initial call
+        setInterval(updateClock, 1000); // Update every second
+    } else {
+        console.warn("Core clock elements (hours, minutes, seconds) not found. Clock will not update.");
+    }
+
     // --- Event listener for window resize to adjust dialog positions (basic) ---
     window.addEventListener('resize', () => {
         document.querySelectorAll('.dialog-box').forEach(dialog => {
