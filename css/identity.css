@@ -243,6 +243,7 @@ body {
 
 .cosmic-ray-info {
     font-size: 11px; /* Slightly smaller for this less critical info */
+    padding: 5px 0px;
     /* You can add more specific styling if needed */
     /* color: var(--pale-pink); /* Example: different color */
 }
