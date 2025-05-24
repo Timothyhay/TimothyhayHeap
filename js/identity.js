@@ -10,8 +10,24 @@ document.addEventListener('DOMContentLoaded', () => {
     let highestZIndex = 101;
 
     // Configuration for dialog spawning
-    const MAX_DIALOGS_TO_SPAWN = 6; // Maximum number of dialogs that will be spawned in total
+    const MAX_DIALOGS_TO_SPAWN = 10; // Maximum number of dialogs that will be spawned in total
     let spawnedDialogsCount = 0;   // Counter for how many dialogs have been spawned
+
+    // --- Global variable to hold dialogs data once fetched ---
+    let DIALOGS_DATA_FROM_JSON = []; // Will be populated by fetch
+
+    // --- Function to initialize and shuffle available dialog indices ---
+    function initializeAvailableDialogs() {
+        if (DIALOGS_DATA_FROM_JSON.length === 0) {
+            console.warn("Dialogs data is not loaded yet or is empty. Cannot initialize.");
+            return;
+        }
+        availableDialogIndices = DIALOGS_DATA_FROM_JSON.map((_, index) => index);
+        for (let i = availableDialogIndices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [availableDialogIndices[i], availableDialogIndices[j]] = [availableDialogIndices[j], availableDialogIndices[i]];
+        }
+    }
 
     // Data for the dialogs. Each object represents one dialog.
     // 'id' is for potential future reference, 'title', 'width', and 'content' (HTML string) define the dialog.
@@ -313,42 +329,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Function to spawn the next dialog from the available list ---
     function spawnNextDialog() {
-        // Stop if max dialog count is reached OR no more unique dialogs are available
-        if (spawnedDialogsCount >= MAX_DIALOGS_TO_SPAWN || availableDialogIndices.length === 0) {
-            console.log(`Spawned ${spawnedDialogsCount} dialogs. Limit reached or no unique dialogs left. Stopping.`);
-            clearInterval(dialogCreationInterval); // Stop the interval timer
+        if (DIALOGS_DATA_FROM_JSON.length === 0) {
+            console.log("Waiting for dialog data to load...");
             return;
         }
-
-        // Get the index of the next dialog to show (from the shuffled list) and remove it
+        if (spawnedDialogsCount >= MAX_DIALOGS_TO_SPAWN || availableDialogIndices.length === 0) {
+            console.log(`Spawned ${spawnedDialogsCount} dialogs. Limit reached or no unique dialogs left. Stopping.`);
+            if (dialogCreationInterval) clearInterval(dialogCreationInterval);
+            return;
+        }
         const nextDialogDataOriginalIndex = availableDialogIndices.shift();
-        const dialogDataToShow = dialogsData[nextDialogDataOriginalIndex];
-
+        const dialogDataToShow = DIALOGS_DATA_FROM_JSON[nextDialogDataOriginalIndex];
         if (dialogDataToShow) {
-            createDialog(dialogDataToShow); // Create and display the dialog
-            console.log(`Spawned ${spawnedDialogsCount} / ${MAX_DIALOGS_TO_SPAWN} dialogs (ID: ${dialogDataToShow.id}). Unique dialogs remaining: ${availableDialogIndices.length}`);
+            createDialog(dialogDataToShow);
+            // spawnedDialogsCount++; // Now incremented inside createDialog
         } else {
-            // This case should ideally not be reached if logic is correct
             console.warn("Attempted to get dialog data that does not exist.");
         }
     }
 
-    // --- Initial dialog spawning and interval setup ---
-    if (dialogsData.length > 0) { // Only proceed if there's dialog data
-        spawnNextDialog(); // Spawn the first dialog immediately
+    // --- Function to start the dialog spawning process ---
+    function startDialogSystem() {
+        if (DIALOGS_DATA_FROM_JSON.length > 0) {
+            initializeAvailableDialogs(); // Shuffle the newly loaded data
+            spawnNextDialog(); // Spawn the first dialog immediately
 
-        // Spawn a second dialog after a short delay, if limits not reached
-        setTimeout(() => {
-            if (spawnedDialogsCount < MAX_DIALOGS_TO_SPAWN && availableDialogIndices.length > 0) {
-                spawnNextDialog();
-            }
-        }, 1200); // 1.2 seconds delay for the second dialog
+            setTimeout(() => {
+                if (spawnedDialogsCount < MAX_DIALOGS_TO_SPAWN && availableDialogIndices.length > 0) {
+                    spawnNextDialog();
+                }
+            }, 1200);
 
-        // Set an interval to spawn subsequent dialogs
-        dialogCreationInterval = setInterval(spawnNextDialog, 2200); // Spawn a new dialog every 2.2 seconds
-    } else {
-        console.log("No dialog data available to spawn.");
+            dialogCreationInterval = setInterval(spawnNextDialog, 2200);
+        } else {
+            console.log("No dialog data loaded to spawn.");
+        }
     }
+
+    // --- FETCH DIALOG DATA ---
+    fetch('data/dialogs/dialogs-data.json') // Adjust path if you placed it elsewhere (e.g., 'js/dialogs-data.json')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            DIALOGS_DATA_FROM_JSON = data; // Store the fetched data globally
+            console.log("Dialogs data loaded successfully:", DIALOGS_DATA_FROM_JSON);
+            startDialogSystem(); // Now that data is loaded, start spawning dialogs
+        })
+        .catch(error => {
+            console.error("Could not load dialogs data:", error);
+            // You could display an error message to the user here if critical
+        });
+
 
     // --- NEW: Pixel Clock Functionality ---
     // --- NEW/UPDATED: Pixel Clock Functionality ---

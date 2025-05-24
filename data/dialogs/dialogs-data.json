@@ -1,0 +1,60 @@
+[
+  {
+    "id": 0,
+    "title": "🍃 通知",
+    "width": "260px",
+    "content": "<p>并没有什么要通知。</p>"
+  },
+  {
+    "id": 1,
+    "title": "💖 YOASOBI 在泡泡岛！",
+    "width": "340px",
+    "content": "<img src=\"images/banner/banner-image5.jpg\" alt=\"YOASOBI\"><p>YOASOBI 第一次来大陆演出。我要哭了。</p>"
+  },
+  {
+    "id": 2,
+    "title": "📅 3.29-5.18 竞技场之旅",
+    "width": "360px",
+    "content": "<img src=\"https://via.placeholder.com/320x150/a0e7e5/333333?text=竞技场之旅图\" alt=\"竞技场之旅\"><p>ZUTOMAYO 竞技场之旅 2024「本格的に」即将举行。日程: 3月29日 - 5月18日</p>",
+    "yesLink": "https://zutomayo.net/arena2024/"
+  },
+  {
+    "id": 3,
+    "title": "📢 News 2025.05.25",
+    "width": "300px",
+    "content": "<p><strong>新主页上线！</strong></p><p>最近一直在听ZUTOMAYO所以做了新主页。想做成坏掉的不停弹内心戏窗口的吓人风格但是忍住了。</p>"
+  },
+  {
+    "id": 4,
+    "title": "💿 1st ZUTOMAYO",
+    "width": "320px",
+    "content": "<img src=\"https://via.placeholder.com/280x200/d7b0ff/333333?text=潜潜話专辑图\" alt=\"潜潜話专辑\"><p>首张专辑「潜潜話」好评发售中！探索ZUTOMAYO的音乐世界。</p>",
+    "yesLink": "https://store.zutomayo.com/products/detail/15"
+  },
+  {
+    "id": 5,
+    "title": "📔 新日记 - 我的所有周末",
+    "width": "350px",
+    "content": "<p><strong>啊 到底要怎么样才能过上有意义的快乐周末.. </strong></p><p>一起用实验论证一下？</p>",
+    "yesLink": "/2024/12/01/AllMyWeekendFeelings.html"
+  },
+  {
+    "id": 6,
+    "title": "✨ 特别通知 ✨",
+    "width": "310px",
+    "content": "<p>我还活着！好耶！</p><p>还要来看我噢！</p>"
+  },
+  {
+    "id": 7,
+    "title": "🎶 新歌试听片段",
+    "width": "330px",
+    "content": "<p>最新单曲片段抢先听！</p><p>感受ZUTOMAYO的独特魅力。</p><img src=\"https://via.placeholder.com/290x100/f9c5d1/333333?text=新歌试听图\" alt=\"新歌试听\">"
+  },
+  {
+    "id": 8,
+    "title": "\uD83D\uDCBF ZUTOMAYO MV发布 5/22 21:00",
+    "width": "350px",
+    "content": "<p><strong>一起来去看看吗？</strong></p><p>新MV已经于 5月22日 21:00 (JST) 发布！快去看！</p>",
+    "yesLink": "https://www.youtube.com/@ZUTOMAYO"
+  }
+]
