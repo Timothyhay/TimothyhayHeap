@@ -84,6 +84,7 @@ body {
 .sidebar {
     width: 220px;                       /* Fixed width for the sidebar */
     background-color: var(--pale-green);/* Sidebar background color */
+    background-image: url(/images/navibar.jpg);
     padding: 20px 15px;                 /* Default side/bottom padding */
     padding-top: 45px;                  /* Increased top padding to ensure navigation items start below the logo */
     display: flex;
@@ -172,7 +173,7 @@ body {
     overflow: hidden;                   /* Clips dialogs if they go out of bounds */
     background-color: var(--pale-blue); /* Fallback background color */
     /* Placeholder background image, replace with actual art if available */
-    background-image: url('https://via.placeholder.com/1000x800/a0e7e5/333333?text=Background+Art+Area');
+    background-image: url(/images/desktop.jpg);
     background-size: cover;             /* Covers the entire area */
     background-position: center;        /* Centers the background image */
     z-index: 5;                         /* Lowest stacking order among main layout blocks */
