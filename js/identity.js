@@ -15,6 +15,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Global variable to hold dialogs data once fetched ---
     let DIALOGS_DATA_FROM_JSON = []; // Will be populated by fetch
+    // Array to store indices of dialogs from dialogsData that are still available to be shown.
+    // This helps ensure dialogs don't repeat until all unique ones are shown (or MAX_DIALOGS_TO_SPAWN is hit).
+    let availableDialogIndices = [];
+    let dialogCreationInterval; // Interval timer for spawning dialogs
 
     // --- Function to initialize and shuffle available dialog indices ---
     function initializeAvailableDialogs() {
@@ -83,19 +87,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     ];
 
-    // Array to store indices of dialogs from dialogsData that are still available to be shown.
-    // This helps ensure dialogs don't repeat until all unique ones are shown (or MAX_DIALOGS_TO_SPAWN is hit).
-    let availableDialogIndices = [];
-    let dialogCreationInterval; // Interval timer for spawning dialogs
 
     // --- Function to initialize and shuffle available dialog indices ---
     function initializeAvailableDialogs() {
-        availableDialogIndices = dialogsData.map((_, index) => index); // Create an array of indices [0, 1, 2, ...]
-        // Fisher-Yates shuffle algorithm to randomize the order of dialogs
-        for (let i = availableDialogIndices.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1)); // Pick a random index before the current one
-            [availableDialogIndices[i], availableDialogIndices[j]] = [availableDialogIndices[j], availableDialogIndices[i]]; // Swap elements
+        // This function is now guaranteed to run AFTER DIALOGS_DATA_FROM_JSON is populated
+        if (DIALOGS_DATA_FROM_JSON.length === 0) {
+            console.warn("Cannot initialize dialog indices: DIALOGS_DATA_FROM_JSON is empty.");
+            return;
         }
+        availableDialogIndices = DIALOGS_DATA_FROM_JSON.map((_, index) => index);
+        // Fisher-Yates shuffle
+        for (let i = availableDialogIndices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [availableDialogIndices[i], availableDialogIndices[j]] = [availableDialogIndices[j], availableDialogIndices[i]];
+        }
+        console.log("Available dialog indices initialized and shuffled:", availableDialogIndices);
     }
     initializeAvailableDialogs(); // Call on script load
 
@@ -329,59 +335,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Function to spawn the next dialog from the available list ---
     function spawnNextDialog() {
-        if (DIALOGS_DATA_FROM_JSON.length === 0) {
-            console.log("Waiting for dialog data to load...");
-            return;
-        }
         if (spawnedDialogsCount >= MAX_DIALOGS_TO_SPAWN || availableDialogIndices.length === 0) {
-            console.log(`Spawned ${spawnedDialogsCount} dialogs. Limit reached or no unique dialogs left. Stopping.`);
-            if (dialogCreationInterval) clearInterval(dialogCreationInterval);
+            console.log(`Spawning limit reached (${spawnedDialogsCount}/${MAX_DIALOGS_TO_SPAWN}) or no unique dialogs left (${availableDialogIndices.length}). Stopping.`);
+            if (dialogCreationInterval) {
+                clearInterval(dialogCreationInterval);
+                dialogCreationInterval = null;
+            }
             return;
         }
-        const nextDialogDataOriginalIndex = availableDialogIndices.shift();
-        const dialogDataToShow = DIALOGS_DATA_FROM_JSON[nextDialogDataOriginalIndex];
+
+        const nextDialogOriginalIndex = availableDialogIndices.shift(); // Get and remove first index
+        const dialogDataToShow = DIALOGS_DATA_FROM_JSON[nextDialogOriginalIndex];
+
         if (dialogDataToShow) {
             createDialog(dialogDataToShow);
-            // spawnedDialogsCount++; // Now incremented inside createDialog
         } else {
-            console.warn("Attempted to get dialog data that does not exist.");
+            console.warn(`Could not find dialog data for index: ${nextDialogOriginalIndex}. This should not happen.`);
         }
     }
 
     // --- Function to start the dialog spawning process ---
     function startDialogSystem() {
-        if (DIALOGS_DATA_FROM_JSON.length > 0) {
-            initializeAvailableDialogs(); // Shuffle the newly loaded data
-            spawnNextDialog(); // Spawn the first dialog immediately
-
-            setTimeout(() => {
-                if (spawnedDialogsCount < MAX_DIALOGS_TO_SPAWN && availableDialogIndices.length > 0) {
-                    spawnNextDialog();
-                }
-            }, 1200);
-
-            dialogCreationInterval = setInterval(spawnNextDialog, 2200);
-        } else {
-            console.log("No dialog data loaded to spawn.");
+        // This is called AFTER data is fetched and DIALOGS_DATA_FROM_JSON is populated.
+        if (DIALOGS_DATA_FROM_JSON.length === 0) {
+            console.log("No dialog data available to start the system.");
+            return;
         }
+
+        initializeAvailableDialogs(); // Now this uses the populated and shuffled data
+
+        // Check again if initialization was successful (e.g., if DIALOGS_DATA_FROM_JSON was unexpectedly empty)
+        if (availableDialogIndices.length === 0 && DIALOGS_DATA_FROM_JSON.length > 0) {
+            console.error("Dialog indices initialization failed despite having data. Check initializeAvailableDialogs.");
+            return;
+        }
+        if (availableDialogIndices.length === 0 && DIALOGS_DATA_FROM_JSON.length === 0) {
+            console.log("No dialogs to spawn after initialization.");
+            return;
+        }
+
+
+        console.log(`Starting dialog system. Will attempt to spawn up to ${MAX_DIALOGS_TO_SPAWN} dialogs from ${DIALOGS_DATA_FROM_JSON.length} available.`);
+
+        spawnNextDialog(); // Spawn the first one
+
+        // Spawn a second dialog after a short delay, if limits not reached
+        setTimeout(() => {
+            if (spawnedDialogsCount < MAX_DIALOGS_TO_SPAWN && availableDialogIndices.length > 0) {
+                spawnNextDialog();
+            }
+        }, 1200);
+
+        // Set an interval to spawn subsequent dialogs
+        if (dialogCreationInterval) clearInterval(dialogCreationInterval); // Clear any old one
+        dialogCreationInterval = setInterval(spawnNextDialog, 2200);
     }
 
     // --- FETCH DIALOG DATA ---
-    fetch('data/dialogs/dialogs-data.json') // Adjust path if you placed it elsewhere (e.g., 'js/dialogs-data.json')
+    // --- FETCH DIALOG DATA & INITIATE DIALOG SYSTEM ---
+    fetch('data/dialogs/dialogs-data.json') // Ensure this path is correct
         .then(response => {
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                throw new Error(`HTTP error! status: ${response.status}, problem loading dialogs-data.json`);
             }
             return response.json();
         })
-        .then(data => {
-            DIALOGS_DATA_FROM_JSON = data; // Store the fetched data globally
-            console.log("Dialogs data loaded successfully:", DIALOGS_DATA_FROM_JSON);
-            startDialogSystem(); // Now that data is loaded, start spawning dialogs
+        .then(jsonData => {
+            DIALOGS_DATA_FROM_JSON = jsonData; // Populate the global variable
+            console.log("Dialogs data loaded successfully. Count:", DIALOGS_DATA_FROM_JSON.length);
+            if (DIALOGS_DATA_FROM_JSON.length > 0) {
+                startDialogSystem(); // <<--- CRITICAL: Start system only after data is loaded
+            } else {
+                console.log("JSON data loaded, but it's an empty array. No dialogs will be shown.");
+            }
         })
         .catch(error => {
-            console.error("Could not load dialogs data:", error);
-            // You could display an error message to the user here if critical
+            console.error("Fatal error: Could not load or parse dialogs data. Dialog system will not start.", error);
+            // Optionally, display a user-friendly error message on the page itself
         });
 
 

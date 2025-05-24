@@ -13,10 +13,10 @@
   },
   {
     "id": 2,
-    "title": "📅 3.29-5.18 竞技场之旅",
-    "width": "360px",
-    "content": "<img src=\"https://via.placeholder.com/320x150/a0e7e5/333333?text=竞技场之旅图\" alt=\"竞技场之旅\"><p>ZUTOMAYO 竞技场之旅 2024「本格的に」即将举行。日程: 3月29日 - 5月18日</p>",
-    "yesLink": "https://zutomayo.net/arena2024/"
+    "title": "📅 更新计划",
+    "width": "320px",
+    "content": "<p>计划在6月重构旧网站代码。因为写得真的太乱太乱了。</p><p>现在就要看看到底有多乱吗？</p>",
+    "yesLink": "https://world.tangerinesoda.fun/"
   },
   {
     "id": 3,
@@ -26,10 +26,9 @@
   },
   {
     "id": 4,
-    "title": "💿 1st ZUTOMAYO",
+    "title": "⛓️\u200D\uD83D\uDCA5 未整理的碎片 - 环球影城的回忆",
     "width": "320px",
-    "content": "<img src=\"https://via.placeholder.com/280x200/d7b0ff/333333?text=潜潜話专辑图\" alt=\"潜潜話专辑\"><p>首张专辑「潜潜話」好评发售中！探索ZUTOMAYO的音乐世界。</p>",
-    "yesLink": "https://store.zutomayo.com/products/detail/15"
+    "content": "<img src=\"images/album/Adventure.jpg\" alt=\"ADVENTURE\"><p>还没有整理好环球影城的回忆。压力淹没了你，对忘记这些快乐细节感到焦虑。需要使用相关媒介唤醒旧回忆。</p>"
   },
   {
     "id": 5,
@@ -42,13 +41,14 @@
     "id": 6,
     "title": "✨ 特别通知 ✨",
     "width": "310px",
-    "content": "<p>我还活着！好耶！</p><p>还要来看我噢！</p>"
+    "content": "<p>你还活着！好耶！</p><p>还要继续哦！</p>"
   },
   {
     "id": 7,
-    "title": "🎶 新歌试听片段",
+    "title": "🎶 最近在循环",
     "width": "330px",
-    "content": "<p>最新单曲片段抢先听！</p><p>感受ZUTOMAYO的独特魅力。</p><img src=\"https://via.placeholder.com/290x100/f9c5d1/333333?text=新歌试听图\" alt=\"新歌试听\">"
+    "content": "<p>突击检查耳机！</p><p>在听ZUTOMAYO的Live哦。要不要一起？</p>",
+    "yesLink": "https://open.spotify.com/album/6IldTWGIC42X8wAGl81YAf?si=1gsw8e_DQ6iGb1AGUAT0zw"
   },
   {
     "id": 8,
@@ -56,5 +56,11 @@
     "width": "350px",
     "content": "<p><strong>一起来去看看吗？</strong></p><p>新MV已经于 5月22日 21:00 (JST) 发布！快去看！</p>",
     "yesLink": "https://www.youtube.com/@ZUTOMAYO"
+  },
+  {
+    "id": 9,
+    "title": "⛓️‍💥 未整理的碎片 - 工作",
+    "width": "320px",
+    "content": "<p>还没有整理好工作中的研究内容。压力淹没了你，对无尽的要做的事感到焦虑。</p>"
   }
 ]

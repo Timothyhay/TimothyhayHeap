@@ -182,13 +182,36 @@ body {
 }
 
 .social-icons { /* Social icons container */
-    text-align: center;                 /* Center the icons */
-    margin-bottom: 15px;                /* Bottom margin */
-    font-size: 18px;                    /* Size for emoji icons */
+    text-align: center;
+    margin-bottom: 15px;
+    /* font-size: 18px; REMOVE this if using img tags, as it won't affect them */
+    display: flex; /* ADDED: For better alignment and spacing of icons */
+    justify-content: center; /* ADDED: Center icons horizontally */
+    align-items: center; /* ADDED: Align icons vertically */
+    gap: 15px; /* ADDED: Space between icons (adjust as needed) */
 }
+
 .social-icons span { /* Individual icon */
     margin: 0 5px;                      /* Margin between icons */
     cursor: pointer;                    /* Hand cursor */
+}
+
+/*.social-icons a { !* Style for the link wrapping the image *!*/
+/*    display: inline-block; !* Or display: block; if you prefer *!*/
+/*    line-height: 0; !* Helps remove extra space below inline-block images *!*/
+/*}*/
+
+.social-icon-img {
+    width: 24px;  /* Set desired width for your pixel icons */
+    height: 24px; /* Set desired height, should match width for square icons */
+    image-rendering: pixelated; /* Crucial for keeping pixel art sharp */
+    vertical-align: middle; /* Good for alignment if <a> is inline-block */
+    transition: transform 0.2s ease-out; /* Optional: hover effect */
+}
+
+.social-icons a:hover .social-icon-img {
+    transform: scale(1.15); /* Optional: Slight zoom on hover */
+    /* filter: drop-shadow(1px 1px 0px #000); /* Optional: pixel shadow */
 }
 
 /* UPDATED STYLES for Pixel Clock */
