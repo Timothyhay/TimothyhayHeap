@@ -61,49 +61,85 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Function to create and display a new dialog box ---
     function createDialog(data) {
-        const dialogClone = dialogTemplate.content.cloneNode(true); // Clone the hidden dialog template
+        const dialogClone = dialogTemplate.content.cloneNode(true);
         const dialogBox = dialogClone.querySelector('.dialog-box');
         const titleElement = dialogBox.querySelector('.dialog-title');
         const contentElement = dialogBox.querySelector('.dialog-content');
         const closeButton = dialogBox.querySelector('.dialog-close-button');
 
-        // Populate dialog with data
-        titleElement.textContent = data.title || 'Untitled Dialog'; // Set title, or default
-        contentElement.innerHTML = data.content || '<p>No content.</p>'; // Set content HTML, or default
-        if (data.width) {
-            dialogBox.style.width = data.width; // Set custom width if provided
+        titleElement.textContent = data.title || 'Untitled Dialog';
+        contentElement.innerHTML = data.content || '<p>No content.</p>';
+
+        let dialogWidth = parseInt(data.width) || 300;
+        let dialogHeight = 150; // Base height for positioning, content will determine actual
+
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight; // Get viewport height as well
+
+        // --- NEW LOGIC for Small Screens ---
+        if (viewportWidth < 480) { // Example breakpoint for "very small"
+            // For very small screens, drastically reduce default/parsed dialog width
+            dialogWidth = Math.min(dialogWidth, viewportWidth * 0.85, 200); // e.g., 85% of viewport, or max 200px
+            // Consider a minimum width too, e.g., 100px, so it's not invisibly small
+            dialogWidth = Math.max(dialogWidth, 120);
+        } else if (viewportWidth < 768) {
+            dialogWidth = Math.min(dialogWidth, viewportWidth * 0.9, 280);
+            dialogWidth = Math.max(dialogWidth, 150);
+        } else {
+            // For larger screens, ensure it doesn't exceed a reasonable max or CSS max-width
+            const cssMaxWidth = parseFloat(getComputedStyle(dialogBox).maxWidth);
+            if (!isNaN(cssMaxWidth) && cssMaxWidth < dialogWidth) {
+                dialogWidth = cssMaxWidth;
+            }
+            dialogWidth = Math.min(dialogWidth, viewportWidth * 0.7); // Max 70% of viewport width on large screens
+        }
+        dialogBox.style.width = `${dialogWidth}px`;
+
+
+        // Positioning:
+        // Allow dialogs to appear even if contentArea is tiny or not fully defined yet.
+        // Position relative to viewport initially, then adjust if needed.
+        // For initial placement, use a simpler logic if strict bounds are not required.
+
+        let initialX, initialY;
+
+        // If contentArea is very small, spawn near top-left of viewport or slightly offset
+        const contentAreaRect = contentArea.getBoundingClientRect();
+        if (contentAreaRect.width < dialogWidth || contentAreaRect.height < (dialogHeight * 0.5) ) {
+            // Fallback: position near top-left of viewport if contentArea is too small
+            initialX = 10 + Math.random() * 20;
+            initialY = (document.querySelector('.main-logo')?.offsetHeight || 90) + 10 + Math.random() * 20; // Below logo
+        } else {
+            // Original random positioning within contentArea (slightly modified)
+            const maxX = Math.max(5, contentAreaRect.width - dialogWidth - 5);
+            const maxY = Math.max(5, contentAreaRect.height - dialogHeight - 5);
+            initialX = Math.max(5, Math.random() * maxX);
+            initialY = Math.max(5, Math.random() * maxY);
         }
 
-        // Calculate random initial position for the dialog within the content area
-        const dialogWidth = parseInt(dialogBox.style.width) || 300; // Use specified or default width
-        const dialogHeight = 180; // Approximate minimum height for positioning calculation
-        const maxX = contentArea.offsetWidth - dialogWidth - 20;  // Max X, with some margin
-        const maxY = contentArea.offsetHeight - dialogHeight - 20; // Max Y, with some margin
-        dialogBox.style.left = `${Math.max(5, Math.random() * Math.max(5, maxX))}px`; // Random X, at least 5px from edge
-        dialogBox.style.top = `${Math.max(5, Math.random() * Math.max(5, maxY))}px`;  // Random Y, at least 5px from edge
+        // Ensure initialX and initialY are at least somewhat on screen
+        initialX = Math.max(5, Math.min(initialX, viewportWidth - dialogWidth - 5));
+        initialY = Math.max(5, Math.min(initialY, viewportHeight - dialogHeight - 5));
 
-        // The base z-index for .dialog-box is set in CSS (e.g., 20).
-        // When a dialog is interacted with, 'highestZIndex' will be used to bring it to the front.
 
-        makeDraggable(dialogBox); // Make the dialog draggable
+        dialogBox.style.left = `${initialX}px`;
+        dialogBox.style.top = `${initialY}px`;
 
-        // Event listener for the close button
-        closeButton.addEventListener('click', () => {
-            dialogBox.remove(); // Remove the dialog from the DOM
-        });
+        makeDraggable(dialogBox);
 
-        // Event listener to bring dialog to front when clicked (mousedown)
+        closeButton.addEventListener('click', () => dialogBox.remove());
+
         dialogBox.addEventListener('mousedown', () => {
-            dialogBox.style.zIndex = ++highestZIndex; // Increment and assign new highest z-index
-            dialogBox.classList.add('active');      // Add 'active' class (for optional styling)
-        }, true); // Use capture phase to ensure this fires before drag starts on title bar
+            dialogBox.style.zIndex = ++highestZIndex;
+            document.querySelectorAll('.dialog-box.active').forEach(el => el.classList.remove('active'));
+            dialogBox.classList.add('active');
+        }, true);
 
-        // Event listener to remove 'active' class on mouseup (optional)
-        dialogBox.addEventListener('mouseup', () => {
-            dialogBox.classList.remove('active');
-        });
+        // No mouseup to remove 'active' to keep the last interacted one visually distinct
 
-        contentArea.appendChild(dialogBox); // Add the new dialog to the content area
+        contentArea.appendChild(dialogBox);
+        spawnedDialogsCount++; // Moved here from spawnNextDialog as it's confirmed created
+        console.log(`Spawned ${spawnedDialogsCount} / ${MAX_DIALOGS_TO_SPAWN} dialogs (ID: ${data.id}). Unique dialogs remaining: ${availableDialogIndices.length}`);
         return dialogBox;
     }
 
@@ -113,32 +149,44 @@ document.addEventListener('DOMContentLoaded', () => {
         let offsetX, offsetY, isDragging = false;
 
         titleBar.addEventListener('mousedown', (e) => {
-            // Prevent dragging if the click target is the close button itself
             if (e.target.classList.contains('dialog-close-button')) return;
-
             isDragging = true;
-            // Calculate mouse offset relative to the dialog's top-left corner
             offsetX = e.clientX - element.offsetLeft;
             offsetY = e.clientY - element.offsetTop;
-
-            // Bring the dragged dialog to the very front
             element.style.zIndex = ++highestZIndex;
-            titleBar.style.cursor = 'grabbing'; // Change cursor to 'grabbing'
-            element.classList.add('active');    // Add 'active' class
+            titleBar.style.cursor = 'grabbing';
+            document.querySelectorAll('.dialog-box.active').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
         });
 
         document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return; // Only move if dragging is active
+            if (!isDragging) return;
 
             let newX = e.clientX - offsetX;
             let newY = e.clientY - offsetY;
 
-            // Constrain dialog movement within the bounds of the contentArea
-            const parentRect = contentArea.getBoundingClientRect(); // Content area dimensions
-            const elemRect = element.getBoundingClientRect();     // Dialog dimensions
+            // --- REMOVE OR RELAX BOUNDARY CONSTRAINTS ---
+            // Option 1: No constraints (can be dragged completely off-screen)
+            // (No additional code needed here for this option)
 
-            newX = Math.max(0, Math.min(newX, parentRect.width - elemRect.width)); // Clamp X
-            newY = Math.max(0, Math.min(newY, parentRect.height - elemRect.height)); // Clamp Y
+            // Option 2: Constrain minimally, e.g., title bar always visible (more complex)
+            // const minVisibleX = 10 - element.offsetWidth; // Allow most of it off-left, but 10px of right edge visible
+            // const minVisibleY = 0; // Allow to go off top until title bar is at edge
+            // const maxVisibleX = window.innerWidth - 10; // Allow most of it off-right, but 10px of left edge visible
+            // const maxVisibleY = window.innerHeight - titleBar.offsetHeight; // Allow to go off-bottom until title bar is at edge
+            //
+            // newX = Math.max(minVisibleX, Math.min(newX, maxVisibleX));
+            // newY = Math.max(minVisibleY, Math.min(newY, maxVisibleY));
+
+            // Option 3: Constrain within the viewport (body) instead of contentArea
+            // This is a reasonable compromise if you don't want them lost entirely.
+            const elemWidth = element.offsetWidth;
+            const elemHeight = element.offsetHeight;
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            newX = Math.max(0 - elemWidth + titleBar.offsetWidth, Math.min(newX, viewportWidth - titleBar.offsetWidth)); // Allow dragging until only titlebar width is left on screen
+            newY = Math.max(0, Math.min(newY, viewportHeight - titleBar.offsetHeight)); // Title bar stays visible vertically
 
             element.style.left = `${newX}px`;
             element.style.top = `${newY}px`;
@@ -147,8 +195,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('mouseup', () => {
             if (isDragging) {
                 isDragging = false;
-                titleBar.style.cursor = 'grab'; // Reset cursor
-                element.classList.remove('active'); // Remove 'active' class
+                titleBar.style.cursor = 'grab';
+                // element.classList.remove('active'); // Keep active for visual feedback of last touch
             }
         });
     }
@@ -168,7 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (dialogDataToShow) {
             createDialog(dialogDataToShow); // Create and display the dialog
-            spawnedDialogsCount++;          // Increment count of spawned dialogs
             console.log(`Spawned ${spawnedDialogsCount} / ${MAX_DIALOGS_TO_SPAWN} dialogs (ID: ${dialogDataToShow.id}). Unique dialogs remaining: ${availableDialogIndices.length}`);
         } else {
             // This case should ideally not be reached if logic is correct
@@ -271,19 +318,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event listener for window resize to adjust dialog positions (basic) ---
+    // --- MODIFIED Window Resize Listener ---
     window.addEventListener('resize', () => {
-        document.querySelectorAll('.dialog-box').forEach(dialog => {
-            const dialogWidth = dialog.offsetWidth;
-            const dialogHeight = dialog.offsetHeight;
-            // Recalculate max X and Y based on new window size
-            const maxX = contentArea.offsetWidth - dialogWidth - 10;
-            const maxY = contentArea.offsetHeight - dialogHeight - 10;
-            let currentX = parseInt(dialog.style.left) || 0;
-            let currentY = parseInt(dialog.style.top) || 0;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
 
-            // Ensure dialogs stay within the new bounds
-            dialog.style.left = `${Math.min(Math.max(0, currentX), Math.max(0, maxX))}px`;
-            dialog.style.top = `${Math.min(Math.max(0, currentY), Math.max(0, maxY))}px`;
+        document.querySelectorAll('.dialog-box').forEach(dialog => {
+            let dialogWidth = dialog.offsetWidth;
+            // const dialogHeight = dialog.offsetHeight; // Not strictly needed if not constraining vertically on resize
+
+            // Re-apply width constraint from CSS if necessary or adapt to viewport
+            if (viewportWidth < 480) {
+                dialogWidth = Math.min(dialog.offsetWidth, viewportWidth * 0.85, 200);
+                dialogWidth = Math.max(dialogWidth, 120);
+            } else if (viewportWidth < 768) {
+                dialogWidth = Math.min(dialog.offsetWidth, viewportWidth * 0.9, 280);
+                dialogWidth = Math.max(dialogWidth, 150);
+            } else {
+                const cssMaxWidth = parseFloat(getComputedStyle(dialog).maxWidth);
+                if (!isNaN(cssMaxWidth) && cssMaxWidth < dialog.offsetWidth) { // Use dialog.offsetWidth for comparison
+                    dialogWidth = cssMaxWidth;
+                }
+                // Cap at 70% of viewport on large screens
+                dialogWidth = Math.min(dialogWidth, viewportWidth * 0.7);
+            }
+            dialog.style.width = `${dialogWidth}px`;
+
+
+            // --- REMOVE OR RELAX BOUNDARY CONSTRAINTS ON RESIZE ---
+            // If we are not constraining drag, we might also not need to aggressively
+            // reposition on resize, unless they are WAY off.
+            // For now, let's just ensure they are somewhat on screen.
+            let currentX = parseFloat(dialog.style.left) || 0;
+            let currentY = parseFloat(dialog.style.top) || 0;
+
+            // Ensure at least a small part of the dialog is visible after resize
+            const minVisiblePart = 30; // e.g., 30px of the dialog should be visible
+
+            if (currentX > viewportWidth - minVisiblePart) {
+                dialog.style.left = `${viewportWidth - minVisiblePart}px`;
+            }
+            if (currentX < 0 - dialogWidth + minVisiblePart) {
+                dialog.style.left = `${0 - dialogWidth + minVisiblePart}px`;
+            }
+            if (currentY > viewportHeight - minVisiblePart) {
+                dialog.style.top = `${viewportHeight - minVisiblePart}px`;
+            }
+            if (currentY < 0 && Math.abs(currentY) > (dialog.offsetHeight - minVisiblePart) ) { // Check if it's too far up
+                dialog.style.top = `${0 - dialog.offsetHeight + minVisiblePart}px`;
+            }
+
+            // If it's completely off (e.g. currentX > viewportWidth), reset to a safe spot
+            if (currentX > viewportWidth || currentX < -dialogWidth) {
+                dialog.style.left = '10px';
+            }
+            if (currentY > viewportHeight || currentY < -dialog.offsetHeight ) {
+                dialog.style.top = (document.querySelector('.main-logo')?.offsetHeight || 90) + 10 + 'px';
+            }
         });
     });
 });
