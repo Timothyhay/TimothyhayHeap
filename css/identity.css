@@ -82,6 +82,8 @@ body {
     display: flex;                      /* Uses flexbox for sidebar and content layout */
     height: 100vh;                      /* Full viewport height */
     padding-top: 90px;                  /* Top padding to leave space for the large logo at the top */
+    position: relative; /* <<--- CRUCIAL: Ensures dialogs are positioned relative to .container */
+    /* This should already be there from previous steps for copyright positioning */
 }
 
 /* --- Sidebar Styling --- */
@@ -384,7 +386,7 @@ padding: 5px 8px;
     padding: 12px;                      /* Internal padding */
     flex-grow: 1;                       /* Allow content to expand to fill available space */
     overflow-y: auto;                   /* Add scrollbar if content exceeds height */
-    background-color: var(--pale-purple); /* Dialog content background color */
+    background-color: var(--pale-green); /* Dialog content background color */
     color: #222;                        /* Darker text color for content */
 }
 
@@ -400,7 +402,7 @@ padding: 5px 8px;
 .dialog-buttons { /* Container for action buttons at the bottom */
     padding: 10px;
     text-align: center;                 /* Center the buttons */
-    background-color: var(--pale-purple); /* Match dialog content background */
+    background-color: var(--pale-green); /* Match dialog content background */
     border-top: 1px solid var(--win98-border-dark); /* Separator line */
 }
 

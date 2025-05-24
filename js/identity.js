@@ -1,8 +1,9 @@
 // Wait for the HTML document to be fully loaded and parsed before executing the script
 document.addEventListener('DOMContentLoaded', () => {
     // Get references to key DOM elements
-    const contentArea = document.getElementById('contentArea'); // Area where dialogs will appear
+    // const contentArea = document.getElementById('contentArea'); // Area where dialogs will appear
     const dialogTemplate = document.getElementById('dialogTemplate'); // HTML template for dialogs
+    const container = document.querySelector('.container'); // <<--- NEW: Get reference to the main container
 
     // Initialize z-index counter for dialog stacking.
     // Starts above the main logo's z-index (100) to ensure dialogs can come to the front.
@@ -15,13 +16,55 @@ document.addEventListener('DOMContentLoaded', () => {
     // Data for the dialogs. Each object represents one dialog.
     // 'id' is for potential future reference, 'title', 'width', and 'content' (HTML string) define the dialog.
     const dialogsData = [
-        { id: 1, title: '💖 宇宙卵团子巡演', width: '340px', content: `<img src="https://via.placeholder.com/300x180/b4f8c8/333333?text=宇宙卵团子巡演图" alt="宇宙卵团子巡演"><p>ZUTOMAYO FACTORY「宇宙の卵子 DORODANGO」巡演开始！更多信息请查看官网。</p>` },
-        { id: 2, title: '📅 3.29-5.18 竞技场之旅', width: '360px', content: `<img src="https://via.placeholder.com/320x150/a0e7e5/333333?text=竞技场之旅图" alt="竞技场之旅"><p>ZUTOMAYO 竞技场之旅 2024「本格的に」即将举行。日程: 3月29日 - 5月18日</p>` },
-        { id: 3, title: '📢 News 2025.05.18', width: '300px', content: `<p><strong>"YAKI YAK" 师父和师父</strong></p><p>新曲发布！详情请关注后续公告。</p>` },
-        { id: 4, title: '💿 1st ZUTOMAYO', width: '320px', content: `<img src="https://via.placeholder.com/280x200/d7b0ff/333333?text=潜潜話专辑图" alt="潜潜話专辑"><p>首张专辑「潜潜話」好评发售中！探索ZUTOMAYO的音乐世界。</p>` },
-        { id: 5, title: 'MV发布 5/22 21:00', width: '350px', content: `<p><strong>你能和 Cream 一起来看我吗？</strong></p><p>新MV将于 5月22日 21:00 (JST) 发布！敬请期待！不要错过！</p>` },
-        { id: 6, title: '✨ 特别通知 ✨', width: '310px', content: `<p>感谢大家一直以来的支持！</p><p>未来将有更多精彩内容，请保持关注官方动态！</p>` },
-        { id: 7, title: '🎶 新歌试听片段', width: '330px', content: `<p>最新单曲片段抢先听！</p><p>感受ZUTOMAYO的独特魅力。</p><img src="https://via.placeholder.com/290x100/f9c5d1/333333?text=新歌试听图" alt="新歌试听">` }
+        {
+            id: 1,
+            title: '💖 宇宙卵团子巡演',
+            width: '340px',
+            content: `<img src="https://via.placeholder.com/300x180/b4f8c8/333333?text=宇宙卵团子巡演图" alt="宇宙卵团子巡演"><p>ZUTOMAYO FACTORY「宇宙の卵子 DORODANGO」巡演开始！更多信息请查看官网。</p>`,
+            yesLink: 'https://zutomayo.net/tour2024_dorodango/' // Example Link
+        },
+        {
+            id: 2,
+            title: '📅 3.29-5.18 竞技场之旅',
+            width: '360px',
+            content: `<img src="https://via.placeholder.com/320x150/a0e7e5/333333?text=竞技场之旅图" alt="竞技场之旅"><p>ZUTOMAYO 竞技场之旅 2024「本格的に」即将举行。日程: 3月29日 - 5月18日</p>`,
+            yesLink: 'https://zutomayo.net/arena2024/' // Example Link
+        },
+        {
+            id: 3,
+            title: '📢 News 2025.05.18',
+            width: '300px',
+            content: `<p><strong>"YAKI YAK" 师父和师父</strong></p><p>新曲发布！详情请关注后续公告。</p>`
+            // No yesLink, so "Yes" button might do nothing or be hidden/disabled
+        },
+        {
+            id: 4,
+            title: '💿 1st ZUTOMAYO',
+            width: '320px',
+            content: `<img src="https://via.placeholder.com/280x200/d7b0ff/333333?text=潜潜話专辑图" alt="潜潜話专辑"><p>首张专辑「潜潜話」好评发售中！探索ZUTOMAYO的音乐世界。</p>`,
+            yesLink: 'https://store.zutomayo.com/products/detail/15' // Example Link
+        },
+        {
+            id: 5,
+            title: 'MV发布 5/22 21:00',
+            width: '350px',
+            content: `<p><strong>你能和 Cream 一起来看我吗？</strong></p><p>新MV将于 5月22日 21:00 (JST) 发布！敬请期待！不要错过！</p>`,
+            yesLink: 'https://www.youtube.com/@ZUTOMAYO' // Example Link
+        },
+        {
+            id: 6,
+            title: '✨ 特别通知 ✨',
+            width: '310px',
+            content: `<p>感谢大家一直以来的支持！</p><p>未来将有更多精彩内容，请保持关注官方动态！</p>`
+            // No yesLink for this one, maybe only "OK" (No button) is needed.
+        },
+        {
+            id: 7,
+            title: '🎶 新歌试听片段',
+            width: '330px',
+            content: `<p>最新单曲片段抢先听！</p><p>感受ZUTOMAYO的独特魅力。</p><img src="https://via.placeholder.com/290x100/f9c5d1/333333?text=新歌试听图" alt="新歌试听">`
+            // No yesLink, "Yes" button could be "Listen More" if you had a link
+        }
     ];
 
     // Array to store indices of dialogs from dialogsData that are still available to be shown.
@@ -67,6 +110,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const contentElement = dialogBox.querySelector('.dialog-content');
         const closeButton = dialogBox.querySelector('.dialog-close-button');
 
+        // --- Get references to action buttons ---
+        const actionButtons = dialogBox.querySelectorAll('.dialog-action-button');
+        const yesButton = actionButtons[0]; // Assuming "はい (Y)" is the first
+        const noButton = actionButtons[1];  // Assuming "いいえ (N)" is the second
+
         titleElement.textContent = data.title || 'Untitled Dialog';
         contentElement.innerHTML = data.content || '<p>No content.</p>';
 
@@ -101,45 +149,96 @@ document.addEventListener('DOMContentLoaded', () => {
         // Position relative to viewport initially, then adjust if needed.
         // For initial placement, use a simpler logic if strict bounds are not required.
 
+        const containerRect = container.getBoundingClientRect();
+        // Need to account for .container's padding-top if positioning from its 0,0
+        const containerPaddingTop = parseFloat(getComputedStyle(container).paddingTop) || 0;
+
         let initialX, initialY;
 
-        // If contentArea is very small, spawn near top-left of viewport or slightly offset
-        const contentAreaRect = contentArea.getBoundingClientRect();
-        if (contentAreaRect.width < dialogWidth || contentAreaRect.height < (dialogHeight * 0.5) ) {
-            // Fallback: position near top-left of viewport if contentArea is too small
+        // If container is very small, fallback to viewport-relative positioning near top-left
+        if (containerRect.width < dialogWidth || containerRect.height < dialogHeight) {
             initialX = 10 + Math.random() * 20;
-            initialY = (document.querySelector('.main-logo')?.offsetHeight || 90) + 10 + Math.random() * 20; // Below logo
+            initialY = (document.querySelector('.main-logo')?.offsetHeight || 90) + 10 + Math.random() * 20;
+            // Make sure it's within viewport if container is truly messed up
+            initialX = Math.max(5, Math.min(initialX, viewportWidth - dialogWidth - 5));
+            initialY = Math.max(5, Math.min(initialY, window.innerHeight - dialogHeight - 5));
         } else {
-            // Original random positioning within contentArea (slightly modified)
-            const maxX = Math.max(5, contentAreaRect.width - dialogWidth - 5);
-            const maxY = Math.max(5, contentAreaRect.height - dialogHeight - 5);
-            initialX = Math.max(5, Math.random() * maxX);
-            initialY = Math.max(5, Math.random() * maxY);
+            // Random positioning within the .container bounds
+            // Max X considers the full width of .container
+            const maxX = Math.max(5, containerRect.width - dialogWidth - 5);
+            // Max Y considers .container height, starting below its padding-top
+            const maxY = Math.max(5, (containerRect.height - containerPaddingTop) - dialogHeight - 5);
+
+            initialX = 5 + Math.random() * maxX;
+            // initialY starts below the container's top padding (where the logo is)
+            initialY = containerPaddingTop + 5 + (Math.random() * maxY);
         }
 
-        // Ensure initialX and initialY are at least somewhat on screen
-        initialX = Math.max(5, Math.min(initialX, viewportWidth - dialogWidth - 5));
-        initialY = Math.max(5, Math.min(initialY, viewportHeight - dialogHeight - 5));
-
-
         dialogBox.style.left = `${initialX}px`;
-        dialogBox.style.top = `${initialY}px`;
+        dialogBox.style.top = `${initialY}px`; // This is relative to .container's top edge now
 
-        makeDraggable(dialogBox);
+        makeDraggable(dialogBox); // Pass dialogBox itself
 
         closeButton.addEventListener('click', () => dialogBox.remove());
-
         dialogBox.addEventListener('mousedown', () => {
             dialogBox.style.zIndex = ++highestZIndex;
             document.querySelectorAll('.dialog-box.active').forEach(el => el.classList.remove('active'));
             dialogBox.classList.add('active');
         }, true);
 
-        // No mouseup to remove 'active' to keep the last interacted one visually distinct
 
-        contentArea.appendChild(dialogBox);
-        spawnedDialogsCount++; // Moved here from spawnNextDialog as it's confirmed created
-        console.log(`Spawned ${spawnedDialogsCount} / ${MAX_DIALOGS_TO_SPAWN} dialogs (ID: ${data.id}). Unique dialogs remaining: ${availableDialogIndices.length}`);
+        // --- CONFIGURE ACTION BUTTONS ---
+        if (noButton) {
+            noButton.addEventListener('click', () => {
+                dialogBox.remove(); // "No" button closes the dialog
+            });
+        } else {
+            console.warn("No button not found for dialog:", data.title);
+        }
+
+        if (yesButton) {
+            if (data.yesLink) {
+                yesButton.addEventListener('click', () => {
+                    window.open(data.yesLink, '_blank'); // Open link in a new tab
+                    // Optionally, close the dialog after clicking "Yes"
+                    // dialogBox.remove();
+                });
+            } else {
+                // No yesLink provided for this dialog.
+                // Option 1: Disable the "Yes" button
+                // yesButton.disabled = true;
+                // yesButton.style.opacity = "0.5";
+                // yesButton.style.cursor = "not-allowed";
+
+                // Option 2: Hide the "Yes" button if no link
+                // yesButton.style.display = 'none';
+
+                // Option 3: Make "Yes" button also close the dialog (acting like an "OK")
+                yesButton.textContent = 'OK'; // Change text if you want
+                noButton.style.display = 'none';
+                yesButton.addEventListener('click', () => {
+                    dialogBox.remove();
+                });
+            }
+        } else {
+            console.warn("Yes button not found for dialog:", data.title);
+        }
+
+        // If only one button is desired (e.g., only "OK" which is the "No" button functionality)
+        // and the other is hidden/disabled:
+        const dialogButtonsContainer = dialogBox.querySelector('.dialog-buttons');
+        if (yesButton && yesButton.style.display === 'none' && noButton) {
+            // If Yes is hidden, and No exists, center No button
+            dialogButtonsContainer.style.textAlign = 'center'; // Or adjust specific button margins
+        } else if (noButton && noButton.style.display === 'none' && yesButton) {
+            // If No is hidden, and Yes exists, center Yes button
+            dialogButtonsContainer.style.textAlign = 'center';
+        }
+
+
+        container.appendChild(dialogBox); // <<--- APPEND TO .container
+        spawnedDialogsCount++;
+        console.log(`Spawned ${spawnedDialogsCount} / ${MAX_DIALOGS_TO_SPAWN} dialogs (ID: ${data.id})...`);
         return dialogBox;
     }
 
@@ -147,12 +246,21 @@ document.addEventListener('DOMContentLoaded', () => {
     function makeDraggable(element) {
         const titleBar = element.querySelector('.dialog-title-bar');
         let offsetX, offsetY, isDragging = false;
+        // The 'container' is the new boundary parent for dragging.
+        // Its getBoundingClientRect() gives viewport-relative coords.
+        // element.offsetLeft/Top are relative to its offsetParent (which is now .container).
 
         titleBar.addEventListener('mousedown', (e) => {
             if (e.target.classList.contains('dialog-close-button')) return;
             isDragging = true;
-            offsetX = e.clientX - element.offsetLeft;
-            offsetY = e.clientY - element.offsetTop;
+
+            // Offset of mouse from top-left of draggable element
+            offsetX = e.clientX - element.getBoundingClientRect().left;
+            offsetY = e.clientY - element.getBoundingClientRect().top;
+            // Alternatively, if element.offsetLeft/Top are reliable relative to .container:
+            // offsetX = e.pageX - element.offsetLeft; // pageX relative to document
+            // offsetY = e.pageY - element.offsetTop;  // pageY relative to document
+
             element.style.zIndex = ++highestZIndex;
             titleBar.style.cursor = 'grabbing';
             document.querySelectorAll('.dialog-box.active').forEach(el => el.classList.remove('active'));
@@ -162,34 +270,36 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
 
-            let newX = e.clientX - offsetX;
-            let newY = e.clientY - offsetY;
+            const containerRect = container.getBoundingClientRect();
+            // New absolute position of element's top-left in viewport coordinates
+            let newViewportX = e.clientX - offsetX;
+            let newViewportY = e.clientY - offsetY;
 
-            // --- REMOVE OR RELAX BOUNDARY CONSTRAINTS ---
-            // Option 1: No constraints (can be dragged completely off-screen)
-            // (No additional code needed here for this option)
+            // Convert to position relative to .container for style.left/top
+            let newStyleLeft = newViewportX - containerRect.left;
+            let newStyleTop = newViewportY - containerRect.top;
 
-            // Option 2: Constrain minimally, e.g., title bar always visible (more complex)
-            // const minVisibleX = 10 - element.offsetWidth; // Allow most of it off-left, but 10px of right edge visible
-            // const minVisibleY = 0; // Allow to go off top until title bar is at edge
-            // const maxVisibleX = window.innerWidth - 10; // Allow most of it off-right, but 10px of left edge visible
-            // const maxVisibleY = window.innerHeight - titleBar.offsetHeight; // Allow to go off-bottom until title bar is at edge
-            //
-            // newX = Math.max(minVisibleX, Math.min(newX, maxVisibleX));
-            // newY = Math.max(minVisibleY, Math.min(newY, maxVisibleY));
-
-            // Option 3: Constrain within the viewport (body) instead of contentArea
-            // This is a reasonable compromise if you don't want them lost entirely.
+            // --- DRAG CONSTRAINTS (Relative to .container) ---
             const elemWidth = element.offsetWidth;
             const elemHeight = element.offsetHeight;
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
 
-            newX = Math.max(0 - elemWidth + titleBar.offsetWidth, Math.min(newX, viewportWidth - titleBar.offsetWidth)); // Allow dragging until only titlebar width is left on screen
-            newY = Math.max(0, Math.min(newY, viewportHeight - titleBar.offsetHeight)); // Title bar stays visible vertically
+            // Option: Constrain within .container, allowing title bar to be visible
+            // This means newStyleLeft/Top are the values we constrain
+            const minX = 0 - elemWidth + titleBar.offsetWidth; // Allow part of window off left
+            const maxX = containerRect.width - titleBar.offsetWidth;   // Allow part of window off right
+            const minY = 0; // Can go to top edge of .container
+            const maxY = containerRect.height - titleBar.offsetHeight; // Title bar visible at bottom
 
-            element.style.left = `${newX}px`;
-            element.style.top = `${newY}px`;
+            newStyleLeft = Math.max(minX, Math.min(newStyleLeft, maxX));
+            newStyleTop = Math.max(minY, Math.min(newStyleTop, maxY));
+
+            // Prevent from going above the main logo area (visual constraint)
+            const logoHeight = (document.querySelector('.main-logo')?.offsetHeight || 0) + 10; // Approx height + margin
+            newStyleTop = Math.max(newStyleTop, logoHeight);
+
+
+            element.style.left = `${newStyleLeft}px`;
+            element.style.top = `${newStyleTop}px`;
         });
 
         document.addEventListener('mouseup', () => {
@@ -321,7 +431,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- MODIFIED Window Resize Listener ---
     window.addEventListener('resize', () => {
         const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
+        const containerRect = container.getBoundingClientRect(); // Use .container for bounds
+        const containerPaddingTop = parseFloat(getComputedStyle(container).paddingTop) || 0;
+        const logoHeight = (document.querySelector('.main-logo')?.offsetHeight || 0) + 10;
 
         document.querySelectorAll('.dialog-box').forEach(dialog => {
             let dialogWidth = dialog.offsetWidth;
@@ -346,35 +458,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
             // --- REMOVE OR RELAX BOUNDARY CONSTRAINTS ON RESIZE ---
-            // If we are not constraining drag, we might also not need to aggressively
-            // reposition on resize, unless they are WAY off.
-            // For now, let's just ensure they are somewhat on screen.
-            let currentX = parseFloat(dialog.style.left) || 0;
-            let currentY = parseFloat(dialog.style.top) || 0;
+            const dialogHeight = dialog.offsetHeight;
 
-            // Ensure at least a small part of the dialog is visible after resize
-            const minVisiblePart = 30; // e.g., 30px of the dialog should be visible
+            // --- REPOSITIONING LOGIC ON RESIZE (Relative to .container) ---
+            let currentStyleLeft = parseFloat(dialog.style.left) || 0;
+            let currentStyleTop = parseFloat(dialog.style.top) || 0;
 
-            if (currentX > viewportWidth - minVisiblePart) {
-                dialog.style.left = `${viewportWidth - minVisiblePart}px`;
+            const minX = 0 - dialogWidth + (dialog.querySelector('.dialog-title-bar')?.offsetWidth || 30);
+            const maxX = containerRect.width - (dialog.querySelector('.dialog-title-bar')?.offsetWidth || 30);
+            const minY = logoHeight; // Don't go above logo
+            const maxY = containerRect.height - (dialog.querySelector('.dialog-title-bar')?.offsetHeight || 20);
+
+            currentStyleLeft = Math.max(minX, Math.min(currentStyleLeft, maxX));
+            currentStyleTop = Math.max(minY, Math.min(currentStyleTop, maxY));
+
+            // If it's WAY off after resize (e.g. container shrank a lot)
+            if (currentStyleLeft > containerRect.width - 30) {
+                currentStyleLeft = Math.max(minX, containerRect.width - dialogWidth);
             }
-            if (currentX < 0 - dialogWidth + minVisiblePart) {
-                dialog.style.left = `${0 - dialogWidth + minVisiblePart}px`;
-            }
-            if (currentY > viewportHeight - minVisiblePart) {
-                dialog.style.top = `${viewportHeight - minVisiblePart}px`;
-            }
-            if (currentY < 0 && Math.abs(currentY) > (dialog.offsetHeight - minVisiblePart) ) { // Check if it's too far up
-                dialog.style.top = `${0 - dialog.offsetHeight + minVisiblePart}px`;
+            if (currentStyleTop > containerRect.height - 20) {
+                currentStyleTop = Math.max(minY, containerRect.height - dialogHeight);
             }
 
-            // If it's completely off (e.g. currentX > viewportWidth), reset to a safe spot
-            if (currentX > viewportWidth || currentX < -dialogWidth) {
-                dialog.style.left = '10px';
-            }
-            if (currentY > viewportHeight || currentY < -dialog.offsetHeight ) {
-                dialog.style.top = (document.querySelector('.main-logo')?.offsetHeight || 90) + 10 + 'px';
-            }
+
+            dialog.style.left = `${currentStyleLeft}px`;
+            dialog.style.top = `${currentStyleTop}px`;
         });
     });
 });
