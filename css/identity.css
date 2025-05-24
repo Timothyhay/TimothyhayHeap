@@ -169,6 +169,7 @@ body {
 }
 
 .sidebar ul li a { /* Navigation link styling */
+    font-family: var(--pixel-font-latin);
     text-decoration: none;              /* Remove underline from links */
     color: var(--dark-text);            /* Link text color, using the defined variable */
     display: block;                     /* Make links block-level for a full-width click area */
