@@ -372,6 +372,15 @@ Records with |Score - Mood| > 1:
 
 p.s. 我尝试在图表中使用了马卡龙配色，这个配色方案是由 Grok 3 帮我完成的。
 
+## Appendix
+
+现有的笔记记录还有的自动包括：
+
+- Last Edited Time: 最后编辑时间，维护DB的自我修养
+- Synced: 原本计划同步至网站Status时间线，使用这个标记记录是否已同步
+- Recall: 标记是否为事后回忆（超过一周）的条目，作为额外的量化心情值影响因素，实际未使用
+
+
 
 ## Reference
 
