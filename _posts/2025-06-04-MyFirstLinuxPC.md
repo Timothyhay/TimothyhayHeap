@@ -10,6 +10,7 @@ Setting up Arch Linux cost me too much time that I did not go to bed until 2 am.
 
 
 
+
 1. 分区
 resize与移动
 
