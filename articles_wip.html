@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章 - SodaFridge OS</title> <!-- 页面标题可以更改 -->
+
+    <!-- Google Font for pixelated Latin characters (LOGO) -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <!-- 复用主站的CSS -->
+    <link rel="stylesheet" href="css/identity.css">
+    <!-- 引入新的CSS（或者将新样式添加到identity.css中） -->
+    <link rel="stylesheet" href="css/article_sample.css">
+</head>
+<body>
+<!-- 主LOGO, 与主站保持一致 -->
+<h1 class="main-logo">SodaFridge OS</h1>
+
+<!-- 主容器, 与主站保持一致 -->
+<div class="container">
+    <!-- 左侧导航栏, 与主站保持一致 -->
+    <nav class="sidebar">
+        <ul>
+            <li class="nav-item"><a href="/">Home</a></li>
+            <li class="nav-item"><a href="/status">Status</a></li>
+            <li class="nav-item"><a href="/profile">Biocard</a></li>
+            <li class="nav-item"><a href="/articlelist" style="background-color: var(--pale-blue);">Articles</a></li> <!-- 当前页面高亮 -->
+            <li class="nav-item"><a href="/#locations">Activated Port.</a></li>
+            <li class="nav-item"><a href="#">Photos</a></li>
+            <li class="nav-item"><a href="/#contact">Contact</a></li>
+        </ul>
+        <div class="social-icons nav-item">
+            <a href="https://github.com/Timothyhay" target="_blank" title="GitHub">
+                <img src="images/icons/github-pixel.svg" alt="GitHub Icon" class="social-icon-img">
+            </a>
+            <a href="https://x.com/Timothy_OwO" target="_blank" title="Twitter/X">
+                <img src="images/icons/twitter-pixel.svg" alt="Twitter/X Icon" class="social-icon-img">
+            </a>
+        </div>
+        <div class="pixel-clock nav-item">
+            <div>
+                <span id="clock-year">2024</span> -
+                W<span id="clock-week">00</span>
+            </div>
+            <div>
+                <span id="clock-hours">00</span>:<span id="clock-minutes">00</span>:<span id="clock-seconds">00</span>
+            </div>
+            <div class="cosmic-ray-info">
+                Cosmic-ray Intensity: <span id="cosmic-ray-intensity">0.00</span> μSv/h
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区域，文章窗口将在这里出现 -->
+    <main class="content-area" id="contentArea">
+        <div class="background-art-placeholder"></div>
+    </main>
+
+    <!-- 版权信息, 与主站保持一致 -->
+    <div class="copyright">
+        <p>I feel quite alive.</p>
+        © 2025 TangerineSoda. All Rights Reserved
+        Design by Timothyhay / Inspired from @ZUTOMAYO
+    </div>
+</div>
+
+<!-- 复用主站的对话框模板 -->
+<template id="dialogTemplate">
+    <div class="dialog-box">
+        <div class="dialog-title-bar">
+            <span class="dialog-title">Dialog Title</span>
+            <button class="dialog-close-button">X</button>
+        </div>
+        <div class="dialog-content">
+            <!-- Dynamic content will be injected here -->
+        </div>
+        <!-- 文章窗口不需要按钮，所以这个区域可以留空或移除 -->
+        <div class="dialog-buttons"></div>
+    </div>
+</template>
+
+<!-- 这是我们的文章内容的模板 -->
+<template id="articleContentTemplate">
+    <div class="article-meta">
+        <span>作者: Timothyhay</span>
+        <span>发布于: 2024-W21</span>
+        <span>标签: #像素艺术 #Web设计</span>
+    </div>
+    <hr class="article-hr">
+    <h2>欢迎来到我的像素世界</h2>
+    <p>你好！欢迎访问我的个人网站。这个网站的设计灵感来源于经典的 Windows 98 操作系统，并融合了一些现代Web技术。我希望通过这种方式，唤起大家对那个计算时代初期的怀旧之情。</p>
+    <img src="https://via.placeholder.com/500x250/a0e7e5/333333?text=Pixel+Art+Banner" alt="文章配图">
+    <p>设计这样一个网站不仅仅是为了好玩。它也是一次探索，看看如何在有限的调色板和低分辨率的美学下，构建一个功能齐全、响应式的网站。每一个元素，从窗口边框到字体渲染，都经过了精心调整，以达到最佳的像素效果。</p>
+    <h3>设计哲学</h3>
+    <p>我的核心设计哲学是“功能性怀旧”。这意味着不仅仅是模仿旧界面的外观，更要捕捉其交互的精髓，比如可拖动的窗口和经典的按钮样式。</p>
+    <blockquote>
+        这是一个引用块的例子。它通常用来强调某段重要的文字或者引用他人的话语。它的样式会略有不同，以示区分。
+    </blockquote>
+    <p>下面是一个代码块示例，展示了如何用CSS实现像素化的图片渲染：</p>
+    <pre><code>html {
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: pixelated;
+    -ms-interpolation-mode: nearest-neighbor;
+}</code></pre>
+    <p>感谢你的阅读！希望你喜欢在这里的探索之旅。随时通过侧边栏的联系方式找到我。</p>
+</template>
+
+<!-- 引入新的JS文件 -->
+<script src="js/article_sample.js"></script>
+</body>
+</html>
