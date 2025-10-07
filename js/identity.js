@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Data for the dialogs. Each object represents one dialog.
     // 'id' is for potential future reference, 'title', 'width', and 'content' (HTML string) define the dialog.
-    const dialogsData = [
+    const sampleDialogsData = [
         {
             id: 1,
             title: '💖 宇宙卵团子巡演',

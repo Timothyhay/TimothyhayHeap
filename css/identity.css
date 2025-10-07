@@ -290,10 +290,6 @@ padding: 5px 8px;
     flex-grow: 1;                       /* Takes up remaining horizontal space */
     position: relative;                 /* For absolute positioning of dialogs within this area */
     overflow: hidden;                   /* Clips dialogs if they go out of bounds */
-    /* REMOVE: background-color: var(--pale-blue); */
-    /* REMOVE: background-image: url(/images/desktop.jpg); */
-    /* REMOVE: background-size: cover; */
-    /* REMOVE: background-position: center; */
     background-color: transparent; /* ADDED: Make it transparent to show body's background */
     z-index: 5;                         /* Lowest stacking order among main layout blocks */
 }
