@@ -175,7 +175,7 @@ body.gallery-maximized .main-logo {
 /* 2. Copyright 内容变得精简和透明 */
 body.gallery-maximized .copyright {
     /* 增加透明度 */
-    opacity: 0.6;
+    opacity: 0.3;
     /* 稍微向下移动，营造“让位”的感觉 */
     transform: translateY(9px);
 }

@@ -50,13 +50,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 核心变量 ---
     const contentArea = document.getElementById('contentArea');
+    const container = document.querySelector('.container')
     const galleryTemplate = document.getElementById('galleryWindowTemplate');
     const viewerTemplate = document.getElementById('imageViewerTemplate');
     let highestZIndex = 101; // 与 identity.js 保持一致或更高
 
     // --- 初始化函数 ---
     function initPhotoApp() {
-        if (!contentArea || !galleryTemplate || !viewerTemplate) {
+        if (!container || !galleryTemplate || !viewerTemplate) {
             console.error('Required elements for Photo App are missing!');
             return;
         }
@@ -106,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
         galleryWindow.style.zIndex = ++highestZIndex;
         makeDraggable(galleryWindow);
 
-        contentArea.appendChild(galleryWindow);
+        container.appendChild(galleryWindow);
     }
 
     // --- 创建单个图片查看器窗口 ---
@@ -128,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let offsetY = 50;
         if (galleryWindow) {
             const rect = galleryWindow.getBoundingClientRect();
-            const parentRect = contentArea.getBoundingClientRect();
+            const parentRect = container.getBoundingClientRect();
             offsetX = rect.left - parentRect.left + Math.random() * 150 + 50;
             offsetY = rect.top - parentRect.top + Math.random() * 100 + 20;
         }
@@ -143,11 +144,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         makeDraggable(viewerWindow);
 
-        contentArea.appendChild(viewerWindow);
+        container.appendChild(viewerWindow);
     }
 
 
-    // --- 可拖动窗口的辅助函数 (可以从 identity.js 复制或共享) ---
+    // --- 可拖动窗口的辅助函数 - 可拖动区域与 indentity.js 不同 ---
     function makeDraggable(element) {
         const titleBar = element.querySelector('.dialog-title-bar');
         if (!titleBar) return;
@@ -177,7 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!isDragging) return;
             e.preventDefault();
 
-            const parentRect = contentArea.getBoundingClientRect();
+            const parentRect = container.getBoundingClientRect();
             let newX = e.clientX - offsetX - parentRect.left;
             let newY = e.clientY - offsetY - parentRect.top;
 
@@ -206,9 +207,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleMaximize(windowElement) {
         const titleBar = windowElement.querySelector('.dialog-title-bar');
         const maximizeButton = windowElement.querySelector('.dialog-maximize-button');
-
-        // 获取 copyright 元素
         const copyrightEl = document.querySelector('.copyright');
+        const sidebar = document.querySelector('.sidebar');
+        const mainLogo = document.querySelector('.main-logo')
 
         const isMaximized = windowElement.dataset.isMaximized === 'true';
 
@@ -226,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
             maximizeButton.title = 'Maximize';
             titleBar.style.cursor = 'grab';
 
-            // 移除全局状态并恢复 copyright 内容 !!!
+            // 移除全局状态并恢复 copyright 内容
             document.body.classList.remove('gallery-maximized');
             if (copyrightEl && copyrightEl.dataset.originalHtml) {
                 copyrightEl.innerHTML = copyrightEl.dataset.originalHtml;
@@ -239,11 +240,33 @@ document.addEventListener('DOMContentLoaded', () => {
             windowElement.dataset.originalTop = windowElement.style.top;
             windowElement.dataset.originalLeft = windowElement.style.left;
 
-            windowElement.style.width = '100%';
-            windowElement.style.height = '100%';
-            windowElement.style.top = '0';
-            windowElement.style.left = '0';
+            // 智能最大化计算
+            // 检查 sidebar 是否可见且为侧边栏模式 (非垂直堆叠)
+            // getComputedStyle(sidebar).display !== 'none' 检查它是否被隐藏
+            // window.innerWidth > 768 是一个简单的断点检查，与你的CSS响应式断点对应
+            let sidebarWidth = 0;
+            if (sidebar && getComputedStyle(sidebar).display !== 'none' && window.innerWidth > 768) {
+                sidebarWidth = sidebar.offsetWidth;
+            }
 
+            let logoTopOffset = 0;
+            if (mainLogo) {
+                const logoRect = mainLogo.getBoundingClientRect();
+                const containerRect = mainLogo.parentElement.getBoundingClientRect(); // 获取父容器(.container)的 rect
+                // 计算 LOGO 底部相对于父容器顶部的距离，并增加一些间距
+                logoTopOffset = (logoRect.bottom - containerRect.top) - 20; // 2px 的额外间距
+            }
+
+            // 应用最大化样式，并留出 sidebar & logo 的空间
+            windowElement.style.width = `calc(100% - ${sidebarWidth}px)`;
+            windowElement.style.height = `calc(100% - ${logoTopOffset}px)`; // 使用 calc() 调整高度
+            windowElement.style.top = `${logoTopOffset}px`; // 从 LOGO 下方开始
+            windowElement.style.left = `${sidebarWidth}px`;
+
+            // 为最大化/还原添加平滑过渡动画
+            windowElement.style.transition = 'width 0.3s ease-out, height 0.3s ease-out, top 0.3s ease-out, left 0.3s ease-out';
+
+            // 设置状态
             windowElement.dataset.isMaximized = 'true';
             windowElement.classList.add('maximized');
 
@@ -251,7 +274,7 @@ document.addEventListener('DOMContentLoaded', () => {
             maximizeButton.title = 'Restore';
             titleBar.style.cursor = 'default';
 
-            // !!! 新增：添加全局状态并修改 copyright 内容 !!!
+            // 添加全局状态并修改 copyright 内容
             document.body.classList.add('gallery-maximized');
             if (copyrightEl) {
                 // 首次最大化时，保存原始内容
