@@ -13,7 +13,7 @@ title: Photos - SodaFridge OS
 
     <!-- 引用主页的核心样式 -->
     <link rel="stylesheet" href="css/identity.css">
-    <!-- !!! 引入新的照片墙专属样式 !!! -->
+    <!-- 引入新的照片墙专属样式 -->
     <link rel="stylesheet" href="css/photos.css">
 </head>
 <body>
@@ -108,7 +108,11 @@ title: Photos - SodaFridge OS
 
 <!-- 引用主页的JS (为了时钟和侧边栏动画) -->
 <script src="js/identity.js"></script>
-<!-- !!! 引入新的照片墙专属逻辑 !!! -->
+<!-- 引入照片墙专属逻辑 -->
+<!-- 引入将 Jekyll 数据并转换为 JavaScript 变量 -->
+<script>
+    const PHOTO_DATA_FROM_JEKYLL = {{ site.data.photos | jsonify }};
+</script>
 <script src="js/photos.js"></script>
 </body>
 </html>

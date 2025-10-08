@@ -3,49 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 照片数据 ---
     // 在这里定义你的照片信息。你可以根据需要添加更多。
     // 建议：为缩略图准备较小的版本以提高加载速度。
-    const photoData = [
-        {
-            id: 'p001',
-            thumbnailUrl: 'https://picsum.photos/id/1015/200/200', // 示例图片
-            fullUrl: 'https://picsum.photos/id/1015/800/600',
-            title: 'Mountain_Lake.jpg',
-            date: '2024-03-15',
-            location: 'Alps, EU'
-        },
-        {
-            id: 'p002',
-            thumbnailUrl: 'https://picsum.photos/id/1025/200/200', // 示例图片
-            fullUrl: 'https://picsum.photos/id/1025/800/600',
-            title: 'Doggo_Portrait.png',
-            date: '2024-04-01',
-            location: 'Home, Earth'
-        },
-        {
-            id: 'p003',
-            thumbnailUrl: 'https://picsum.photos/id/237/200/200', // 示例图片
-            fullUrl: 'https://picsum.photos/id/237/800/600',
-            title: 'Another_Dog.jpg',
-            date: '2023-11-20',
-            location: 'Park, Local Town'
-        },
-        {
-            id: 'p004',
-            thumbnailUrl: 'https://picsum.photos/id/10/200/200',
-            fullUrl: 'https://picsum.photos/id/10/800/600',
-            title: 'Forest_Path.raw',
-            date: '2024-01-22',
-            location: 'Redwood National Park'
-        },
-        {
-            id: 'p005',
-            thumbnailUrl: 'https://picsum.photos/id/433/200/200',
-            fullUrl: 'https://picsum.photos/id/433/800/600',
-            title: 'City_Night.gif',
-            date: '2024-05-10',
-            location: 'Neo-Kyoto'
-        },
-        // ... 在这里添加更多你的照片
-    ];
+    const photoData = PHOTO_DATA_FROM_JEKYLL;
 
 
     // --- 核心变量 ---
@@ -100,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // 添加按钮事件监听器
         maximizeButton.addEventListener('click', () => toggleMaximize(galleryWindow));
         closeButton.addEventListener('click', () => galleryWindow.remove());
+        maximizeButton.innerHTML = '❐';
 
         // 放置窗口并使其可拖动
         galleryWindow.style.left = '40px';
@@ -212,6 +171,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const mainLogo = document.querySelector('.main-logo')
 
         const isMaximized = windowElement.dataset.isMaximized === 'true';
+
+
 
         if (isMaximized) {
             // --- 还原窗口 ---

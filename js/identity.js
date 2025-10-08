@@ -391,7 +391,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dialogCreationInterval = setInterval(spawnNextDialog, 2200);
     }
 
-    // --- FETCH DIALOG DATA ---
     // --- FETCH DIALOG DATA & INITIATE DIALOG SYSTEM ---
     fetch('data/dialogs/dialogs-data.json') // Ensure this path is correct
         .then(response => {
@@ -415,8 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
 
-    // --- NEW: Pixel Clock Functionality ---
-    // --- NEW/UPDATED: Pixel Clock Functionality ---
+    // --- Pixel Clock Functionality ---
     const yearElem = document.getElementById('clock-year');
     const weekElem = document.getElementById('clock-week');
     const hoursElem = document.getElementById('clock-hours');
@@ -493,7 +491,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Event listener for window resize to adjust dialog positions (basic) ---
-    // --- MODIFIED Window Resize Listener ---
     window.addEventListener('resize', () => {
         const viewportWidth = window.innerWidth;
         const containerRect = container.getBoundingClientRect(); // Use .container for bounds
