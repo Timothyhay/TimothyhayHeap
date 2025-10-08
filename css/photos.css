@@ -122,6 +122,65 @@
     color: #000;
 }
 
+/* 为标题栏按钮组添加样式 */
+.dialog-title-bar {
+    /* 确保 dialog-title-bar 仍然是 flex 容器 */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.title-bar-buttons {
+    display: flex;
+    align-items: center;
+}
+
+/* !!! 最大化按钮的样式 (仿照关闭按钮) !!! */
+.dialog-maximize-button {
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+    font-size: 12px;
+    line-height: 10px;
+    background-color: var(--win98-bg);
+    color: black;
+    border-top: 1px solid var(--win98-border-light);
+    border-left: 1px solid var(--win98-border-light);
+    border-right: 1px solid var(--win98-border-dark);
+    border-bottom: 1px solid var(--win98-border-dark);
+    width: 16px;
+    height: 14px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 3px; /* 与关闭按钮的间距 */
+}
+.dialog-maximize-button:active {
+    border-top: 1px solid var(--win98-border-dark);
+    border-left: 1px solid var(--win98-border-dark);
+    border-right: 1px solid var(--win98-border-light);
+    border-bottom: 1px solid var(--win98-border-light);
+}
+
+/* 当 body 拥有 .gallery-maximized class 时... */
+/* 1. Logo 缩小并移动到角落 */
+body.gallery-maximized .main-logo {
+    /* 使用 transform: scale() 来平滑缩小 */
+    transform: scale(0.7);
+    /* 调整位置以紧贴边缘 */
+    top: 10px;
+    left: 15px;
+}
+
+/* 2. Copyright 内容变得精简和透明 */
+body.gallery-maximized .copyright {
+    /* 增加透明度 */
+    opacity: 0.6;
+    /* 稍微向下移动，营造“让位”的感觉 */
+    transform: translateY(9px);
+}
+
+
 /* 响应式调整 */
 @media (max-width: 768px) {
     .photo-gallery-window {

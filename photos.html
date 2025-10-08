@@ -61,11 +61,17 @@ title: Photos - SodaFridge OS
 <!-- =========== 新增的模板 =========== -->
 
 <!-- 模板 1: 主照片库窗口 -->
+<!-- 模板 1: 主照片库窗口 -->
 <template id="galleryWindowTemplate">
     <div class="dialog-box photo-gallery-window">
         <div class="dialog-title-bar">
-            <span class="dialog-title">🖼️ Photo Gallery v1.0</span>
-            <button class="dialog-close-button">X</button>
+            <span class="dialog-title">🖼️ Ohh It's Photo Gallery v1.0</span>
+            <!-- 标题栏按钮组 -->
+            <div class="title-bar-buttons">
+                <!-- !!! 新增最大化按钮 !!! -->
+                <button class="dialog-maximize-button" title="Maximize">□</button>
+                <button class="dialog-close-button">X</button>
+            </div>
         </div>
         <div class="dialog-content">
             <div class="photo-grid">

@@ -69,6 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const galleryWindow = galleryClone.querySelector('.dialog-box');
         const photoGrid = galleryClone.querySelector('.photo-grid');
         const photoCountStatus = galleryClone.querySelector('#photo-count');
+        const maximizeButton = galleryClone.querySelector('.dialog-maximize-button');
+        const closeButton = galleryClone.querySelector('.dialog-close-button');
 
         // 填充缩略图
         photoData.forEach((photo, index) => {
@@ -93,6 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 更新状态栏
         photoCountStatus.textContent = `${photoData.length} items`;
+
+        // 添加按钮事件监听器
+        maximizeButton.addEventListener('click', () => toggleMaximize(galleryWindow));
+        closeButton.addEventListener('click', () => galleryWindow.remove());
 
         // 放置窗口并使其可拖动
         galleryWindow.style.left = '40px';
@@ -149,7 +155,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let offsetX, offsetY, isDragging = false;
 
         titleBar.addEventListener('mousedown', (e) => {
-            if (e.target.classList.contains('dialog-close-button')) return;
+            // if (e.target.classList.contains('dialog-close-button')) return;
+            if (element.dataset.isMaximized === 'true' || e.target.closest('button')) {
+                return;
+            }
             isDragging = true;
 
             const rect = element.getBoundingClientRect();
@@ -191,6 +200,68 @@ document.addEventListener('DOMContentLoaded', () => {
                 titleBar.style.cursor = 'grab';
             }
         });
+    }
+
+    // 最大化/还原窗口的函数
+    function toggleMaximize(windowElement) {
+        const titleBar = windowElement.querySelector('.dialog-title-bar');
+        const maximizeButton = windowElement.querySelector('.dialog-maximize-button');
+
+        // 获取 copyright 元素
+        const copyrightEl = document.querySelector('.copyright');
+
+        const isMaximized = windowElement.dataset.isMaximized === 'true';
+
+        if (isMaximized) {
+            // --- 还原窗口 ---
+            windowElement.style.width = windowElement.dataset.originalWidth;
+            windowElement.style.height = windowElement.dataset.originalHeight;
+            windowElement.style.top = windowElement.dataset.originalTop;
+            windowElement.style.left = windowElement.dataset.originalLeft;
+
+            windowElement.dataset.isMaximized = 'false';
+            windowElement.classList.remove('maximized');
+
+            maximizeButton.innerHTML = '❐';
+            maximizeButton.title = 'Maximize';
+            titleBar.style.cursor = 'grab';
+
+            // 移除全局状态并恢复 copyright 内容 !!!
+            document.body.classList.remove('gallery-maximized');
+            if (copyrightEl && copyrightEl.dataset.originalHtml) {
+                copyrightEl.innerHTML = copyrightEl.dataset.originalHtml;
+            }
+
+        } else {
+            // --- 最大化窗口 ---
+            windowElement.dataset.originalWidth = windowElement.style.width || `${windowElement.offsetWidth}px`;
+            windowElement.dataset.originalHeight = windowElement.style.height || `${windowElement.offsetHeight}px`;
+            windowElement.dataset.originalTop = windowElement.style.top;
+            windowElement.dataset.originalLeft = windowElement.style.left;
+
+            windowElement.style.width = '100%';
+            windowElement.style.height = '100%';
+            windowElement.style.top = '0';
+            windowElement.style.left = '0';
+
+            windowElement.dataset.isMaximized = 'true';
+            windowElement.classList.add('maximized');
+
+            maximizeButton.innerHTML = '□';
+            maximizeButton.title = 'Restore';
+            titleBar.style.cursor = 'default';
+
+            // !!! 新增：添加全局状态并修改 copyright 内容 !!!
+            document.body.classList.add('gallery-maximized');
+            if (copyrightEl) {
+                // 首次最大化时，保存原始内容
+                if (!copyrightEl.dataset.originalHtml) {
+                    copyrightEl.dataset.originalHtml = copyrightEl.innerHTML;
+                }
+                // 修改为精简内容
+                copyrightEl.innerHTML = '© 2025 TangerineSoda. All Rights Reserved';
+            }
+        }
     }
 
     // --- 启动照片应用 ---
