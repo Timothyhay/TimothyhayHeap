@@ -75,6 +75,11 @@ body {
     opacity: 1;                         /* Static: visible by default (no entry animation for the logo) */
     transform: translateY(0);           /* Static: no transformation */
     pointer-events: none;               /* Makes the logo text non-interactive (doesn't capture clicks) if it's purely decorative */
+
+    /* Add smooth animation for transform & top/left */
+    /* transform-origin 确保缩放时以左上角为基点 */
+    transform-origin: top left;
+    transition: transform 0.4s ease-in-out, top 0.4s ease-in-out, left 0.4s ease-in-out;
 }
 
 /* --- Main Layout Container --- */
@@ -290,10 +295,6 @@ padding: 5px 8px;
     flex-grow: 1;                       /* Takes up remaining horizontal space */
     position: relative;                 /* For absolute positioning of dialogs within this area */
     overflow: hidden;                   /* Clips dialogs if they go out of bounds */
-    /* REMOVE: background-color: var(--pale-blue); */
-    /* REMOVE: background-image: url(/images/desktop.jpg); */
-    /* REMOVE: background-size: cover; */
-    /* REMOVE: background-position: center; */
     background-color: transparent; /* ADDED: Make it transparent to show body's background */
     z-index: 5;                         /* Lowest stacking order among main layout blocks */
 }
@@ -511,6 +512,8 @@ padding: 5px 8px;
         bottom: 5px;
         right: 10px;
         /* If it gets too wide, consider reducing padding or max-width */
+
+        transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
     }
 }
 

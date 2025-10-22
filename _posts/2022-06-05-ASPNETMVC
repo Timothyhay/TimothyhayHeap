@@ -1,0 +1,245 @@
+---
+layout: blogpage
+title: ASP .NET MVC Notes!
+comments: true
+tags: Note CSharp
+---
+
+## Overview of ASP.NET Core MVC[1]
+
+The Model-View-Controller (MVC) architectural pattern separates an application into three main groups of components: Models, Views, and Controllers. This pattern helps to achieve separation of concerns. Using this pattern, user requests are routed to a Controller which is responsible for working with the Model to perform user actions and/or retrieve results of queries. The Controller chooses the View to display to the user, and provides it with any Model data it requires.
+
+The MVC pattern helps you create apps that are more testable and easier to update than traditional monolithic apps.
+
+- Models: Classes that represent the data of the app. The model classes use validation logic to enforce business rules for that data. Typically, model objects retrieve and store model state in a database. In this tutorial, a Movie model retrieves movie data from a database, provides it to the view or updates it. Updated data is written to a database.
+
+- Views: Views are the components that display the app's user interface (UI). Generally, this UI displays the model data.
+
+- Controllers: Classes that:
+    - Handle browser requests.
+    - Retrieve model data.
+    - Call view templates that return a response.
+
+
+## Controller
+
+Web 服务器通常会将进入的 URL 请求直接映射到服务器上的磁盘文件。例如：URL 请求 "http://www.w3cschool.cc/index.php" 将直接映射到服务器根目录上的文件 "index.php"。
+
+MVC 框架的映射方式有所不同。MVC 将 URL 映射到方法。这些方法在类中被称为"控制器"。
+
+控制器负责处理进入的请求，处理输入，保存数据，并把响应发送回客户端。
+
+Every public method in a controller is callable as an HTTP endpoint. In the sample above, both methods return a string. Note the comments preceding each method.
+
+An HTTP endpoint:
+
+Is a targetable URL in the web application, such as https://localhost:5001/HelloWorld.
+Combines:
+- The protocol used: HTTPS.
+- The network location of the web server, including the TCP port: localhost:5001.
+- The target URI: HelloWorld.
+
+
+MVC invokes controller classes, and the action methods within them, depending on the incoming URL. The default URL routing logic used by MVC, uses a format like this to determine what code to invoke:
+
+    /[Controller]/[ActionName]/[Parameters]
+
+The routing format is set in the `Program.cs` file.
+
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+The trailing ? (in id?) indicates the id parameter is optional.
+
+e.g. 
+
+    public string Welcome(string name, int ID = 1)
+    {
+        return HtmlEncoder.Default.Encode($"Hello {name}, ID: {ID}");
+    }
+
+The following URL will call this method: https://localhost:{PORT}/HelloWorld/Welcome/3?name=Rick
+
+Another way: https://localhost:{PORT}/HelloWorld/Welcome?name=Rick&numtimes=4.
+
+The query string follows `?`.
+
+(Output: Hello Rick, ID: 3)
+
+## View
+
+View templates are created using Razor. Razor-based view templates:
+
+- Have a .cshtml file extension.
+- Provide an elegant way to create HTML output with C#.
+
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+The preceding code:
+
+- Calls the controller's View method.
+- Uses a view template to generate an HTML response.
+
+
+We can see - Each page shows the same menu layout. The menu layout is implemented in the `Views/Shared/_Layout.cshtml` file.
+
+The changes were made once in the layout template and all pages on the site reflect the changes (e.g. new link text and new title).
+
+`Views/_ViewStart.cshtml`:
+
+    @{
+        Layout = "_Layout";
+    }
+
+The `Views/_ViewStart.cshtml` file brings in the Views/Shared/_Layout.cshtml file to each view. The Layout property can be used to set a different layout view, or set it to null so no layout file will be used.
+
+这段代码被自动添加到由应用程序显示的所有视图。如果您删除了这个文件，则必须向所有视图中添加这行代码。
+
+
+The content in the Index.cshtml view template is merged with the Views/Shared/_Layout.cshtml view template. A single HTML response is sent to the browser. Layout templates make it easy to make changes that apply across all of the pages in an app.
+
+
+
+### Passing Data from the Controller to the View
+
+Controller:
+
+        public IActionResult Welcome(string name, int numTimes = 1)
+        {
+            ViewData["Message"] = "Hello " + name;
+            ViewData["NumTimes"] = numTimes;
+
+            return View();
+        }
+
+View:
+
+    <ul>
+        @for (int i = 0; i < (int)ViewData["NumTimes"]!; i++)
+        {
+            <li>@ViewData["Message"]</li>
+        }
+    </ul>
+
+In the preceding sample, the ViewData dictionary was used to pass data from the controller to a view. Later in the tutorial, a view model is used to pass data from a controller to a view. The view model approach to passing data is preferred over the ViewData dictionary approach.
+
+
+## Model
+
+These model classes are used with Entity Framework Core (EF Core) to work with a database. EF Core is an object-relational mapping (ORM) framework that simplifies the data access code that you have to write.
+
+The model classes created are known as POCO classes, from Plain Old CLR Objects. POCO classes don't have any dependency on EF Core. They only define the properties of the data to be stored in the database.
+
+In this tutorial, model classes are created first, and EF Core creates the database.
+
+
+
+The question mark after string indicates that the property is nullable. 
+
+
+NuGet packages:
+
+Add:
+
+- The EF Core SQL Server provider. The provider package installs the EF Core package as a dependency.
+- The utilities used by the packages installed automatically in the scaffolding step, later in the tutorial.
+
+Scaffold movie pages:
+
+Use the scaffolding tool to produce Create, Read, Update, and Delete (CRUD) pages for the movie model.
+
+> right-click the **Controllers** folder and select Add > New Scaffolded Item.
+
+Scaffolding updates the following:
+
+- Inserts required package references in the `MvcMovie.csproj` project file.
+- Registers the database context in the `Program.cs` file.
+- Adds a database connection string to the `appsettings.json` file.
+
+Scaffolding creates the following:
+
+- A movies controller: Controllers/MoviesController.cs
+- Razor view files for Create, Delete, Details, Edit, and Index pages: Views/Movies/*.cshtml
+- A database context class: Data/MvcMovieContext.cs
+- The automatic creation of these files and file updates is known as scaffolding.
+
+The automatic creation of these files and file updates is known as **scaffolding**.
+
+
+Use the EF Core **Migrations** feature to create the database. Migrations is a set of tools that create and update a database to match the data model.
+
+With EF Core, data access is performed using a model. A model is made up of entity classes and a context object that represents a session with the database. The context object allows querying and saving data. The database context is derived from Microsoft.EntityFrameworkCore.DbContext and specifies the entities to include in the data model.
+
+Scaffolding creates the `Data/MvcMovieContext.cs` database context class:
+
+
+    namespace MvcMovie.Data
+    {
+        public class MvcMovieContext : DbContext
+        {
+            public MvcMovieContext (DbContextOptions<MvcMovieContext> options)
+                : base(options)
+            {
+            }
+
+            public DbSet<MvcMovie.Models.Movie> Movie { get; set; }
+        }
+    }
+
+The preceding code creates a DbSet<Movie> property that represents the movies in the database.
+
+a controller can pass data or objects to a view using the ViewData dictionary. The ViewData dictionary is a dynamic object that provides a convenient late-bound way to pass information to a view.
+
+MVC provides the ability to pass strongly typed model objects to a view. This strongly typed approach enables compile time code checking. The scaffolding mechanism passed a strongly typed model in the MoviesController class and views.
+
+
+    // GET: Movies/Details/5
+    public async Task<IActionResult> Details(int? id)
+    {
+        if (id == null)
+        {
+            return NotFound();
+        }
+
+        var movie = await _context.Movie
+            .FirstOrDefaultAsync(m => m.Id == id);
+        if (movie == null)
+        {
+            return NotFound();
+        }
+
+        return View(movie);
+    }
+
+The id parameter is generally passed as route data. For example, https://localhost:5001/movies/details/1 sets:
+
+The controller to the movies controller, the first URL segment.
+The action to details, the second URL segment.
+The id to 1, the last URL segment.
+The id can be passed in with a query string, as in the following example:
+
+https://localhost:5001/movies/details?id=1
+
+The id parameter is defined as a nullable type (int?) in cases when the id value isn't provided.
+
+
+The @model statement at the top of the view file specifies the type of object that the view expects. When the movie controller was created, the following @model statement was included:
+
+    @model MvcMovie.Models.Movie
+
+This @model directive allows access to the movie that the controller passed to the view. The Model object is strongly typed. 
+
+For example, in the Details.cshtml view, the code passes each movie field to the DisplayNameFor and DisplayFor HTML Helpers with the strongly typed Model object. The Create and Edit methods and views also pass a Movie model object.
+
+        <dt class = "col-sm-2">
+            @Html.DisplayNameFor(model => model.Price)
+        </dt>
+        <dd class = "col-sm-10">
+            @Html.DisplayFor(model => model.Price)
+        </dd>
+
+## Reference
+
+[1] Overview of ASP.NET Core MVC - https://docs.microsoft.com/en-us/aspnet/core/mvc/overview?WT.mc_id=dotnet-35129-website&view=aspnetcore-6.0

@@ -69,7 +69,7 @@ Manus 引入了 PlanningTool 作为单独工具 -
 继承了 Manus 的规划优势，通过 PlanningTool 实现任务分解，会使用`PlanningTool`形成一个包含多个任务的线性结构的计划，写入至一个 markdowns 文件中去.  
 然后 OpenManus 查看这个 Plan，从中依次取出每个任务，在执行任务时，会将该任务分配给最适合处理该任务的 Agent(工具类)。
 
-![openManusProcedure](/images/illustration/2021-06-21/openManusProcedure.png)
+![openManusProcedure](/images/illustration/2025-03-12/openManusProcedure.png)
 
 
 本质上决定一个ReAct Agent(Reason & Act)的效果的关键是提示词引导和工具使用。

@@ -1,0 +1,39 @@
+- id: 'p001'
+  thumbnailUrl: 'https://picsum.photos/id/1015/200/200'
+  fullUrl: 'https://picsum.photos/id/1015/800/600'
+  title: 'Mountain_Lake.jpg'
+  date: '2024-03-15'
+  location: 'Alps, EU'
+
+- id: 'p002'
+  thumbnailUrl: 'https://picsum.photos/id/1025/200/200'
+  fullUrl: 'https://picsum.photos/id/1025/800/600'
+  title: 'Doggo_Portrait.png'
+  date: '2024-04-01'
+  location: 'Home, Earth'
+
+- id: 'p003'
+  thumbnailUrl: 'https://picsum.photos/id/237/200/200'
+  fullUrl: 'https://picsum.photos/id/237/800/600'
+  title: 'Another_Dog.jpg'
+  date: '2023-11-20'
+  location: 'Park, Local Town'
+
+- id: 'p004'
+  thumbnailUrl: 'https://picsum.photos/id/10/200/200'
+  fullUrl: 'https://picsum.photos/id/10/800/600'
+  title: 'Forest_Path.raw'
+  date: '2024-01-22'
+  location: 'Redwood National Park'
+
+- id: 'p005'
+  thumbnailUrl: 'https://picsum.photos/id/433/200/200'
+  fullUrl: 'https://picsum.photos/id/433/800/600'
+  title: 'City_Night.gif'
+  date: '2024-05-10'
+  location: 'Neo-Kyoto'
+
+# 以后添加新照片，只需在这里按格式添加新的一段即可
+# - id: 'p006'
+#   thumbnailUrl: '...'
+#   ...

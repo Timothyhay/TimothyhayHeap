@@ -1,0 +1,112 @@
+/* =============================================== */
+/* ==         Article Window Styles             == */
+/* =============================================== */
+
+/* 用于文章窗口的主样式 */
+.article-window {
+    /* 默认尺寸更大 */
+    width: 640px;
+    height: 480px;
+    /* 允许用户调整窗口大小 */
+    resize: both;
+    overflow: auto; /* 当内容超出时，窗口本身出现滚动条 */
+    min-width: 320px; /* 限制最小尺寸 */
+    min-height: 240px;
+}
+
+/* 文章窗口的内容区域 */
+.article-window .dialog-content {
+    /* 将背景色设为更适合阅读的白色或浅灰色 */
+    background-color: #ffffff;
+    color: #000000;
+    /* 移除内部滚动条，因为父元素已经有了 */
+    overflow-y: visible;
+    padding: 15px 20px;
+}
+
+/* 文章内容具体样式 */
+.article-content {
+    line-height: 1.6;
+}
+
+.article-content h2,
+.article-content h3,
+.article-content h4 {
+    font-family: var(--pixel-font-cjk), var(--pixel-font-latin);
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.article-content h2 {
+    font-size: 20px;
+    border-bottom: 2px solid var(--win98-border-dark);
+    padding-bottom: 5px;
+}
+
+.article-content h3 {
+    font-size: 16px;
+}
+
+.article-content p {
+    margin-bottom: 12px;
+}
+
+.article-content img {
+    max-width: 100%;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border-top: 2px solid var(--win98-border-light);
+    border-left: 2px solid var(--win98-border-light);
+    border-right: 2px solid var(--win98-border-dark);
+    border-bottom: 2px solid var(--win98-border-dark);
+}
+
+/* 代码块样式 */
+.article-content pre {
+    background-color: #000000;
+    color: #00ff00; /* 经典的绿色终端文本颜色 */
+    padding: 10px;
+    border-top: 2px solid var(--win98-border-dark);
+    border-left: 2px solid var(--win98-border-dark);
+    border-right: 2px solid var(--win98-border-light);
+    border-bottom: 2px solid var(--win98-border-light);
+    overflow-x: auto; /* 代码过长时出现水平滚动条 */
+    font-family: 'Courier New', Courier, monospace; /* 使用等宽字体 */
+    font-size: 13px;
+    margin-bottom: 15px;
+}
+
+.article-content pre code {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+/* 引用块样式 */
+.article-content blockquote {
+    margin: 15px 0;
+    padding: 10px 15px;
+    background-color: #f0f0f0; /* 浅灰色背景 */
+    border-left: 4px solid var(--win98-title-bg-dark); /* 左侧有深色边框 */
+    font-style: italic;
+}
+
+/* 文章元信息 (作者、日期等) */
+.article-meta {
+    font-size: 11px;
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.article-meta span {
+    margin-right: 15px;
+}
+
+/* Win98风格的水平分割线 */
+.article-hr {
+    border: none;
+    height: 2px;
+    background-color: var(--win98-border-dark);
+    border-bottom: 2px solid var(--win98-border-light);
+    margin: 15px 0;
+}
