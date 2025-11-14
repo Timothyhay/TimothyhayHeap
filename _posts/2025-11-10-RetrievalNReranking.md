@@ -7,7 +7,11 @@ tags: Deep-Learning
 
 I need a plan for effective code retrieval to extract the most relevant part of code file(s) before send it to LLM - today we call it **Context Management** (code as most the context window)
 
-Current code embedding models work well for smaller tasks.
+For most of the reranking task, a 2-step retrieval is a usual combo:
+1. Embedding model roughly sort 
+第一阶段 bi-encoder（快速粗排）：unixcoder-base、grapecodebert-base、bge-m3、nv-embed-v2 等代码专用 embedding
+2. Reranker model finely sort  
+第二阶段 reranker（精排 Top 50→Top 10）： cross-encoder
 
 
 jina-embeddings-v2-base-code is an multilingual embedding model speaks English and 30 widely used programming languages. Same as other jina-embeddings-v2 series, it supports 8192 sequence length.
