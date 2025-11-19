@@ -22,8 +22,8 @@ CodeT5+: Open Code Large Language Models for Code Understanding and Generation b
 
 Compared to the original CodeT5 family (base: 220M, large: 770M), CodeT5+ is pretrained with a diverse set of pretraining tasks including span denoising, causal language modeling, contrastive learning, and text-code matching to learn rich representations from both unimodal code data and bimodal code-text data. Additionally, it employs a simple yet effective compute-efficient pretraining method to initialize the model components with frozen off-the-shelf LLMs such as CodeGen to efficiently scale up the model (i.e. 2B, 6B, 16B), and adopts a "shallow encoder and deep decoder" architecture. Furthermore, it is instruction-tuned to align with natural language instructions (see our InstructCodeT5+ 16B) following Code Alpaca.
 
-** 使用没有微调过的模型作为Reranker **
-以 CodeT5+ 为例：CodeT5+ 的重排序能力主要来自于其 "Text-Code Matching" (TCM) 预训练任务。在该模式下，模型不仅独立编码文本和代码，还通过 Decoder 的 Cross-Attention 机制深度融合两者的信息，判断它们是否匹配。
+### 使用没有微调过的模型作为Reranker
+以 CodeT5+ 为例：CodeT5+ 的重排序能力主要来自于其 Text-Code Matching预训练任务。在该模式下，模型不仅独立编码文本和代码，还通过 Decoder 的 Cross-Attention 机制深度融合两者的信息，判断它们是否匹配。
 
 **选择模型：**
 必须使用经过双模态（Bimodal）训练的checkpoint，例如 Salesforce/codet5p-220m-bimodal 或 Salesforce/codet5p-770m。纯 Encoder 模型（如 embedding 版本）通常用于粗排（向量检索），而 Reranker 需要 Decoder 参与。
