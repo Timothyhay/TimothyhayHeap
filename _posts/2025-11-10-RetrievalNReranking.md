@@ -15,7 +15,7 @@ For most of the reranking task, a 2-step retrieval is a usual combo:
 对海量文档的处理往往需要先使用Bi-Encoder快速召回Top-K（like Top 100），然后再用一个Cross-Encoder（like BGE）对着K个文档精排。
 
 
-* Bi-Encoder
+- Bi-Encoder
 Query 和 Code/Doc 分别独立通过模型，被压缩成两个固定维度的向量（Embedding）。最后只通过简单的“向量点积”或“余弦相似度”来计算分数。这种方式强制将复杂的语义压缩到一个向量中。Query 中的每个 Token 无法直接“看见” Code 中的 Token。
 
 由于缺乏深层的 Cross-Attention，它难以捕捉精细的语义匹配（例如：代码中的变量名是否对应 Query 中的某个特定约束）。
@@ -23,7 +23,7 @@ Query 和 Code/Doc 分别独立通过模型，被压缩成两个固定维度的�
 如果不适合 Rerank，为什么还要用它？ 因为它快。你可以预先计算好库里几百万个代码的向量，检索时只需做矩阵乘法。
 相对的 Cross-Encoder 必须实时计算每一对 (Query, Candidate)，无法预计算。
 
-* Cross-Encoder
+- Cross-Encoder
 Query 和 Code 拼接在一起输入模型。模型中的每一层 Transformer 都在让 Query 和 Code 的 Token 进行互相注意（Attention）。这样模型可以逐字逐句地比对细节。
 
 
@@ -41,7 +41,7 @@ Compared to the original CodeT5 family (base: 220M, large: 770M), CodeT5+ is pre
 **选择模型：**
 必须使用经过双模态（Bimodal）训练的checkpoint，例如 Salesforce/codet5p-220m-bimodal 或 Salesforce/codet5p-770m。纯 Encoder 模型（如 embedding 版本）通常用于粗排（向量检索），而 Reranker 需要 Decoder 参与。
 **数据构造：**
-Reranker 是 Cross-Encoder 模式。我们需要将 (Query, Code_Candidate) 拼成一对输入
+Reranker 是 Cross-Encoder 模式。我们需要将 (Query, Code_Candidate) 拼成一对输入：
 
 > [CLS] Query [SEP] Code
 
