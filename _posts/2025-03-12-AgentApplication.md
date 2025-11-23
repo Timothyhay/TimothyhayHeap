@@ -11,7 +11,7 @@ tags: LLM Note
 
 我想来谈一谈以 Manus 通稿营销爆火的背景下如今 Agent 的有趣特点，以及最近的研究里一些我的发现。
 
-# 1 是什么让通用 Agent 如此不同 / What makes general agent general
+## 1 是什么让通用 Agent 如此不同 / What makes general agent general
 
 迄今为止，不仅是研发领域的 Agent 应用，其他领域甚至宣称自己是通用 Agent 的产品的发展趋势都很明显 - 即扩大作用域。
 
@@ -43,7 +43,7 @@ Microsoft Copilot 出来的时候也是主打了一个系统交互功能，将�
 
 另外，如果没有合适的工具可用，除了让模型自己生成回答，还有另一种思路 - 即现场生成代码，在沙箱执行并获取结果。qwen-agent 和 smol-agent 都基本具备相应能力，这种方案从解决问题的方向增强了 Agent 能力，
 
-# 2 现有 Agent 项目架构的异同 / Similarities and differences between Agent architectures
+## 2 现有 Agent 项目架构的异同 / Similarities and differences between Agent architectures
 
 前段时间组内思考过的一个问题 - 有关 Agent 框架如何选型？事到如今其实形态已经大差不差。
 
@@ -52,7 +52,7 @@ Microsoft Copilot 出来的时候也是主打了一个系统交互功能，将�
 纵观上文类似 Cline，bolt，OmniParser，Manus 的作用域不同的项目级代码生成产品、辅助研发 Agent 或通用 Agent 框架或项目，越往后出现的产品，实现框架都越呈现出一种同样的范式。
 因为大量做法已经成为业界共识 -
 
-## multi-agent 协作思路
+### multi-agent 协作思路
 
 如 Manus -
 
@@ -62,7 +62,7 @@ Agent 在执行每个任务的过程中，以 ReAct 循环的形式调用工具�
 Manus 引入了 PlanningTool 作为单独工具 -
 > 这很重要，比如 Claude-3.7 在 SWEBench 上达到 70% 解决率的效果，此前是 49% 的。这里一部分提升是来源于模型，另一部分就来源于规划。
 
-## signle agent 思路
+### signle agent 思路
 
 如 OpenManus -
 
