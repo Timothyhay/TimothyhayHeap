@@ -84,7 +84,7 @@ Manus 引入了 PlanningTool 作为单独工具 -
 2. 意图识别 - 使用额外的模型对上下文进行分析，决定接下来是否需要调用工具、调什么工具
 3. 正则匹配 - （OpenManus的做法）对工具类用途详细描述，根据描述内容进行正则匹配，快速判断是否调用
 
-# 3 一些悬而未决的问题
+## 3 一些悬而未决的问题
 
 1. 成本 - 首先大量的应用厂商，包括MGX，都会使用如缓存或 memory 压缩技术对 token 消耗进行优化，尽量减少每次调用的上下文长度。
 此外，未来大家很可能会部署大量小模型，基于已有数据进行微调或强化，专注于优化某些节点或工具使用的能力。通过集成多个小模型的能力，实现完整甚至超过大模型的效果。
@@ -95,9 +95,9 @@ Manus 引入了 PlanningTool 作为单独工具 -
 
 > MemoryGPT 对一定的上下文进行总结，这是一种非常朴素但也有效的思想。Mem0则在 memory 更新过程中主动使用工具，涉及 memory删除、memory 更新和新增等操作。
 
-# 4 补充一点想说的
+## 4 补充一点想说的
 
-## 关于 Function Call 和 MCP 协议
+### 关于 Function Call 和 MCP 协议
 
 - Function Call 是一个更大的概念，让 LLM 从聊天工具变成能使用其他工具的智能。
 - MCP 通过统一协议和请求格式访问不同的特定工具。
@@ -111,12 +111,12 @@ MCP -> [MCP Server] -> Tool 1
 ```
 
 
-## SPO
+### SPO
 
 SPO 是一套提示词优化工具。与传统需要大量数据集的优化方法不同，SPO适用于没有准确评分或数据集有限的场景。例如，写小红书文案或SEO优化时，我们可能只有几个满意的样例。SPO能在这种有限样例条件下进行提示词优化。该工具已经开源，在国内魔搭平台和Hugging Face上均有良好反馈。
 
 
-# Reference
+## Reference
 
 [1] [OpenAI Agents SDK](https://openai.github.io/openai-agents-python/)
 [2] [微软Copilot详细指南——你必须尝试的Copilot技能大全](https://zhuanlan.zhihu.com/p/673884336)
