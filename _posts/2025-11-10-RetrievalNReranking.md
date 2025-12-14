@@ -40,6 +40,7 @@ Compared to the original CodeT5 family (base: 220M, large: 770M), CodeT5+ is pre
 
 **选择模型：**
 必须使用经过双模态（Bimodal）训练的checkpoint，例如 Salesforce/codet5p-220m-bimodal 或 Salesforce/codet5p-770m。纯 Encoder 模型（如 embedding 版本）通常用于粗排（向量检索），而 Reranker 需要 Decoder 参与。
+
 **数据构造：**
 Reranker 是 Cross-Encoder 模式。我们需要将 (Query, Code_Candidate) 拼成一对输入：
 
@@ -47,6 +48,7 @@ Reranker 是 Cross-Encoder 模式。我们需要将 (Query, Code_Candidate) 拼�
 
 Encoder 输入：自然语言查询（Query）。
 Decoder 输入：代码候选（Code Snippet）。
+
 **获取匹配分数：**
  CodeT5+ 的匹配分数的计算逻辑如下：
 - 将 Query 输入 Encoder。
