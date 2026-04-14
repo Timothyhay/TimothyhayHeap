@@ -7,20 +7,20 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
 <!--icon-->
-<link rel="shortcut icon" href="/images/favicon.ico" />
+<link rel="shortcut icon" href="{{ '/images/favicon.ico' | relative_url }}" />
 
 <!--css-->
-<link href="css/bootstrap.min.css" rel="stylesheet">
-<link href="css/chocolat.css" rel="stylesheet" type="text/css" media="all">
-<link href="css/font-awesome.min.css" rel="stylesheet" type="text/css" media="all"> <!-- Icon Needs -->
-<link href="css/fonts.css" rel="stylesheet" type="text/css" media="all">
-<link href="css/style.css" rel="stylesheet" type="text/css" media="all">
-<link href="css/table.css" rel="stylesheet" type="text/css" media="all">
-<link href="css/tilteffect.css" rel="stylesheet" type="text/css" media="all">
+<link href="{{ '/css/bootstrap.min.css' | relative_url }}" rel="stylesheet">
+<link href="{{ '/css/chocolat.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
+<link href="{{ '/css/font-awesome.min.css' | relative_url }}" rel="stylesheet" type="text/css" media="all"> <!-- Icon Needs -->
+<link href="{{ '/css/fonts.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
+<link href="{{ '/css/style.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
+<link href="{{ '/css/table.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
+<link href="{{ '/css/tilteffect.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
 
 <!-- elasti slide-->
-<!-- <link rel="stylesheet" type="text/css" href="css/elastislide.css" />
-<link rel="stylesheet" type="text/css" href="css/custom.css" /> -->
+<!-- <link rel="stylesheet" type="text/css" href="{{ '/css/elastislide.css' | relative_url }}" />
+<link rel="stylesheet" type="text/css" href="{{ '/css/custom.css' | relative_url }}" /> -->
 
 <!--//css-->
 
@@ -35,17 +35,17 @@
 {{ content }}
 
 <!--javascript-->
-<script src="js/jquery-1.11.3.min.js"></script>
-<script src="js/bootstrap.js"></script>
-<script src="js/smoothscroll.js"></script>
-<script src="js/jquery.easing.min.js"></script>
-<script src="js/grayscale.js"></script>
-<script src="js/move-top.js"></script>
-<script src="js/tiltfx.js"></script>
+<script src="{{ '/js/jquery-1.11.3.min.js' | relative_url }}"></script>
+<script src="{{ '/js/bootstrap.js' | relative_url }}"></script>
+<script src="{{ '/js/smoothscroll.js' | relative_url }}"></script>
+<script src="{{ '/js/jquery.easing.min.js' | relative_url }}"></script>
+<script src="{{ '/js/grayscale.js' | relative_url }}"></script>
+<script src="{{ '/js/move-top.js' | relative_url }}"></script>
+<script src="{{ '/js/tiltfx.js' | relative_url }}"></script>
 <!--//javascript-->
 
 <!-- js for gallery -->
-<script type="text/javascript" src="js/jquery.chocolat.js"></script>
+<script type="text/javascript" src="{{ '/js/jquery.chocolat.js' | relative_url }}"></script>
 <script>
 $(function(){
                 $('#gal').Chocolat({

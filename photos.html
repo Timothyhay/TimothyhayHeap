@@ -2,79 +2,30 @@
 layout: pixel
 title: Photos - SodaFridge OS
 ---
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ page.title }}</title>
+---
+layout: pixel
+title: Photos - SodaFridge OS
+---
+---
+layout: pixel
+title: Photos - SodaFridge OS
+stylesheet: /css/photos.css
+javascript: /js/photos.js
+---
+<main class="content-area" id="contentArea">
+</main>
 
-    <!-- 引用主页的字体 -->
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-
-    <!-- 引用主页的核心样式 -->
-    <link rel="stylesheet" href="css/identity.css">
-    <!-- 引入新的照片墙专属样式 -->
-    <link rel="stylesheet" href="css/photos.css">
-</head>
-<body>
-<!-- Main LOGO, 与主页保持一致 -->
-<h1 class="main-logo">SodaFridge OS</h1>
-
-<!-- Main container, 与主页保持一致 -->
-<div class="container">
-    <!-- Left navigation sidebar, 与主页保持一致 -->
-    <nav class="sidebar">
-        <!-- 同样的内容，Jekyll可以通过 include 来简化 -->
-        <ul>
-            <li class="nav-item"><a href="/">Home</a></li>
-            <li class="nav-item"><a href="/status">Status</a></li>
-            <li class="nav-item"><a href="/profile">Biocard</a></li>
-            <li class="nav-item"><a href="/articlelist">Articles</a></li>
-            <li class="nav-item"><a href="/#locations">Activated Port.</a></li>
-            <li class="nav-item"><a href="/photos.html">Photos</a></li> <!-- 指向当前页面 -->
-            <li class="nav-item"><a href="/#contact">Contact</a></li>
-        </ul>
-        <div class="social-icons nav-item">
-            <a href="https://github.com/Timothyhay" target="_blank" title="GitHub"><img src="images/icons/github-pixel.svg" alt="GitHub Icon" class="social-icon-img"></a>
-            <a href="https://x.com/Timothy_OwO" target="_blank" title="Twitter/X"><img src="images/icons/twitter-pixel.svg" alt="Twitter/X Icon" class="social-icon-img"></a>
-        </div>
-        <div class="pixel-clock nav-item">
-            <div><span id="clock-year">2024</span> - W<span id="clock-week">00</span></div>
-            <div><span id="clock-hours">00</span>:<span id="clock-minutes">00</span>:<span id="clock-seconds">00</span></div>
-            <div class="cosmic-ray-info">Cosmic-ray Intensity: <span id="cosmic-ray-intensity">0.00</span> μSv/h</div>
-        </div>
-    </nav>
-
-    <!-- Main content display area, 这里将是我们的照片应用的主场 -->
-    <main class="content-area" id="contentArea">
-        <!-- 照片墙应用将由 JS 动态创建并注入到这里 -->
-    </main>
-
-    <!-- Copyright, 与主页保持一致 -->
-    <div class="copyright">
-        <p>I feel quite alive.</p>
-        © 2025 TangerineSoda. All Rights Reserved
-        Design by Timothyhay / Inspired from @ZUTOMAYO
-    </div>
-</div>
-
-<!-- =========== 新增的模板 =========== -->
-
-<!-- 模板 1: 主照片库窗口 -->
 <template id="galleryWindowTemplate">
     <div class="dialog-box photo-gallery-window">
         <div class="dialog-title-bar">
             <span class="dialog-title">🖼️ Ohh It's Photo Gallery v1.0</span>
-            <!-- 标题栏按钮组 -->
             <div class="title-bar-buttons">
-                <!-- !!! 新增最大化按钮 !!! -->
                 <button class="dialog-maximize-button" title="Maximize">□</button>
                 <button class="dialog-close-button">X</button>
             </div>
         </div>
         <div class="dialog-content">
             <div class="photo-grid">
-                <!-- 缩略图将由 JS 动态填充到这里 -->
             </div>
         </div>
         <div class="photo-gallery-statusbar">
@@ -84,7 +35,6 @@ title: Photos - SodaFridge OS
     </div>
 </template>
 
-<!-- 模板 2: 单个图片查看器窗口 -->
 <template id="imageViewerTemplate">
     <div class="dialog-box image-viewer-window">
         <div class="dialog-title-bar">
@@ -105,14 +55,6 @@ title: Photos - SodaFridge OS
     </div>
 </template>
 
-
-<!-- 引用主页的JS (为了时钟和侧边栏动画) -->
-<script src="js/identity.js"></script>
-<!-- 引入照片墙专属逻辑 -->
-<!-- 引入将 Jekyll 数据并转换为 JavaScript 变量 -->
 <script>
     const PHOTO_DATA_FROM_JEKYLL = {{ site.data.photos | jsonify }};
 </script>
-<script src="js/photos.js"></script>
-</body>
-</html>

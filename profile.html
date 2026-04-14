@@ -8,7 +8,7 @@ comments: false
 	<div class="left">
 		<div class="hovereffect" id="gal">
 			<div class="illustration" >
-				<a class="chocolat-image"  href="/images/biocard.jpg"><img src="/images/biocard.jpg" class="img-responsive" alt="biocard"></a>
+				<a class="chocolat-image"  href="{{ '/images/biocard.jpg' | relative_url }}"><img src="{{ '/images/biocard.jpg' | relative_url }}" class="img-responsive" alt="biocard"></a>
 				<h6>My Ingress Biocard</h6>
 			</div>
 		</div>
@@ -42,7 +42,7 @@ comments: false
 
 
 <div id="aplayer"></div>
-<script src="js/APlayer.min.js"></script>
+<script src="{{ '/js/APlayer.min.js' | relative_url }}"></script>
 <script type="text/javascript">
 	const ap = new APlayer({
     container: document.getElementById('aplayer'),
@@ -51,15 +51,14 @@ comments: false
     {
         name: 'クロノスタシス',
         artist: 'きのこ帝国',
-        url: '/music/Chronostasis.mp3',
-        cover: '/images/album/Fake_World_Wonderland.jpg',
+        url: '{{ "/music/Chronostasis.mp3" | relative_url }}',
+        cover: '{{ "/images/album/Fake_World_Wonderland.jpg" | relative_url }}',
     },
     {
         name: '星見る頃を過ぎても',
         artist: 'H△G',
-        url: '/music/Hoshi_miru_koro_o_sugite_mo.mp3',
-        cover: '/images/album/Shojo-tachi_no_owaranai_yoru.jpg',
+        url: '{{ "/music/Hoshi_miru_koro_o_sugite_mo.mp3" | relative_url }}',
+        cover: '{{ "/images/album/Shojo-tachi_no_owaranai_yoru.jpg" | relative_url }}',
     }]
 });
 </script>
-

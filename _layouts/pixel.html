@@ -1,1 +1,65 @@
-{{ content }}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if page.title %}{{ page.title }} - {% endif %}SodaFridge OS</title>
+
+    <!-- Google Font for pixelated Latin characters (LOGO) -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <!-- Core pixel styles -->
+    <link rel="stylesheet" href="{{ '/css/identity.css' | relative_url }}">
+    {% if page.stylesheet %}
+    <link rel="stylesheet" href="{{ page.stylesheet | relative_url }}">
+    {% endif %}
+</head>
+<body>
+<!-- Main LOGO, positioned absolutely to overlap sidebar and content area -->
+<h1 class="main-logo">SodaFridge OS</h1>
+
+<!-- Main container for sidebar and content area -->
+<div class="container">
+    {% include sidebar_pixel.html %}
+
+    <!-- Main content display area where dialogs will appear -->
+    <main class="content-area" id="contentArea">
+        {{ content }}
+    </main>
+
+    <!-- Copyright -->
+    <div class="copyright">
+        <p>I feel quite alive.</p>
+        © 2025 TangerineSoda. All Rights Reserved
+        Design by Timothyhay / Inspired from @ZUTOMAYO
+    </div>
+</div>
+
+<!-- HTML template for the dialog boxes (initially hidden) -->
+<template id="dialogTemplate">
+    <div class="dialog-box">
+        <!-- Dialog title bar: draggable area and close button -->
+        <div class="dialog-title-bar">
+            <span class="dialog-title">Dialog Title</span> <!-- Title text -->
+            <button class="dialog-close-button">X</button> <!-- Close button -->
+        </div>
+        <!-- Main content area of the dialog -->
+        <div class="dialog-content">
+            <!-- Dynamic content will be injected here by JavaScript -->
+        </div>
+        <!-- Button area at the bottom of the dialog -->
+        <div class="dialog-buttons">
+            <button class="dialog-action-button">はい (Y)</button> <!-- Yes button -->
+            <button class="dialog-action-button">いいえ (N)</button> <!-- No button -->
+        </div>
+    </div>
+</template>
+
+<!-- Link to the external JavaScript file -->
+<script src="{{ '/js/identity.js' | relative_url }}"></script>
+{% if page.javascript %}
+<script src="{{ page.javascript | relative_url }}"></script>
+{% endif %}
+
+</body>
+</html>

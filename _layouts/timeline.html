@@ -7,17 +7,17 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
 <!--icon-->
-<link rel="shortcut icon" href="/images/favicon.ico" />
+<link rel="shortcut icon" href="{{ '/images/favicon.ico' | relative_url }}" />
 
 <!--css-->
-<link href="css/bootstrap.min.css" rel="stylesheet">
-<link href="css/chocolat.css" rel="stylesheet" type="text/css" media="all">
-<link href="css/fonts.css" rel="stylesheet" type="text/css" media="all">
-<link href="css/style.css" rel="stylesheet" type="text/css" media="all">
-<link rel="stylesheet" type="text/css" href="css/elastislide.css" />
-<link rel="stylesheet" type="text/css" href="css/custom.css" />
+<link href="{{ '/css/bootstrap.min.css' | relative_url }}" rel="stylesheet">
+<link href="{{ '/css/chocolat.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
+<link href="{{ '/css/fonts.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
+<link href="{{ '/css/style.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
+<link rel="stylesheet" type="text/css" href="{{ '/css/elastislide.css' | relative_url }}" />
+<link rel="stylesheet" type="text/css" href="{{ '/css/custom.css' | relative_url }}" />
 
-<link href="css/timeline.css" rel="stylesheet" type="text/css" media="all">
+<link href="{{ '/css/timeline.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
 <!--//css-->
 
 <!--google fonts-->
@@ -39,17 +39,17 @@
 		        	<span class="icon-bar"></span>
 		        	<span class="icon-bar"></span>
 		      	</button>
-		    	<a class="navbar-brand" href="/">HayHeapStudio</a>
+		    	<a class="navbar-brand" href="{{ '/' | relative_url }}">HayHeapStudio</a>
 		    </div>
 
 		    <!-- Collect the nav links, forms, and other content for toggling -->
 		    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 		    	<ul class="nav navbar-nav navbar-right">
-		            <li><a href="/" class="active">Home</a></li>
-		            <li><a href="/#about" class="page-scroll">About</a></li>
-		    	    <li><a href="/#locations" class="page-scroll">Locations</a></li>
-		            <li><a href="/#daily" class="page-scroll">Daily</a></li>
-		            <li><a href="/#contact" class="page-scroll">Contact</a></li>
+		            <li><a href="{{ '/' | relative_url }}" class="active">Home</a></li>
+		            <li><a href="{{ '/#about' | relative_url }}" class="page-scroll">About</a></li>
+		    	    <li><a href="{{ '/#locations' | relative_url }}" class="page-scroll">Locations</a></li>
+		            <li><a href="{{ '/#daily' | relative_url }}" class="page-scroll">Daily</a></li>
+		            <li><a href="{{ '/#contact' | relative_url }}" class="page-scroll">Contact</a></li>
 		        </ul>
 		    </div><!-- /.navbar-collapse -->
 		  </div><!-- /.container-fluid -->
@@ -133,24 +133,24 @@
 	    height: 32px;
 	    border: none;
 	    text-indent: 100%;
-	    background: url("/images/arrow.png") no-repeat 0px 0px;
+	    background: url("{{ '/images/arrow.png' | relative_url }}") no-repeat 0px 0px;
 	}
 	</style>
 
 
 <!--javascript-->
-<script src="js/jquery-1.11.3.min.js"></script>
-<script src="js/bootstrap.js"></script>
-<script src="js/smoothscroll.js"></script>
-<script src="js/jquery.easing.min.js"></script>
-<script src="js/grayscale.js"></script>
-<script src="js/move-top.js"></script>
+<script src="{{ '/js/jquery-1.11.3.min.js' | relative_url }}"></script>
+<script src="{{ '/js/bootstrap.js' | relative_url }}"></script>
+<script src="{{ '/js/smoothscroll.js' | relative_url }}"></script>
+<script src="{{ '/js/jquery.easing.min.js' | relative_url }}"></script>
+<script src="{{ '/js/grayscale.js' | relative_url }}"></script>
+<script src="{{ '/js/move-top.js' | relative_url }}"></script>
 
-<script src="js/timeline.js"></script>
+<script src="{{ '/js/timeline.js' | relative_url }}"></script>
 <!--//javascript-->
 
 <!-- js for gallery -->
-<script type="text/javascript" src="js/jquery.chocolat.js"></script>
+<script type="text/javascript" src="{{ '/js/jquery.chocolat.js' | relative_url }}"></script>
 <script>
 $(function(){
                 $('#gal').Chocolat({
