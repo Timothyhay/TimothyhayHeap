@@ -6,7 +6,7 @@ tags: Life-Fragments
 ---
 
 <div id="aplayer"></div>
-<script src="/js/APlayer.min.js"></script>
+<script src="{{ '/js/APlayer.min.js' | relative_url }}"></script>
 <script type="text/javascript">
 	const ap = new APlayer({
     container: document.getElementById('aplayer'),
@@ -14,8 +14,8 @@ tags: Life-Fragments
     {
         name: 'アドベンチャー',
         artist: 'YOASOBI',
-        url: '/music/Adventure.mp3',
-        cover: '/images/album/Adventure.jpg'
+        url: '{{ "/music/Adventure.mp3" | relative_url }}',
+        cover: '{{ "/images/album/Adventure.jpg" | relative_url }}'
     }]
 });
 </script>

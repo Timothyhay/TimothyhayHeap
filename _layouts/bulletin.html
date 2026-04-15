@@ -7,17 +7,17 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
 <!--css-->
-<link href="/css/bootstrap.min.css" rel="stylesheet">
-<link href="/css/chocolat.css" rel="stylesheet" type="text/css" media="all">
-<link href="/css/style.css" rel="stylesheet" type="text/css" media="all">
-<link href="/css/syntax.css" media="all" rel="stylesheet" type="text/css"  />
-<link href="/css/bulletin.css" rel="stylesheet" type="text/css" media="all">
-<link href="/css/APlayer.min.css" rel="stylesheet" type="text/css" >
-<link href="/css/fonts.css" rel="stylesheet" type="text/css" media="all">
+<link href="{{ '/css/bootstrap.min.css' | relative_url }}" rel="stylesheet">
+<link href="{{ '/css/chocolat.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
+<link href="{{ '/css/style.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
+<link href="{{ '/css/syntax.css' | relative_url }}" media="all" rel="stylesheet" type="text/css"  />
+<link href="{{ '/css/bulletin.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
+<link href="{{ '/css/APlayer.min.css' | relative_url }}" rel="stylesheet" type="text/css" >
+<link href="{{ '/css/fonts.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
 <!--//css-->
 
 <!--icon-->
-<link rel="shortcut icon" href="/images/favicon.ico" />
+<link rel="shortcut icon" href="{{ '/images/favicon.ico' | relative_url }}" />
 
 <!--google fonts-->
 <!--
@@ -39,16 +39,16 @@
 		        	<span class="icon-bar"></span>
 		        	<span class="icon-bar"></span>
 		      	</button>
-		    	<a class="navbar-brand" href="/">HayHeapStudio</a>
+		    	<a class="navbar-brand" href="{{ '/' | relative_url }}">HayHeapStudio</a>
 		    </div>
 
 		    <!-- Collect the nav links, forms, and other content for toggling -->
 		    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 		    	<ul class="nav navbar-nav navbar-right">
-					<li><a href="/" class="page-scroll">Home</a></li>
-					<li><a href="/profile" class="page-scroll">Biocard</a></li>
-					<li><a href="/status" class="page-scroll">Status</a></li>
-		        	<li><a href="/articlelist" class="page-scroll">All Articles</a></li>
+					<li><a href="{{ '/' | relative_url }}" class="page-scroll">Home</a></li>
+					<li><a href="{{ '/profile' | relative_url }}" class="page-scroll">Biocard</a></li>
+					<li><a href="{{ '/status' | relative_url }}" class="page-scroll">Status</a></li>
+		        	<li><a href="{{ '/articlelist' | relative_url }}" class="page-scroll">All Articles</a></li>
 		        </ul>
 		    </div><!-- /.navbar-collapse -->
 		  </div><!-- /.container-fluid -->
@@ -86,11 +86,6 @@
 						*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
 						
 						var disqus_config = function () {
-							/*
-							var connecterlink = '{{ page.url }}';
-							var predomain = 'zero.razzorleaf.fun';
-							var resulturl = connecterlink + predomain;
-							*/
 						this.page.url = '{{ page.url | absolute_url }}';  // Replace PAGE_URL with your page's canonical URL variable
 						this.page.identifier = '{{ page.url }}'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 						};
@@ -161,14 +156,6 @@
 	easingType: 'linear' 
 	};
 
-	$().UItoTop({ easingType: 'easeOutQuart' });
-
-	});
-	</script>
-	<!-- //js for gallery -->	
-
-</body>
-</html>
 	$().UItoTop({ easingType: 'easeOutQuart' });
 
 	});
