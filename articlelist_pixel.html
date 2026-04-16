@@ -1,0 +1,160 @@
+---
+layout: pixel
+title: Articles
+---
+{% assign pixel_mode = true %}
+{% if pixel_mode %}
+<div class="article-list-container">
+    <div class="article-list-header">
+        <span class="header-icon">📂</span>
+        <span class="header-text">Article Archive</span>
+    </div>
+    <div class="article-items">
+        {% for post in site.posts %}
+        <div class="article-item">
+            <span class="article-date">[{{ post.date | date: "%Y-%m-%d" }}]</span>
+            <a href="{{ post.url | relative_url }}" class="article-link">{{ post.title }}</a>
+            {% if post.tags.size > 0 %}
+            <span class="article-tags">
+                {% for tag in post.tags %}
+                <span class="tag-label">#{{ tag }}</span>
+                {% endfor %}
+            </span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+.article-list-container {
+    background-color: var(--win98-bg);
+    border-top: 2px solid var(--win98-border-light);
+    border-left: 2px solid var(--win98-border-light);
+    border-right: 2px solid var(--win98-border-dark);
+    border-bottom: 2px solid var(--win98-border-dark);
+    padding: 2px;
+    width: 94%;
+    max-width: 900px;
+    margin: 20px auto;
+    font-family: var(--pixel-font-cjk);
+}
+
+.article-list-header {
+    background: linear-gradient(to right,
+        var(--win98-title-bg-dark) 0%,
+        var(--win98-title-bg-mid) 50%,
+        var(--win98-title-bg-light) 100%
+    );
+    color: white;
+    padding: 4px 8px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.article-items {
+    background-color: var(--pale-green);
+    padding: 15px;
+    max-height: 70vh;
+    overflow-y: auto;
+    border-top: 1px solid var(--win98-border-dark);
+}
+
+/* Custom Win98 style scrollbar */
+.article-items::-webkit-scrollbar {
+    width: 16px;
+}
+.article-items::-webkit-scrollbar-track {
+    background-color: #dfdfdf;
+}
+.article-items::-webkit-scrollbar-thumb {
+    background-color: var(--win98-bg);
+    border: 2px solid;
+    border-color: var(--win98-border-light) var(--win98-border-dark) var(--win98-border-dark) var(--win98-border-light);
+}
+
+.article-item {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed rgba(0,0,0,0.1);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.article-item:last-child {
+    border-bottom: none;
+}
+
+.article-date {
+    color: #555;
+    font-family: var(--pixel-font-latin);
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.article-link {
+    text-decoration: none;
+    color: var(--win98-title-bg-dark);
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.article-link:hover {
+    background-color: var(--pale-blue);
+    color: black;
+}
+
+.article-tags {
+    display: flex;
+    gap: 5px;
+}
+
+.tag-label {
+    font-size: 10px;
+    background-color: var(--pale-pink);
+    padding: 1px 4px;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+@media (max-width: 480px) {
+    .article-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    .article-link {
+        font-size: 12px;
+    }
+}
+</style>
+{% else %}
+{% comment %}
+    Original design for backward compatibility if needed
+{% endcomment %}
+<div class="services-w3ls" id="daily">
+    <div class="container table-container">
+        <table class="table table-bordered bloglist-table">
+            <tr>
+                <th>Date</th>
+                <th>Tag[0]</th>
+                <th>Title</th>
+            </tr>
+            {% for post in site.posts %}
+            <tr>
+                {% assign tag = post.tags.first %}
+                {% if tag == nil %}
+                    {% assign tag = "Sand" %}
+                {% endif %}
+                <td>{{ post.date | date_to_string }}</td>
+                <td>{{ tag }}</td>
+                <td><a href="{{ post.url | relative_url }}">{{ post.title }}</a></td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endif %}
