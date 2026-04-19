@@ -1,128 +1,176 @@
 // Wait for the HTML document to be fully loaded and parsed before executing the script
 document.addEventListener('DOMContentLoaded', () => {
     // Get references to key DOM elements
-    // const contentArea = document.getElementById('contentArea'); // Area where dialogs will appear
-    const dialogTemplate = document.getElementById('dialogTemplate'); // HTML template for dialogs
-    const container = document.querySelector('.container'); // <<--- NEW: Get reference to the main container
+    const bootScreen = document.getElementById('boot-screen');
+    const dialogTemplate = document.getElementById('dialogTemplate');
+    const container = document.querySelector('.container');
 
     // Initialize z-index counter for dialog stacking.
-    // Starts above the main logo's z-index (100) to ensure dialogs can come to the front.
     let highestZIndex = 101;
 
     // Configuration for dialog spawning
-    const MAX_DIALOGS_TO_SPAWN = 10; // Maximum number of dialogs that will be spawned in total
-    let spawnedDialogsCount = 0;   // Counter for how many dialogs have been spawned
-
-    // --- Global variable to hold dialogs data once fetched ---
-    let DIALOGS_DATA_FROM_JSON = []; // Will be populated by fetch
-    // Array to store indices of dialogs from dialogsData that are still available to be shown.
-    // This helps ensure dialogs don't repeat until all unique ones are shown (or MAX_DIALOGS_TO_SPAWN is hit).
+    const MAX_DIALOGS_TO_SPAWN = 10;
+    let spawnedDialogsCount = 0;
+    let DIALOGS_DATA_FROM_JSON = [];
     let availableDialogIndices = [];
-    let dialogCreationInterval; // Interval timer for spawning dialogs
+    let dialogCreationInterval;
 
-    // --- Function to initialize and shuffle available dialog indices ---
-    function initializeAvailableDialogs() {
-        if (DIALOGS_DATA_FROM_JSON.length === 0) {
-            console.warn("Dialogs data is not loaded yet or is empty. Cannot initialize.");
+    // --- Boot Sequence Handler ---
+    function handleBootSequence() {
+        const skipBoot = localStorage.getItem('sodaOS_skipBoot') === 'true';
+        const crtOverlay = document.querySelector('.crt-overlay');
+        const crtEnabled = localStorage.getItem('sodaOS_crtEnabled') !== 'false';
+
+        // Apply CRT initial state
+        if (crtOverlay) {
+            crtOverlay.style.display = crtEnabled ? 'block' : 'none';
+        }
+
+        if (!bootScreen || skipBoot) {
+            if (bootScreen) bootScreen.remove();
+            startDialogSystem();
+            animateSidebarItems();
             return;
         }
-        availableDialogIndices = DIALOGS_DATA_FROM_JSON.map((_, index) => index);
-        for (let i = availableDialogIndices.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [availableDialogIndices[i], availableDialogIndices[j]] = [availableDialogIndices[j], availableDialogIndices[i]];
-        }
+
+        console.log("%c SodaFridge OS v1.0.4 Initializing... ", "background: #000; color: #0f0; font-weight: bold;");
+        
+        // After the progress bar animation (approx 4.2s total), fade out the boot screen
+        setTimeout(() => {
+            bootScreen.classList.add('fade-out');
+            setTimeout(() => {
+                bootScreen.remove();
+                startDialogSystem();
+                animateSidebarItems();
+            }, 1000);
+        }, 4500);
     }
 
-    // Data for the dialogs. Each object represents one dialog.
-    // 'id' is for potential future reference, 'title', 'width', and 'content' (HTML string) define the dialog.
-    const sampleDialogsData = [
-        {
-            id: 1,
-            title: '💖 宇宙卵团子巡演',
-            width: '340px',
-            content: `<img src="https://via.placeholder.com/300x180/b4f8c8/333333?text=宇宙卵团子巡演图" alt="宇宙卵团子巡演"><p>ZUTOMAYO FACTORY「宇宙の卵子 DORODANGO」巡演开始！更多信息请查看官网。</p>`,
-            yesLink: 'https://zutomayo.net/tour2024_dorodango/' // Example Link
-        },
-        {
-            id: 2,
-            title: '📅 3.29-5.18 竞技场之旅',
-            width: '360px',
-            content: `<img src="https://via.placeholder.com/320x150/a0e7e5/333333?text=竞技场之旅图" alt="竞技场之旅"><p>ZUTOMAYO 竞技场之旅 2024「本格的に」即将举行。日程: 3月29日 - 5月18日</p>`,
-            yesLink: 'https://zutomayo.net/arena2024/' // Example Link
-        },
-        {
-            id: 3,
-            title: '📢 News 2025.05.18',
-            width: '300px',
-            content: `<p><strong>"YAKI YAK" 师父和师父</strong></p><p>新曲发布！详情请关注后续公告。</p>`
-            // No yesLink, so "Yes" button might do nothing or be hidden/disabled
-        },
-        {
-            id: 4,
-            title: '💿 1st ZUTOMAYO',
-            width: '320px',
-            content: `<img src="https://via.placeholder.com/280x200/d7b0ff/333333?text=潜潜話专辑图" alt="潜潜話专辑"><p>首张专辑「潜潜話」好评发售中！探索ZUTOMAYO的音乐世界。</p>`,
-            yesLink: 'https://store.zutomayo.com/products/detail/15' // Example Link
-        },
-        {
-            id: 5,
-            title: 'MV发布 5/22 21:00',
-            width: '350px',
-            content: `<p><strong>你能和 Cream 一起来看我吗？</strong></p><p>新MV将于 5月22日 21:00 (JST) 发布！敬请期待！不要错过！</p>`,
-            yesLink: 'https://www.youtube.com/@ZUTOMAYO' // Example Link
-        },
-        {
-            id: 6,
-            title: '✨ 特别通知 ✨',
-            width: '310px',
-            content: `<p>感谢大家一直以来的支持！</p><p>未来将有更多精彩内容，请保持关注官方动态！</p>`
-            // No yesLink for this one, maybe only "OK" (No button) is needed.
-        },
-        {
-            id: 7,
-            title: '🎶 新歌试听片段',
-            width: '330px',
-            content: `<p>最新单曲片段抢先听！</p><p>感受ZUTOMAYO的独特魅力。</p><img src="https://via.placeholder.com/290x100/f9c5d1/333333?text=新歌试听图" alt="新歌试听">`
-            // No yesLink, "Yes" button could be "Listen More" if you had a link
-        }
-    ];
-
-
-    // --- Function to initialize and shuffle available dialog indices ---
-    function initializeAvailableDialogs() {
-        // This function is now guaranteed to run AFTER DIALOGS_DATA_FROM_JSON is populated
-        if (DIALOGS_DATA_FROM_JSON.length === 0) {
-            console.warn("Cannot initialize dialog indices: DIALOGS_DATA_FROM_JSON is empty.");
+    // --- System Settings Dialog ---
+    function openSystemDialog() {
+        // Prevent multiple system dialogs
+        const existingDialog = document.querySelector('.dialog-box.system-dialog-window');
+        if (existingDialog) {
+            existingDialog.style.zIndex = ++highestZIndex;
+            document.querySelectorAll('.dialog-box.active').forEach(el => el.classList.remove('active'));
+            existingDialog.classList.add('active');
             return;
         }
-        availableDialogIndices = DIALOGS_DATA_FROM_JSON.map((_, index) => index);
-        // Fisher-Yates shuffle
-        for (let i = availableDialogIndices.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [availableDialogIndices[i], availableDialogIndices[j]] = [availableDialogIndices[j], availableDialogIndices[i]];
-        }
-        console.log("Available dialog indices initialized and shuffled:", availableDialogIndices);
+
+        const skipBoot = localStorage.getItem('sodaOS_skipBoot') === 'true';
+        const crtEnabled = localStorage.getItem('sodaOS_crtEnabled') !== 'false';
+        const turboMode = localStorage.getItem('sodaOS_turboMode') === 'true';
+
+        const content = `
+            <div class="system-settings">
+                <div class="settings-group">
+                    <p style="margin-bottom: 8px; font-weight: bold; border-bottom: 1px solid #888;">Startup & Visuals</p>
+                    <label class="win98-checkbox">
+                        <input type="checkbox" id="setting-skip-boot" ${skipBoot ? 'checked' : ''}>
+                        <span>Skip Boot Animation</span>
+                    </label>
+                    <label class="win98-checkbox">
+                        <input type="checkbox" id="setting-crt" ${crtEnabled ? 'checked' : ''}>
+                        <span>CRT Scanline Effect</span>
+                    </label>
+                    <label class="win98-checkbox">
+                        <input type="checkbox" id="setting-turbo" ${turboMode ? 'checked' : ''}>
+                        <span>Turbo Mode (Fast Spawning)</span>
+                    </label>
+                </div>
+                <div class="settings-group" style="margin-top: 15px;">
+                    <p style="margin-bottom: 8px; font-weight: bold; border-bottom: 1px solid #888;">System Actions</p>
+                    <button class="dialog-action-button" id="btn-reboot" style="width: 100%; margin: 5px 0; font-weight: bold;">REBOOT SYSTEM</button>
+                    <button class="dialog-action-button" id="btn-clear-data" style="width: 100%; margin: 5px 0; font-weight: bold;">RESET ALL DATA</button>
+                </div>
+                <div style="margin-top: 15px; font-size: 9px; color: #666; text-align: center;">
+                    SodaFridge OS v1.0.4<br>Kernel: WebKit/Blink Hybrid
+                </div>
+            </div>
+        `;
+
+        const dialog = createDialog({
+            title: '⚙ System Control Panel',
+            content: content,
+            width: 260
+        });
+
+        // Add a specific class to identify this dialog
+        dialog.classList.add('system-dialog-window');
+
+        // --- Center the dialog manually ---
+        const containerRect = container.getBoundingClientRect();
+        const dialogWidth = 260;
+        const dialogHeight = 280; // Estimated height
+
+        const centerX = (containerRect.width - dialogWidth) / 2;
+        const centerY = (containerRect.height - dialogHeight) / 2;
+
+        dialog.style.left = `${centerX}px`;
+        dialog.style.top = `${centerY}px`;
+
+        // Add event listeners for the settings
+        const skipCheck = dialog.querySelector('#setting-skip-boot');
+        const crtCheck = dialog.querySelector('#setting-crt');
+        const turboCheck = dialog.querySelector('#setting-turbo');
+        const rebootBtn = dialog.querySelector('#btn-reboot');
+        const resetBtn = dialog.querySelector('#btn-clear-data');
+
+        skipCheck.addEventListener('change', (e) => {
+            localStorage.setItem('sodaOS_skipBoot', e.target.checked);
+        });
+
+        crtCheck.addEventListener('change', (e) => {
+            localStorage.setItem('sodaOS_crtEnabled', e.target.checked);
+            const overlay = document.querySelector('.crt-overlay');
+            if (overlay) overlay.style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        turboCheck.addEventListener('change', (e) => {
+            localStorage.setItem('sodaOS_turboMode', e.target.checked);
+            location.reload(); // Reload to apply turbo intervals
+        });
+
+        rebootBtn.addEventListener('click', () => {
+            localStorage.setItem('sodaOS_skipBoot', 'false'); // Force boot screen once
+            window.location.href = '/identity.html';
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to wipe all local settings?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        });
     }
-    initializeAvailableDialogs(); // Call on script load
+
+    // Bind sidebar trigger
+    const systemTrigger = document.getElementById('systemSettingsTrigger');
+    if (systemTrigger) {
+        systemTrigger.addEventListener('click', (e) => {
+            e.preventDefault();
+            openSystemDialog();
+        });
+    }
 
     // --- Function to animate sidebar navigation items sequentially ---
     function animateSidebarItems() {
-        const navItems = document.querySelectorAll('.sidebar .nav-item'); // Get all elements with .nav-item class in sidebar
-        console.log(`[animateSidebarItems] Found ${navItems.length} nav items to animate.`); // Debug log
-
+        const navItems = document.querySelectorAll('.sidebar .nav-item');
         navItems.forEach((item, index) => {
-            // Log for debugging each item being processed
-            console.log(`[animateSidebarItems] Animating item ${index}:`, item.textContent.trim().substring(0,20) + "...");
-            // Set the individual transition-delay for each item using an inline style
-            // This creates the staggered animation effect.
-            item.style.transitionDelay = `${index * 0.07}s`; // e.g., 0s, 0.07s, 0.14s, ...
-            // Add the 'nav-item-visible' class to trigger the CSS transition defined in style.css
+            item.style.transitionDelay = `${index * 0.07}s`;
             item.classList.add('nav-item-visible');
         });
     }
-    // Start sidebar animation after a short delay to allow other elements to render and
-    // potentially for the main logo (if it were animated) to start.
-    setTimeout(animateSidebarItems, 700); // 0.7 seconds delay
+
+    // --- Function to initialize and shuffle available dialog indices ---
+    function initializeAvailableDialogs() {
+        if (DIALOGS_DATA_FROM_JSON.length === 0) return;
+        availableDialogIndices = DIALOGS_DATA_FROM_JSON.map((_, index) => index);
+        for (let i = availableDialogIndices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [availableDialogIndices[i], availableDialogIndices[j]] = [availableDialogIndices[j], availableDialogIndices[i]];
+        }
+    }
 
     // --- Function to create and display a new dialog box ---
     function createDialog(data) {
@@ -131,158 +179,72 @@ document.addEventListener('DOMContentLoaded', () => {
         const titleElement = dialogBox.querySelector('.dialog-title');
         const contentElement = dialogBox.querySelector('.dialog-content');
         const closeButton = dialogBox.querySelector('.dialog-close-button');
-
-        // --- Get references to action buttons ---
         const actionButtons = dialogBox.querySelectorAll('.dialog-action-button');
-        const yesButton = actionButtons[0]; // Assuming "はい (Y)" is the first
-        const noButton = actionButtons[1];  // Assuming "いいえ (N)" is the second
+        const yesButton = actionButtons[0];
+        const noButton = actionButtons[1];
 
         titleElement.textContent = data.title || 'Untitled Dialog';
         contentElement.innerHTML = data.content || '<p>No content.</p>';
 
         let dialogWidth = parseInt(data.width) || 300;
-        let dialogHeight = 150; // Base height for positioning, content will determine actual
-
         const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight; // Get viewport height as well
 
-        // --- NEW LOGIC for Small Screens ---
-        if (viewportWidth < 480) { // Example breakpoint for "very small"
-            // For very small screens, drastically reduce default/parsed dialog width
-            dialogWidth = Math.min(dialogWidth, viewportWidth * 0.85, 200); // e.g., 85% of viewport, or max 200px
-            // Consider a minimum width too, e.g., 100px, so it's not invisibly small
+        if (viewportWidth < 480) {
+            dialogWidth = Math.min(dialogWidth, viewportWidth * 0.85, 200);
             dialogWidth = Math.max(dialogWidth, 120);
         } else if (viewportWidth < 768) {
             dialogWidth = Math.min(dialogWidth, viewportWidth * 0.9, 280);
             dialogWidth = Math.max(dialogWidth, 150);
-        } else {
-            // For larger screens, ensure it doesn't exceed a reasonable max or CSS max-width
-            const cssMaxWidth = parseFloat(getComputedStyle(dialogBox).maxWidth);
-            if (!isNaN(cssMaxWidth) && cssMaxWidth < dialogWidth) {
-                dialogWidth = cssMaxWidth;
-            }
-            dialogWidth = Math.min(dialogWidth, viewportWidth * 0.7); // Max 70% of viewport width on large screens
         }
         dialogBox.style.width = `${dialogWidth}px`;
 
-
-        // Positioning:
-        // Allow dialogs to appear even if contentArea is tiny or not fully defined yet.
-        // Position relative to viewport initially, then adjust if needed.
-        // For initial placement, use a simpler logic if strict bounds are not required.
-
         const containerRect = container.getBoundingClientRect();
-        // Need to account for .container's padding-top if positioning from its 0,0
-        const containerPaddingTop = parseFloat(getComputedStyle(container).paddingTop) || 0;
+        const containerPaddingTop = parseFloat(getComputedStyle(container).paddingTop) || 90;
+        const maxX = Math.max(5, containerRect.width - dialogWidth - 5);
+        const maxY = Math.max(5, containerRect.height - containerPaddingTop - 150);
 
-        let initialX, initialY;
+        dialogBox.style.left = `${5 + Math.random() * maxX}px`;
+        dialogBox.style.top = `${containerPaddingTop + 5 + Math.random() * maxY}px`;
 
-        // If container is very small, fallback to viewport-relative positioning near top-left
-        if (containerRect.width < dialogWidth || containerRect.height < dialogHeight) {
-            initialX = 10 + Math.random() * 20;
-            initialY = (document.querySelector('.main-logo')?.offsetHeight || 90) + 10 + Math.random() * 20;
-            // Make sure it's within viewport if container is truly messed up
-            initialX = Math.max(5, Math.min(initialX, viewportWidth - dialogWidth - 5));
-            initialY = Math.max(5, Math.min(initialY, window.innerHeight - dialogHeight - 5));
-        } else {
-            // Random positioning within the .container bounds
-            // Max X considers the full width of .container
-            const maxX = Math.max(5, containerRect.width - dialogWidth - 5);
-            // Max Y considers .container height, starting below its padding-top
-            const maxY = Math.max(5, (containerRect.height - containerPaddingTop) - dialogHeight - 5);
+        makeDraggable(dialogBox);
 
-            initialX = 5 + Math.random() * maxX;
-            // initialY starts below the container's top padding (where the logo is)
-            initialY = containerPaddingTop + 5 + (Math.random() * maxY);
-        }
+        const closeDialog = () => {
+            dialogBox.classList.add('closing');
+            setTimeout(() => dialogBox.remove(), 200);
+        };
 
-        dialogBox.style.left = `${initialX}px`;
-        dialogBox.style.top = `${initialY}px`; // This is relative to .container's top edge now
-
-        makeDraggable(dialogBox); // Pass dialogBox itself
-
-        closeButton.addEventListener('click', () => dialogBox.remove());
+        closeButton.addEventListener('click', closeDialog);
         dialogBox.addEventListener('mousedown', () => {
             dialogBox.style.zIndex = ++highestZIndex;
             document.querySelectorAll('.dialog-box.active').forEach(el => el.classList.remove('active'));
             dialogBox.classList.add('active');
         }, true);
 
-
-        // --- CONFIGURE ACTION BUTTONS ---
-        if (noButton) {
-            noButton.addEventListener('click', () => {
-                dialogBox.remove(); // "No" button closes the dialog
-            });
-        } else {
-            console.warn("No button not found for dialog:", data.title);
-        }
-
+        if (noButton) noButton.addEventListener('click', closeDialog);
         if (yesButton) {
             if (data.yesLink) {
-                yesButton.addEventListener('click', () => {
-                    window.open(data.yesLink, '_blank'); // Open link in a new tab
-                    // Optionally, close the dialog after clicking "Yes"
-                    // dialogBox.remove();
-                });
+                yesButton.addEventListener('click', () => window.open(data.yesLink, '_blank'));
             } else {
-                // No yesLink provided for this dialog.
-                // Option 1: Disable the "Yes" button
-                // yesButton.disabled = true;
-                // yesButton.style.opacity = "0.5";
-                // yesButton.style.cursor = "not-allowed";
-
-                // Option 2: Hide the "Yes" button if no link
-                // yesButton.style.display = 'none';
-
-                // Option 3: Make "Yes" button also close the dialog (acting like an "OK")
-                yesButton.textContent = 'OK'; // Change text if you want
-                noButton.style.display = 'none';
-                yesButton.addEventListener('click', () => {
-                    dialogBox.remove();
-                });
+                yesButton.textContent = 'OK';
+                if (noButton) noButton.style.display = 'none';
+                yesButton.addEventListener('click', closeDialog);
             }
-        } else {
-            console.warn("Yes button not found for dialog:", data.title);
         }
 
-        // If only one button is desired (e.g., only "OK" which is the "No" button functionality)
-        // and the other is hidden/disabled:
-        const dialogButtonsContainer = dialogBox.querySelector('.dialog-buttons');
-        if (yesButton && yesButton.style.display === 'none' && noButton) {
-            // If Yes is hidden, and No exists, center No button
-            dialogButtonsContainer.style.textAlign = 'center'; // Or adjust specific button margins
-        } else if (noButton && noButton.style.display === 'none' && yesButton) {
-            // If No is hidden, and Yes exists, center Yes button
-            dialogButtonsContainer.style.textAlign = 'center';
-        }
-
-
-        container.appendChild(dialogBox); // <<--- APPEND TO .container
+        container.appendChild(dialogBox);
         spawnedDialogsCount++;
-        console.log(`Spawned ${spawnedDialogsCount} / ${MAX_DIALOGS_TO_SPAWN} dialogs (ID: ${data.id})...`);
         return dialogBox;
     }
 
-    // --- Function to make a dialog element draggable ---
     function makeDraggable(element) {
         const titleBar = element.querySelector('.dialog-title-bar');
         let offsetX, offsetY, isDragging = false;
-        // The 'container' is the new boundary parent for dragging.
-        // Its getBoundingClientRect() gives viewport-relative coords.
-        // element.offsetLeft/Top are relative to its offsetParent (which is now .container).
 
         titleBar.addEventListener('mousedown', (e) => {
             if (e.target.classList.contains('dialog-close-button')) return;
             isDragging = true;
-
-            // Offset of mouse from top-left of draggable element
             offsetX = e.clientX - element.getBoundingClientRect().left;
             offsetY = e.clientY - element.getBoundingClientRect().top;
-            // Alternatively, if element.offsetLeft/Top are reliable relative to .container:
-            // offsetX = e.pageX - element.offsetLeft; // pageX relative to document
-            // offsetY = e.pageY - element.offsetTop;  // pageY relative to document
-
             element.style.zIndex = ++highestZIndex;
             titleBar.style.cursor = 'grabbing';
             document.querySelectorAll('.dialog-box.active').forEach(el => el.classList.remove('active'));
@@ -291,260 +253,70 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
-
             const containerRect = container.getBoundingClientRect();
-            // New absolute position of element's top-left in viewport coordinates
-            let newViewportX = e.clientX - offsetX;
-            let newViewportY = e.clientY - offsetY;
-
-            // Convert to position relative to .container for style.left/top
-            let newStyleLeft = newViewportX - containerRect.left;
-            let newStyleTop = newViewportY - containerRect.top;
-
-            // --- DRAG CONSTRAINTS (Relative to .container) ---
-            const elemWidth = element.offsetWidth;
-            const elemHeight = element.offsetHeight;
-
-            // Option: Constrain within .container, allowing title bar to be visible
-            // This means newStyleLeft/Top are the values we constrain
-            const minX = 0 - elemWidth + titleBar.offsetWidth; // Allow part of window off left
-            const maxX = containerRect.width - titleBar.offsetWidth;   // Allow part of window off right
-            const minY = 0; // Can go to top edge of .container
-            const maxY = containerRect.height - titleBar.offsetHeight; // Title bar visible at bottom
-
-            newStyleLeft = Math.max(minX, Math.min(newStyleLeft, maxX));
-            newStyleTop = Math.max(minY, Math.min(newStyleTop, maxY));
-
-            // Prevent from going above the main logo area (visual constraint)
-            const logoHeight = (document.querySelector('.main-logo')?.offsetHeight || 0) + 10; // Approx height + margin
+            let newStyleLeft = (e.clientX - offsetX) - containerRect.left;
+            let newStyleTop = (e.clientY - offsetY) - containerRect.top;
+            
+            const logoHeight = (document.querySelector('.main-logo')?.offsetHeight || 0) + 10;
             newStyleTop = Math.max(newStyleTop, logoHeight);
-
-
+            
             element.style.left = `${newStyleLeft}px`;
             element.style.top = `${newStyleTop}px`;
         });
 
         document.addEventListener('mouseup', () => {
-            if (isDragging) {
-                isDragging = false;
-                titleBar.style.cursor = 'grab';
-                // element.classList.remove('active'); // Keep active for visual feedback of last touch
-            }
+            isDragging = false;
+            titleBar.style.cursor = 'grab';
         });
     }
 
-    // --- Function to spawn the next dialog from the available list ---
     function spawnNextDialog() {
         if (spawnedDialogsCount >= MAX_DIALOGS_TO_SPAWN || availableDialogIndices.length === 0) {
-            console.log(`Spawning limit reached (${spawnedDialogsCount}/${MAX_DIALOGS_TO_SPAWN}) or no unique dialogs left (${availableDialogIndices.length}). Stopping.`);
-            if (dialogCreationInterval) {
-                clearInterval(dialogCreationInterval);
-                dialogCreationInterval = null;
-            }
+            if (dialogCreationInterval) clearInterval(dialogCreationInterval);
             return;
         }
-
-        const nextDialogOriginalIndex = availableDialogIndices.shift(); // Get and remove first index
-        const dialogDataToShow = DIALOGS_DATA_FROM_JSON[nextDialogOriginalIndex];
-
-        if (dialogDataToShow) {
-            createDialog(dialogDataToShow);
-        } else {
-            console.warn(`Could not find dialog data for index: ${nextDialogOriginalIndex}. This should not happen.`);
-        }
+        const data = DIALOGS_DATA_FROM_JSON[availableDialogIndices.shift()];
+        if (data) createDialog(data);
     }
 
-    // --- Function to start the dialog spawning process ---
     function startDialogSystem() {
-        // This is called AFTER data is fetched and DIALOGS_DATA_FROM_JSON is populated.
-        if (DIALOGS_DATA_FROM_JSON.length === 0) {
-            console.log("No dialog data available to start the system.");
-            return;
-        }
+        const turboMode = localStorage.getItem('sodaOS_turboMode') === 'true';
+        const initialDelay = turboMode ? 400 : 1200;
+        const interval = turboMode ? 800 : 2200;
 
-        initializeAvailableDialogs(); // Now this uses the populated and shuffled data
-
-        // Check again if initialization was successful (e.g., if DIALOGS_DATA_FROM_JSON was unexpectedly empty)
-        if (availableDialogIndices.length === 0 && DIALOGS_DATA_FROM_JSON.length > 0) {
-            console.error("Dialog indices initialization failed despite having data. Check initializeAvailableDialogs.");
-            return;
-        }
-        if (availableDialogIndices.length === 0 && DIALOGS_DATA_FROM_JSON.length === 0) {
-            console.log("No dialogs to spawn after initialization.");
-            return;
-        }
-
-
-        console.log(`Starting dialog system. Will attempt to spawn up to ${MAX_DIALOGS_TO_SPAWN} dialogs from ${DIALOGS_DATA_FROM_JSON.length} available.`);
-
-        spawnNextDialog(); // Spawn the first one
-
-        // Spawn a second dialog after a short delay, if limits not reached
-        setTimeout(() => {
-            if (spawnedDialogsCount < MAX_DIALOGS_TO_SPAWN && availableDialogIndices.length > 0) {
-                spawnNextDialog();
-            }
-        }, 1200);
-
-        // Set an interval to spawn subsequent dialogs
-        if (dialogCreationInterval) clearInterval(dialogCreationInterval); // Clear any old one
-        dialogCreationInterval = setInterval(spawnNextDialog, 2200);
+        initializeAvailableDialogs();
+        spawnNextDialog();
+        setTimeout(() => spawnNextDialog(), initialDelay);
+        dialogCreationInterval = setInterval(spawnNextDialog, interval);
     }
 
-    // --- FETCH DIALOG DATA & INITIATE DIALOG SYSTEM ---
-    fetch('data/dialogs/dialogs-data.json') // Ensure this path is correct
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}, problem loading dialogs-data.json`);
-            }
-            return response.json();
+    fetch('data/dialogs/dialogs-data.json')
+        .then(r => r.json())
+        .then(data => {
+            DIALOGS_DATA_FROM_JSON = data;
+            handleBootSequence();
         })
-        .then(jsonData => {
-            DIALOGS_DATA_FROM_JSON = jsonData; // Populate the global variable
-            console.log("Dialogs data loaded successfully. Count:", DIALOGS_DATA_FROM_JSON.length);
-            if (DIALOGS_DATA_FROM_JSON.length > 0) {
-                startDialogSystem(); // <<--- CRITICAL: Start system only after data is loaded
-            } else {
-                console.log("JSON data loaded, but it's an empty array. No dialogs will be shown.");
-            }
-        })
-        .catch(error => {
-            console.error("Fatal error: Could not load or parse dialogs data. Dialog system will not start.", error);
-            // Optionally, display a user-friendly error message on the page itself
+        .catch(e => {
+            console.error(e);
+            handleBootSequence();
         });
 
-
-    // --- Pixel Clock Functionality ---
-    const yearElem = document.getElementById('clock-year');
-    const weekElem = document.getElementById('clock-week');
-    const hoursElem = document.getElementById('clock-hours');
-    const minutesElem = document.getElementById('clock-minutes');
-    const secondsElem = document.getElementById('clock-seconds');
-    const cosmicRayElem = document.getElementById('cosmic-ray-intensity');
-
-    // Function to get the ISO week number
-    // Source: https://stackoverflow.com/a/6117889/1238098
-    function getWeekNumber(d) {
-        d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-        var yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-        var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-        return weekNo;
-    }
-
-    // Function to calculate fictional cosmic ray intensity
-    function calculateCosmicRayIntensity(now) {
-        // This is a completely arbitrary calculation for fun.
-        // Uses minutes, seconds, and a bit of randomization.
-        const minutes = now.getMinutes();
-        const seconds = now.getSeconds();
-
-        // Base value fluctuates with minutes
-        let baseIntensity = (minutes % 10) * 0.15; // 0 to 1.35
-
-        // Add fluctuation based on seconds (more chaotic)
-        let secondFluctuation = Math.sin(seconds * (Math.PI / 15)) * 0.5; // -0.5 to 0.5, cycles every 30s
-
-        // Add a very slow-changing component (e.g., based on hour)
-        let hourComponent = (now.getHours() % 6) * 0.05; // 0 to 0.25, changes every 6 hours
-
-        // Combine them and add some randomness
-        let intensity = baseIntensity + secondFluctuation + hourComponent + (Math.random() * 0.2 - 0.1);
-
-        // Ensure non-negative and apply a cap
-        intensity = Math.max(0.01, intensity); // Minimum 0.01
-        intensity = Math.min(5.0, intensity);  // Maximum 5.0
-
-        return intensity.toFixed(2); // Return as string with 2 decimal places
-    }
-
-
+    // Clock Logic
     function updateClock() {
         const now = new Date();
+        const year = document.getElementById('clock-year');
+        const week = document.getElementById('clock-week');
+        const h = document.getElementById('clock-hours');
+        const m = document.getElementById('clock-minutes');
+        const s = document.getElementById('clock-seconds');
+        const cr = document.getElementById('cosmic-ray-intensity');
 
-        if (yearElem) {
-            yearElem.textContent = now.getFullYear();
-        }
-        if (weekElem) {
-            weekElem.textContent = String(getWeekNumber(now)).padStart(2, '0');
-        }
-        if (hoursElem) {
-            hoursElem.textContent = String(now.getHours()).padStart(2, '0');
-        }
-        if (minutesElem) {
-            minutesElem.textContent = String(now.getMinutes()).padStart(2, '0');
-        }
-        if (secondsElem) {
-            secondsElem.textContent = String(now.getSeconds()).padStart(2, '0');
-        }
-        if (cosmicRayElem) {
-            cosmicRayElem.textContent = calculateCosmicRayIntensity(now);
-        }
+        if (year) year.textContent = now.getFullYear();
+        if (h) h.textContent = String(now.getHours()).padStart(2, '0');
+        if (m) m.textContent = String(now.getMinutes()).padStart(2, '0');
+        if (s) s.textContent = String(now.getSeconds()).padStart(2, '0');
+        if (cr) cr.textContent = (Math.random() * 2).toFixed(2);
     }
-
-    // Check if primary clock elements exist before setting interval
-    if (hoursElem && minutesElem && secondsElem) {
-        updateClock(); // Initial call
-        setInterval(updateClock, 1000); // Update every second
-    } else {
-        console.warn("Core clock elements (hours, minutes, seconds) not found. Clock will not update.");
-    }
-
-    // --- Event listener for window resize to adjust dialog positions (basic) ---
-    window.addEventListener('resize', () => {
-        const viewportWidth = window.innerWidth;
-        const containerRect = container.getBoundingClientRect(); // Use .container for bounds
-        const containerPaddingTop = parseFloat(getComputedStyle(container).paddingTop) || 0;
-        const logoHeight = (document.querySelector('.main-logo')?.offsetHeight || 0) + 10;
-
-        document.querySelectorAll('.dialog-box').forEach(dialog => {
-            let dialogWidth = dialog.offsetWidth;
-            // const dialogHeight = dialog.offsetHeight; // Not strictly needed if not constraining vertically on resize
-
-            // Re-apply width constraint from CSS if necessary or adapt to viewport
-            if (viewportWidth < 480) {
-                dialogWidth = Math.min(dialog.offsetWidth, viewportWidth * 0.85, 200);
-                dialogWidth = Math.max(dialogWidth, 120);
-            } else if (viewportWidth < 768) {
-                dialogWidth = Math.min(dialog.offsetWidth, viewportWidth * 0.9, 280);
-                dialogWidth = Math.max(dialogWidth, 150);
-            } else {
-                const cssMaxWidth = parseFloat(getComputedStyle(dialog).maxWidth);
-                if (!isNaN(cssMaxWidth) && cssMaxWidth < dialog.offsetWidth) { // Use dialog.offsetWidth for comparison
-                    dialogWidth = cssMaxWidth;
-                }
-                // Cap at 70% of viewport on large screens
-                dialogWidth = Math.min(dialogWidth, viewportWidth * 0.7);
-            }
-            dialog.style.width = `${dialogWidth}px`;
-
-
-            // --- REMOVE OR RELAX BOUNDARY CONSTRAINTS ON RESIZE ---
-            const dialogHeight = dialog.offsetHeight;
-
-            // --- REPOSITIONING LOGIC ON RESIZE (Relative to .container) ---
-            let currentStyleLeft = parseFloat(dialog.style.left) || 0;
-            let currentStyleTop = parseFloat(dialog.style.top) || 0;
-
-            const minX = 0 - dialogWidth + (dialog.querySelector('.dialog-title-bar')?.offsetWidth || 30);
-            const maxX = containerRect.width - (dialog.querySelector('.dialog-title-bar')?.offsetWidth || 30);
-            const minY = logoHeight; // Don't go above logo
-            const maxY = containerRect.height - (dialog.querySelector('.dialog-title-bar')?.offsetHeight || 20);
-
-            currentStyleLeft = Math.max(minX, Math.min(currentStyleLeft, maxX));
-            currentStyleTop = Math.max(minY, Math.min(currentStyleTop, maxY));
-
-            // If it's WAY off after resize (e.g. container shrank a lot)
-            if (currentStyleLeft > containerRect.width - 30) {
-                currentStyleLeft = Math.max(minX, containerRect.width - dialogWidth);
-            }
-            if (currentStyleTop > containerRect.height - 20) {
-                currentStyleTop = Math.max(minY, containerRect.height - dialogHeight);
-            }
-
-
-            dialog.style.left = `${currentStyleLeft}px`;
-            dialog.style.top = `${currentStyleTop}px`;
-        });
-    });
+    setInterval(updateClock, 1000);
+    updateClock();
 });

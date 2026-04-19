@@ -2,8 +2,24 @@
 layout: pixel
 stylesheet: /css/identity.css
 javascript: /js/identity.js
+show_boot: true
 ---
 <main class="content-area" id="contentArea">
+    <div class="desktop-icons">
+        <div class="desktop-icon" onclick="window.location.href='/profile'">
+            <div class="desktop-icon-image">👤</div>
+            <div class="desktop-icon-label">Biocard</div>
+        </div>
+        <div class="desktop-icon" onclick="window.location.href='/articlelist'">
+            <div class="desktop-icon-image">📝</div>
+            <div class="desktop-icon-label">Articles</div>
+        </div>
+        <div class="desktop-icon" onclick="window.location.href='/status'">
+            <div class="desktop-icon-image">📊</div>
+            <div class="desktop-icon-label">Status</div>
+        </div>
+    </div>
     <div class="background-art-placeholder">
     </div>
 </main>
+

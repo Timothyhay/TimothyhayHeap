@@ -15,6 +15,8 @@
     {% endif %}
 </head>
 <body>
+
+
 <!-- Main LOGO, positioned absolutely to overlap sidebar and content area -->
 <h1 class="main-logo">SodaFridge OS</h1>
 
@@ -55,11 +57,31 @@
     </div>
 </template>
 
-<!-- Link to the external JavaScript file -->
-<script src="{{ '/js/identity.js' | relative_url }}"></script>
-{% if page.javascript %}
-<script src="{{ page.javascript | relative_url }}"></script>
-{% endif %}
+    <!-- Link to the external JavaScript file -->
+    <script src="{{ '/js/identity.js' | relative_url }}"></script>
+    {% if page.javascript and page.javascript != '/js/identity.js' %}
+    <script src="{{ page.javascript | relative_url }}"></script>
+    {% endif %}
+
+    <!-- CRT Effect Overlay -->
+    <div class="crt-overlay"></div>
+
+    {% if page.show_boot %}
+    <!-- Boot Screen -->
+    <div id="boot-screen" class="boot-screen">
+        <div class="boot-content">
+            <p>> SODA FRIDGE CHURCHKEY v1.0.4...</p>
+            <p>> CHECKING DRINK MEMORY... OK</p>
+            <p>> LOADING OS: SodaFridge OS...</p>
+            <p>> CHILLING THE SODA... OK</p>
+            <p>> POPING THE CAP... OK</p>
+            <p>> WELCOME BACK ALIVE.</p>
+            <div class="boot-progress-bar">
+                <div class="boot-progress-fill"></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
 </body>
 </html>

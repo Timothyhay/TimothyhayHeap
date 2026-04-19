@@ -55,6 +55,69 @@ body {
     font-size: 12px;                    /* Base font size for CJK text */
     line-height: 1.5;                   /* Base line height for readability */
     position: relative;                 /* Necessary for absolute positioning of .main-logo */
+    cursor: default; /* Use standard cursor for reliability */
+}
+
+/* --- CRT Effect Overlay --- */
+.crt-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%, 
+        rgba(0, 0, 0, 0.1) 50%
+    ), 
+    linear-gradient(
+        90deg, 
+        rgba(255, 0, 0, 0.03), 
+        rgba(0, 255, 0, 0.01), 
+        rgba(0, 0, 255, 0.03)
+    );
+    background-size: 100% 3px, 3px 100%;
+    pointer-events: none; /* Let clicks pass through */
+    z-index: 9999;
+    opacity: 0.6;
+}
+
+.crt-overlay::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: rgba(18, 16, 16, 0.03);
+    opacity: 0;
+    z-index: 10000;
+    pointer-events: none;
+    animation: flicker 0.15s infinite;
+}
+
+@keyframes flicker {
+    0% { opacity: 0.27861; }
+    5% { opacity: 0.34769; }
+    10% { opacity: 0.23604; }
+    15% { opacity: 0.90626; }
+    20% { opacity: 0.18128; }
+    25% { opacity: 0.83891; }
+    30% { opacity: 0.65583; }
+    35% { opacity: 0.57807; }
+    40% { opacity: 0.26559; }
+    45% { opacity: 0.84693; }
+    50% { opacity: 0.96019; }
+    55% { opacity: 0.08523; }
+    60% { opacity: 0.71056; }
+    65% { opacity: 0.73437; }
+    70% { opacity: 0.28574; }
+    75% { opacity: 0.96387; }
+    80% { opacity: 0.22603; }
+    85% { opacity: 0.20405; }
+    90% { opacity: 0.2714; }
+    95% { opacity: 0.32021; }
+    100% { opacity: 0.19131; }
 }
 
 /* --- Main LOGO Styling --- */
@@ -80,6 +143,16 @@ body {
     /* transform-origin 确保缩放时以左上角为基点 */
     transform-origin: top left;
     transition: transform 0.4s ease-in-out, top 0.4s ease-in-out, left 0.4s ease-in-out;
+    animation: logo-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes logo-glow {
+    from {
+        filter: drop-shadow(0 0 2px rgba(255,255,255,0.2));
+    }
+    to {
+        filter: drop-shadow(0 0 10px rgba(255,255,255,0.5));
+    }
 }
 
 /* --- Main Layout Container --- */
@@ -171,6 +244,19 @@ body {
 
 .sidebar ul li { /* Styling for each list item (same as .sidebar .nav-item if all <li> are nav-items) */
     margin-bottom: 8px;                 /* Space between navigation links */
+}
+
+.sidebar ul .nav-divider {
+    height: 2px;
+    margin: 12px 6px;
+    border-top: 1px solid var(--win98-border-dark);
+    border-bottom: 1px solid var(--win98-border-light);
+    list-style: none;
+}
+
+/* Ensure the divider keeps its transparency even after the animation completes */
+.sidebar ul .nav-divider.nav-item-visible {
+    opacity: 0.3;
 }
 
 .sidebar ul li a { /* Navigation link styling */
@@ -309,6 +395,126 @@ padding: 5px 8px;
     color: rgba(0,0,0,0.2);             /* Subtle text */
 }
 
+/* --- Desktop Icons --- */
+.desktop-icons {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 10;
+}
+
+.desktop-icon {
+    width: 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.1s;
+    user-select: none;
+}
+
+.desktop-icon:hover {
+    filter: brightness(1.2);
+}
+
+.desktop-icon:active {
+    transform: scale(0.95);
+}
+
+.desktop-icon-image {
+    font-size: 32px;
+    margin-bottom: 4px;
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+}
+
+.desktop-icon-label {
+    font-family: var(--pixel-font-cjk);
+    font-size: 10px;
+    color: white;
+    text-shadow: 1px 1px 1px black;
+    background-color: rgba(0, 0, 0, 0.4);
+    padding: 2px 4px;
+    border-radius: 2px;
+}
+
+/* --- Boot Screen --- */
+.boot-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: black;
+    color: #00ff00;
+    font-family: var(--pixel-font-latin);
+    z-index: 20000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    transition: opacity 1s ease-in-out;
+}
+
+.boot-content {
+    max-width: 600px;
+    width: 100%;
+}
+
+.boot-content p {
+    margin-bottom: 10px;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    width: 0;
+    animation: typing 0.5s steps(30, end) forwards;
+}
+
+.boot-content p:nth-child(2) { animation-delay: 0.5s; }
+.boot-content p:nth-child(3) { animation-delay: 1.0s; }
+.boot-content p:nth-child(4) { animation-delay: 1.5s; }
+.boot-content p:nth-child(5) { animation-delay: 2.0s; }
+.boot-content p:nth-child(6) { animation-delay: 2.5s; font-weight: bold; }
+
+@keyframes typing {
+    from { width: 0; }
+    to { width: 100%; }
+}
+
+.boot-progress-bar {
+    width: 100%;
+    height: 20px;
+    border: 2px solid #00ff00;
+    margin-top: 30px;
+    padding: 2px;
+    opacity: 0;
+    animation: fadeIn 0.1s forwards 2.6s;
+}
+
+.boot-progress-fill {
+    width: 0%;
+    height: 100%;
+    background-color: #00ff00;
+    animation: progress 1.5s linear forwards 2.7s;
+}
+
+@keyframes progress {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
+@keyframes fadeIn {
+    to { opacity: 1; }
+}
+
+.boot-screen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
 /* --- Windows 98 Style Dialog Box --- */
 /* Keyframes for dialog pop-up animation */
 @keyframes fadeInScaleUp {
@@ -319,6 +525,17 @@ padding: 5px 8px;
     to {
         opacity: 1;                 /* Ends fully opaque */
         transform: scale(1);        /* Ends at full size */
+    }
+}
+
+@keyframes fadeOutScaleDown {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.9);
     }
 }
 
@@ -345,6 +562,10 @@ padding: 5px 8px;
     animation: fadeInScaleUp 0.25s ease-out forwards; /* Apply pop-up animation */
     /* 'forwards' keeps the end state of the animation */
     z-index: 20;                        /* Base z-index, active dialogs get higher via JS */
+}
+
+.dialog-box.closing {
+    animation: fadeOutScaleDown 0.2s ease-in forwards;
 }
 
 .dialog-box.active { /* Class for dialog being interacted with (e.g., dragged) */
@@ -452,6 +673,55 @@ padding: 5px 8px;
     border-left: 1px solid var(--win98-border-dark);
     border-right: 1px solid var(--win98-border-light);
     border-bottom: 1px solid var(--win98-border-light);
+}
+
+/* --- System Settings Panel --- */
+.system-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.settings-group {
+    border: 1px solid rgba(0,0,0,0.1);
+    padding: 8px;
+    background: rgba(0,0,0,0.02);
+}
+
+.win98-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.win98-checkbox input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: white;
+    border-top: 2px solid var(--win98-border-dark);
+    border-left: 2px solid var(--win98-border-dark);
+    border-right: 2px solid var(--win98-border-light);
+    border-bottom: 2px solid var(--win98-border-light);
+    position: relative;
+    cursor: pointer;
+}
+
+.win98-checkbox input[type="checkbox"]:checked::after {
+    content: '✔';
+    position: absolute;
+    top: -2px;
+    left: 1px;
+    color: black;
+    font-size: 10px;
+}
+
+.win98-checkbox:hover span {
+    text-decoration: underline;
 }
 
 
