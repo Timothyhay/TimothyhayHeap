@@ -1,11 +1,14 @@
 <nav class="sidebar">
+    <!-- Retracted Logo (visible when a window is maximized) -->
+    <div class="logo-retracted">SODA FRIDGE</div>
+
     <!-- Navigation list -->
     <ul>
         <!-- Each list item has 'nav-item' class for staggered animation -->
         <li class="nav-item"><a href="/">Home</a></li>
         <li class="nav-item"><a href="/status">Status</a></li>
         <li class="nav-item"><a href="/profile">Biocard</a></li>
-        <li class="nav-item"><a href="/articlelist">Articles</a></li>
+        <li class="nav-item"><a href="/article-list">Articles</a></li>
         <li class="nav-item"><a href="/#locations">Activated Port.</a></li>
         <li class="nav-item"><a href="/photos">Photos</a></li>
         <li class="nav-item"><a href="/#contact">Contact</a></li>
@@ -15,10 +18,10 @@
     <!-- Social media icons (also animated as a 'nav-item') -->
     <div class="social-icons nav-item">
         <a href="https://github.com/Timothyhay" target="_blank" title="GitHub">
-            <img src="images/icons/github-pixel.svg" alt="GitHub Icon" class="social-icon-img">
+            <img src="{{ '/images/icons/github-pixel.svg' | relative_url }}" alt="GitHub Icon" class="social-icon-img">
         </a>
         <a href="https://x.com/Timothy_OwO" target="_blank" title="Twitter/X">
-            <img src="images/icons/twitter-pixel.svg" alt="Twitter/X Icon" class="social-icon-img">
+            <img src="{{ '/images/icons/twitter-pixel.svg' | relative_url }}" alt="Twitter/X Icon" class="social-icon-img">
         </a>
     </div>
 

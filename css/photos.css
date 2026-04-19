@@ -162,21 +162,10 @@
     border-bottom: 1px solid var(--win98-border-light);
 }
 
-/* 当 body 拥有 .gallery-maximized class 时... */
-/* 1. Logo 缩小并移动到角落 */
-body.gallery-maximized .main-logo {
-    /* 使用 transform: scale() 来平滑缩小 */
-    transform: scale(0.7);
-    /* 调整位置以紧贴边缘 */
-    top: 10px;
-    left: 15px;
-}
-
-/* 2. Copyright 内容变得精简和透明 */
-body.gallery-maximized .copyright {
-    /* 增加透明度 */
+/* 当 body 拥有 .window-maximized class 时... */
+/* Copyright 内容变得精简和透明 (Logo 已经在 identity.css 处理) */
+body.window-maximized .copyright {
     opacity: 0.3;
-    /* 稍微向下移动，营造“让位”的感觉 */
     transform: translateY(9px);
 }
 
