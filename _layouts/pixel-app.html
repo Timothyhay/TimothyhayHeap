@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if page.title %}{{ page.title }} - {% endif %}SodaFridge OS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ '/css/fonts.css' | relative_url }}">
+    <link rel="stylesheet" href="{{ '/css/identity.css' | relative_url }}">
+    {% if page.stylesheet %}
+    <link rel="stylesheet" href="{{ page.stylesheet | relative_url }}">
+    {% endif %}
+    <style>
+        /* 特殊调整：允许内容区域的子元素溢出并浮动在侧边栏之上 */
+        .app-container {
+            overflow: visible !important;
+            z-index: 100 !important; /* 确保高于侧边栏的 z-index: 10 */
+        }
+        .container {
+            overflow: visible !important;
+        }
+    </style>
+</head>
+<body>
+
+<h1 class="main-logo">SodaFridge OS</h1>
+
+<div class="container">
+    {% include sidebar_pixel.html %}
+
+    <!-- 使用 .app-container 代替普通的 .content-area -->
+    <main class="content-area app-container" id="contentArea">
+        {{ content }}
+    </main>
+
+    <div class="copyright">
+        <p>I feel quite alive.</p>
+        © 2025 TangerineSoda. All Rights Reserved
+    </div>
+</div>
+
+<script src="{{ '/js/identity.js' | relative_url }}"></script>
+{% if page.javascript and page.javascript != '/js/identity.js' %}
+<script src="{{ page.javascript | relative_url }}"></script>
+{% endif %}
+
+<div class="crt-overlay"></div>
+
+</body>
+</html>

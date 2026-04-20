@@ -1,0 +1,64 @@
+---
+layout: pixel-app
+title: Article List
+stylesheet: /css/article-list.css
+javascript: /js/article-list.js
+---
+
+<div class="dialog-box article-list-window">
+    <div class="dialog-title-bar">
+        <span class="dialog-title">📑 Article List</span>
+        <div class="dialog-title-controls">
+            <button class="dialog-maximize-button">▢</button>
+            <button class="dialog-close-button">X</button>
+        </div>
+    </div>
+
+    <!-- 列表内容区域 -->
+    <div class="dialog-content list-container">
+        <table class="article-table">
+            <thead>
+                <tr>
+                    <th class="col-date">Date</th>
+                    <th class="col-tags">Tags</th>
+                    <th class="col-title">Subject</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in site.posts %}
+                <tr class="article-row" 
+                    onclick="location.href='{{ post.url | relative_url }}'"
+                    data-preview="{{ post.content | strip_html | truncate: 120 | escape }}">
+                    <td class="cell-date">{{ post.date | date: "%Y/%m/%d" }}</td>
+                    <td class="cell-tags">
+                        {% for tag in post.tags %}
+                        <span class="tag-label">{{ tag | upcase }}</span>
+                        {% endfor %}
+                    </td>
+                    <td class="cell-title">
+                        <span class="title-text">{{ post.title }}</span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 悬浮预览框 (由 JS 控制显示) -->
+    <div id="hover-preview" class="pixel-preview-box">
+        <div class="preview-header">PREVIEW</div>
+        <div class="preview-body"></div>
+    </div>
+
+    <!-- 底部状态栏 -->
+    <div class="explorer-status-bar">
+        <div class="status-item">Total: {{ site.posts | size }} Article(s)</div>
+        <div class="status-item">Mode: Read-Only</div>
+        <div class="status-item">SodaFridge OS</div>
+    </div>
+</div>
+
+<style>
+/* 覆盖之前可能存在的内联样式 */
+.article-row { cursor: pointer; }
+</style>

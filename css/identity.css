@@ -5,6 +5,7 @@
     --pale-green: #b4f8c8;      /* Light mint green for the sidebar */
     --pale-purple: #d7b0ff;     /* Light purple for dialog content background */
     --pale-pink: #f9c5d1;       /* Light pink for accents (e.g., language switcher) */
+    --lighter-green: #e2ffeb;    /* Very light green for specific windows */
     --dark-text: #333333;       /* Dark gray for general text, ensuring contrast */
 
     /* Windows 98 style colors for dialogs */
@@ -578,6 +579,15 @@ padding: 5px 8px;
     animation: fadeInScaleUp 0.25s ease-out forwards; /* Apply pop-up animation */
     /* 'forwards' keeps the end state of the animation */
     z-index: 20;                        /* Base z-index, active dialogs get higher via JS */
+}
+
+.dialog-box.system-dialog-window {
+    background-color: var(--lighter-green) !important;
+}
+
+.system-dialog-window .dialog-close-button,
+.system-dialog-window .dialog-action-button {
+    background-color: var(--lighter-green);
 }
 
 .dialog-box.closing {

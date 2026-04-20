@@ -1,0 +1,221 @@
+/* =============================================== */
+/* ==         Article List (Stylized View)      == */
+/* =============================================== */
+
+.article-list-window {
+    width: 85%;
+    height: 75%;
+    min-width: 350px;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out, width 0.3s ease-out, height 0.3s ease-out, top 0.3s ease-out, left 0.3s ease-out;
+    background-color: var(--lighter-green) !important;
+}
+
+/* 最大化状态 */
+.article-list-window.maximized {
+    /* 具体的尺寸由 JS 计算并应用 inline style，这里主要处理一些细节 */
+    transform: none !important;
+    border-radius: 0;
+}
+
+/* 标题栏按钮组 */
+.dialog-title-controls {
+    display: flex;
+    gap: 2px;
+}
+
+.dialog-maximize-button, .dialog-close-button {
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+    font-size: 10px;
+    background-color: var(--lighter-green);
+    color: black;
+    border-top: 1px solid var(--win98-border-light);
+    border-left: 1px solid var(--win98-border-light);
+    border-right: 1px solid var(--win98-border-dark);
+    border-bottom: 1px solid var(--win98-border-dark);
+    width: 16px;
+    height: 14px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dialog-maximize-button:active, .dialog-close-button:active {
+    border-top: 1px solid var(--win98-border-dark);
+    border-left: 1px solid var(--win98-border-dark);
+    border-right: 1px solid var(--win98-border-light);
+    border-bottom: 1px solid var(--win98-border-light);
+}
+
+/* 列表容器：使用更浅的绿色背景 */
+.list-container {
+    flex-grow: 1;
+    background-color: var(--lighter-green) !important;
+    margin: 5px;
+    padding: 0 !important;
+    border: 2px solid var(--win98-border-dark);
+    box-shadow: inset 2px 2px 0px rgba(0,0,0,0.1);
+    overflow-y: auto !important;
+    position: relative;
+}
+
+.article-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+/* 表头样式 - 保持像素风 */
+.article-table thead th {
+    position: sticky;
+    top: 0;
+    background-color: var(--lighter-green);
+    padding: 8px;
+    text-align: left;
+    border-top: 1px solid var(--win98-border-light);
+    border-left: 1px solid var(--win98-border-light);
+    border-right: 1px solid var(--win98-border-dark);
+    border-bottom: 1px solid var(--win98-border-dark);
+    z-index: 10;
+    font-weight: normal;
+    color: var(--dark-text);
+    font-family: var(--pixel-font-latin);
+    font-size: 11px;
+}
+
+/* 列宽分配：拓宽 Date 列以适应完整日期显示 */
+.col-date { width: 130px; }
+.col-tags { width: 160px; }
+.col-title { width: auto; }
+
+/* 行与单元格 */
+.article-row {
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    transition: background-color 0.1s;
+}
+
+.article-row td {
+    padding: 12px 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+}
+
+.article-row:hover {
+    background-color: var(--win98-title-bg-mid);
+    color: #ffffff !important;
+}
+
+/* 日期：保持像素风 */
+.cell-date {
+    font-family: var(--pixel-font-latin);
+    font-size: 10px;
+    letter-spacing: 0px;
+}
+
+/* 标题：使用指定的平滑字体，不使用像素字体 */
+.title-text {
+    font-family: '39_smoothregular', 'fzsongkebenxiukais', sans-serif;
+    font-size: 18px; 
+    font-weight: normal;
+}
+
+.article-row:hover .title-text {
+    color: #ffffff;
+}
+
+/* 标签：保持像素风磁贴 */
+.cell-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.tag-label {
+    font-family: var(--pixel-font-latin), var(--pixel-font-cjk);
+    font-size: 9px;
+    padding: 2px 6px;
+    background-color: var(--pale-blue);
+    color: var(--win98-title-bg-dark);
+    border-top: 1px solid #ffffff;
+    border-left: 1px solid #ffffff;
+    border-right: 1px solid var(--win98-border-dark);
+    border-bottom: 1px solid var(--win98-border-dark);
+    font-weight: bold;
+}
+
+.article-row:hover .tag-label {
+    background-color: var(--pale-green);
+    color: var(--win98-title-bg-dark);
+}
+
+/* --- 动态展示预览框 --- */
+.pixel-preview-box {
+    position: absolute;
+    width: 240px;
+    background-color: #ffffcc;
+    border: 2px solid #000;
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+    padding: 0;
+    pointer-events: none;
+    display: none;
+    z-index: 1000;
+    font-family: var(--pixel-font-cjk);
+    font-size: 12px;
+    line-height: 1.5;
+    animation: previewPop 0.15s ease-out;
+}
+
+@keyframes previewPop {
+    from { transform: scale(0.8) translateY(10px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.preview-header {
+    background-color: #000;
+    color: #fff;
+    padding: 2px 8px;
+    font-size: 9px;
+    font-family: var(--pixel-font-latin);
+}
+
+.preview-body {
+    padding: 10px;
+    color: #333;
+}
+
+/* 状态栏 */
+.explorer-status-bar {
+    display: flex;
+    padding: 4px 8px;
+    background-color: var(--lighter-green);
+    border-top: 1px solid var(--win98-border-light);
+    font-size: 10px;
+    font-family: var(--pixel-font-latin);
+}
+
+.status-item {
+    border-left: 1px solid var(--win98-border-dark);
+    border-right: 1px solid var(--win98-border-light);
+    padding: 0 10px;
+}
+
+.status-item:first-child {
+    border-left: none;
+    flex-grow: 1;
+}
+
+/* 响应式适配 */
+@media (max-width: 800px) {
+    .col-tags { display: none; }
+    .cell-tags { display: none; }
+    .article-list-window { width: 95%; height: 80%; }
+    .title-text { font-size: 16px; }
+}
