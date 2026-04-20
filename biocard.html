@@ -18,7 +18,7 @@ title: Digital Biocard 2026
                     <div class="header-line"></div>
                     <div class="header-content">
                         <span class="id-label">ID_TYPE: RESISTANCE_BIOCARD</span>
-                        <span class="id-serial">SN: 2026-PAPA-SODA</span>
+                        <span class="id-serial">SN: 2026-FIZZ-SODA</span>
                     </div>
                 </div>
 
@@ -87,9 +87,8 @@ title: Digital Biocard 2026
 
     .biocard-window {
         position: absolute;
-        top: 40px;
-        left: 50%;
-        transform: translateX(-50%) scale(0.95);
+        top: 100px;
+        left: 0;
         width: 850px;
         max-width: 95vw;
         max-height: 85vh;
@@ -99,6 +98,7 @@ title: Digital Biocard 2026
         display: flex;
         flex-direction: column;
         opacity: 0;
+        transform: scale(0.95);
         transition: opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         z-index: 1000;
         overflow: hidden;
@@ -349,17 +349,25 @@ title: Digital Biocard 2026
         makeDraggable(win);
         ensureSidebarVisible();
         
-        // Use timeout to ensure styles are applied and we can measure
         setTimeout(() => {
-            const container = document.querySelector('.container');
-            const containerRect = container.getBoundingClientRect();
-            const winWidth = win.offsetWidth;
+            const parent = win.offsetParent || document.body;
+            const parentRect = parent.getBoundingClientRect();
             
-            // Center the window
-            const centerX = (containerRect.width - winWidth) / 2 + 50; 
+            const winWidth = win.offsetWidth;
+            const winHeight = win.offsetHeight;
+            
+            // Calculate center of the viewport
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+            
+            // Convert viewport center to parent-relative coordinates
+            const centerX = (viewportWidth - winWidth) / 2 - parentRect.left;
+            const centerY = (viewportHeight - winHeight) / 2 - parentRect.top;
+            
             win.style.left = `${centerX}px`;
+            win.style.top = `${centerY}px`;
             win.style.opacity = '1';
-            win.style.transform = 'translateX(-50%) scale(1)';
+            win.style.transform = 'scale(1)';
         }, 100);
     });
 </script>
