@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ page.title }} - SODA FRIDGE</title>
+    
+    <!-- CSS Dependencies -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="{{ '/css/syntax.css' | relative_url }}" rel="stylesheet" type="text/css">
+    <link href="{{ '/css/modern_article.css' | relative_url }}" rel="stylesheet" type="text/css">
+    
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="{{ '/images/favicon.ico' | relative_url }}" />
+</head>
+<body>
+
+    <header class="modern-header">
+        <div class="container">
+            <a href="{{ '/' | relative_url }}" class="modern-logo">SODA FRIDGE</a>
+            <nav class="modern-nav">
+                <a href="{{ '/' | relative_url }}">HOME</a>
+                <a href="{{ '/articlelist' | relative_url }}">ARTICLES</a>
+                <a href="{{ '/profile' | relative_url }}">ABOUT</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="article-wrapper">
+        <aside class="article-sidebar">
+            <nav class="toc-sidebar">
+                <h4>CONTENTS</h4>
+                {% include toc.html html=content sanitize=true h_min=2 h_max=3 %}
+            </nav>
+        </aside>
+
+        <main class="article-main">
+            <article class="article-container">
+                <header class="article-header">
+                    <h1>{{ page.title }}</h1>
+                    <div class="article-meta">
+                        <span class="date">{{ page.date | date: "%Y-%m-%d" }}</span>
+                        {% if page.tags %}
+                            {% for tag in page.tags %}
+                                <span class="tag">#{{ tag }}</span>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </header>
+
+                <section class="article-content">
+                    {{ content }}
+                </section>
+            </article>
+
+            <!-- Comments Section -->
+            {% if page.comments %}
+            <div style="margin-top: 80px; padding-top: 40px; border-top: 1px solid var(--border-color);">
+                <div id="disqus_thread"></div>
+                <script>
+                    var disqus_config = function () {
+                        this.page.url = '{{ page.url | absolute_url }}';
+                        this.page.identifier = '{{ page.url }}';
+                    };
+                    (function() {
+                        var d = document, s = d.createElement('script');
+                        s.src = 'https://razzorleaf.disqus.com/embed.js';
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <footer class="modern-footer">
+        <div class="container">
+            <p>&copy; {{ site.time | date: "%Y" }} SODA FRIDGE. Built with passion and code.</p>
+        </div>
+    </footer>
+
+    <!-- Back to Top (Simple Version) -->
+    <button id="backToTop" title="Go to top" style="display: none; position: fixed; bottom: 40px; right: 40px; z-index: 99; border: none; outline: none; background-color: var(--accent-blue); color: #444; cursor: pointer; padding: 10px 15px; border-radius: 4px; font-family: 'Press Start 2P'; font-size: 10px;">UP</button>
+
+    <script>
+        // Back to top functionality
+        window.onscroll = function() {scrollFunction()};
+        function scrollFunction() {
+            if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+                document.getElementById("backToTop").style.display = "block";
+            } else {
+                document.getElementById("backToTop").style.display = "none";
+            }
+        }
+        document.getElementById("backToTop").onclick = function() {
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        };
+    </script>
+
+</body>
+</html>
