@@ -1,0 +1,41 @@
+- name: Fuzhou
+  id: fuzhou
+  image: /images/locations-Fuzhou.jpg
+  location_name: 上下杭
+  mood: 童年回忆。
+  experience: 翻新前的样子，保留下来的旧招牌和今天门店的招牌放在一起冲突感很有意思。
+
+- name: Quanzhou
+  id: quanzhou
+  image: /images/locations-Quanzhou.jpg
+  location_name: 忘记名字的粉色教堂
+  mood: 为了闽南小吃绝对值得一去的地方。
+  experience: 泉州是一个充满烟火气的城市，古老的寺庙与现代的生活交织在一起。
+
+- name: Shanghai
+  id: shanghai
+  image: /images/locations-Shanghai.jpg
+  location_name: 某个立交桥
+  mood: 大城市里的惬意旅行，攻略最随意的一次。
+  experience: 从嘈杂的地下广场走出来，眼前是纵横交错的立交桥，灯光如流动的银河。在快节奏的上海，这种漫无目的的游荡让我沉迷。
+
+- name: Singapore
+  id: singapore
+  image: /images/locations-Singapore.jpg
+  location_name: ERC @ NUS
+  mood: 在新加坡过了第一个生日。
+  experience: 湿热的海风和干巴巴的水泥街道，非常重要的回忆。
+
+- name: Tianjin
+  id: tianjin
+  image: /images/locations-Tianjin.jpg
+  location_name: 滨海图书馆
+  mood: 落花的四月天津，摩天轮超好评。
+  experience: 后来因为不同原因去了天津很多次，这个城市的各方各面都好喜欢。不管是吃的喝的（海河牛奶还是煎饼果子），风景还是人（意大利建筑或者卖酸奶的阿姨）所有的事情都有一种能真正放松下来的感觉。
+
+- name: Weihai
+  id: weihai
+  image: /images/locations-Weihai.jpg
+  location_name: 山东大学 @威海
+  mood: 没有去之前以为是另一个普林斯顿。
+  experience: 威海的海边总有一种宁静的力量。夜里在北门看着远处的海岸线是难得的人生幸福时刻。

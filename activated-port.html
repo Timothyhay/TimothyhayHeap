@@ -1,0 +1,221 @@
+---
+layout: pixel-app
+title: Activated Portal
+stylesheet: /css/portal.css
+---
+
+<div class="dialog-box portal-window" id="portalWindow">
+    <div class="dialog-title-bar">
+        <span class="dialog-title">📡 VOYAGER TERMINAL v1.0.4 - [SECURE CONNECTION]</span>
+        <div class="dialog-title-controls">
+            <button class="dialog-close-button" onclick="location.href='/'">X</button>
+        </div>
+    </div>
+
+    <div class="portal-body">
+        <!-- Port Selection Sidebar -->
+        <aside class="portal-sidebar">
+            <div class="sidebar-header">DESTINATIONS</div>
+            <nav class="port-list">
+                {% for loc in site.data.locations %}
+                <div class="port-item" onclick="activatePort('{{ loc.id }}')" id="btn-{{ loc.id }}">
+                    <span class="port-status">●</span>
+                    <span class="port-name">{{ loc.name | upcase }}</span>
+                </div>
+                {% endfor %}
+            </nav>
+        </aside>
+
+        <!-- Main Display -->
+        <main class="portal-main">
+            <div class="display-header">
+                <div class="scanning-text">STATUS: <span id="status-text">LISTENING...</span></div>
+                <div class="scanning-text">PORT: <span id="active-port-id">NONE</span></div>
+            </div>
+
+            <div class="display-scroll-area" id="displayArea">
+                <div id="initial-overlay" class="initial-state">
+                    <div class="terminal-text">
+                        > SYSTEM READY.<br>
+                        > AWAITING PORT SELECTION...<br>
+                        > [TIP]: SELECT A DESTINATION FROM THE LEFT PANEL TO SCAN.
+                    </div>
+                </div>
+
+                <div id="port-content" style="display: none;">
+                    <div class="terminal-monitor">
+                        <div class="image-container">
+                            <img id="port-image" src="" alt="Satellite View">
+                            <div class="image-overlay-fx"></div>
+                        </div>
+
+                        <div class="info-grid">
+                            <div class="info-block">
+                                <span class="info-label">SPECIFIC_LOCATION</span>
+                                <div id="port-loc" class="info-value"></div>
+                            </div>
+                            <div class="info-block">
+                                <span class="info-label">PSYCHOLOGICAL_STATE</span>
+                                <div id="port-mood" class="info-value"></div>
+                            </div>
+                        </div>
+
+                        <div class="experience-log" id="port-experience">
+                            <!-- Typed content goes here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<script>
+    const locationData = {
+        {% for loc in site.data.locations %}
+        "{{ loc.id }}": {
+            "name": "{{ loc.name }}",
+            "image": "{{ loc.image | relative_url }}",
+            "loc": "{{ loc.location_name }}",
+            "mood": "{{ loc.mood }}",
+            "exp": "{{ loc.experience | escape }}"
+        }{% unless forloop.last %},{% endunless %}
+        {% endfor %}
+    };
+
+    let typingTimer = null;
+    let highestZIndex = 1000;
+
+    function activatePort(id) {
+        const data = locationData[id];
+        if (!data) return;
+
+        if (typingTimer) clearTimeout(typingTimer);
+
+        document.getElementById('initial-overlay').style.display = 'none';
+        document.getElementById('port-content').style.display = 'block';
+        document.getElementById('status-text').textContent = 'ACTIVE';
+        document.getElementById('status-text').style.color = 'var(--pale-green)';
+        document.getElementById('active-port-id').textContent = id.toUpperCase();
+        
+        document.getElementById('port-image').src = data.image;
+        document.getElementById('port-loc').textContent = data.loc;
+        document.getElementById('port-mood').textContent = data.mood;
+        
+        const expEl = document.getElementById('port-experience');
+        expEl.textContent = '';
+        let i = 0;
+        const text = "> " + data.exp;
+        
+        function typeWriter() {
+            if (i < text.length) {
+                expEl.textContent += text.charAt(i);
+                i++;
+                typingTimer = setTimeout(typeWriter, 15);
+                expEl.scrollTop = expEl.scrollHeight;
+            }
+        }
+        typeWriter();
+
+        document.querySelectorAll('.port-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('btn-' + id).classList.add('active');
+    }
+
+    // Draggable Logic
+    function makeDraggable(element) {
+        const titleBar = element.querySelector('.dialog-title-bar');
+        let offsetX, offsetY, isDragging = false;
+
+        titleBar.addEventListener('mousedown', (e) => {
+            if (e.target.closest('button')) return;
+            isDragging = true;
+            
+            // Disable transition and remove transform before measuring for accurate offset
+            element.style.transition = 'none';
+            element.style.transform = 'none';
+            
+            const rect = element.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            
+            element.style.zIndex = ++highestZIndex;
+            titleBar.style.cursor = 'grabbing';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            // Use offsetParent's bounding rect to calculate relative coordinates correctly
+            const parentRect = (element.offsetParent || document.body).getBoundingClientRect();
+            let newX = (e.clientX - offsetX) - parentRect.left;
+            let newY = (e.clientY - offsetY) - parentRect.top;
+            
+            // Limit Y to not go above logo
+            newY = Math.max(10, newY);
+            
+            element.style.left = `${newX}px`;
+            element.style.top = `${newY}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                titleBar.style.cursor = 'grab';
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const win = document.getElementById('portalWindow');
+        makeDraggable(win);
+        
+        const container = document.querySelector('.container');
+        const containerRect = container.getBoundingClientRect();
+        
+        // Initial centering logic
+        setTimeout(() => {
+            const winWidth = win.offsetWidth;
+            const centerX = (containerRect.width - winWidth) / 2 + 50; // Offset for sidebar
+            
+            win.style.left = `${centerX}px`;
+            win.style.top = `80px`;
+            win.style.opacity = '1';
+            win.style.transform = 'scale(1)';
+        }, 100);
+    });
+</script>
+
+<style>
+    .portal-window {
+        position: absolute; /* Changed from fixed to absolute to align with container */
+        top: 40px;
+        left: 50%;
+        transform: scale(0.95);
+        opacity: 0;
+        transition: opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        z-index: 1000;
+        cursor: default;
+    }
+    
+    .dialog-title-bar {
+        cursor: grab;
+    }
+
+    .terminal-text {
+        font-family: 'Consolas', monospace;
+        color: #00ff41;
+        text-shadow: 0 0 5px rgba(0,255,65,0.5);
+        line-height: 1.6;
+        text-align: left;
+    }
+
+    @media (max-width: 1000px) {
+        .portal-window {
+            left: 5px !important;
+            top: 10px !important;
+            width: 98% !important;
+            height: auto;
+            max-height: 90vh;
+        }
+    }
+</style>

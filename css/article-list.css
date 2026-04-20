@@ -212,6 +212,71 @@
     flex-grow: 1;
 }
 
+/* --- Tag Filter Window --- */
+.tag-window {
+    position: absolute;
+    width: 320px;
+    height: 400px;
+    z-index: 2000;
+    background-color: var(--lighter-green) !important;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 10px 10px 0px rgba(0,0,0,0.2);
+}
+
+.filter-results {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px;
+    background-color: #ffffff;
+    border: 2px solid var(--win98-border-dark);
+    margin: 5px;
+}
+
+.pixel-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.pixel-list li {
+    padding: 8px;
+    border-bottom: 1px dashed var(--win98-border-dark);
+    font-family: '39_smoothregular', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.pixel-list li:hover {
+    background-color: var(--win98-title-bg-mid);
+    color: white;
+}
+
+.pixel-list .item-date {
+    font-family: var(--pixel-font-latin);
+    font-size: 9px;
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-light);
+}
+
+.pixel-list li:hover .item-date {
+    color: #eee;
+}
+
+.tag-label {
+    cursor: pointer;
+}
+
+.tag-label:hover {
+    background-color: var(--pale-pink) !important;
+    color: var(--win98-title-bg-dark) !important;
+    border-top: 1px solid var(--win98-border-dark);
+    border-left: 1px solid var(--win98-border-dark);
+    border-right: 1px solid #ffffff;
+    border-bottom: 1px solid #ffffff;
+}
+
 /* 响应式适配 */
 @media (max-width: 800px) {
     .col-tags { display: none; }
