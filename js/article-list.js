@@ -159,4 +159,51 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 300);
         });
     }
+
+    // --- Tag Filtering Logic ---
+    const tagWindow = document.getElementById('tag-filter-window');
+    const activeTagName = document.getElementById('active-tag-name');
+    const filteredList = document.getElementById('filtered-article-list');
+
+    window.filterByTag = function(tag) {
+        activeTagName.textContent = tag;
+        filteredList.innerHTML = '';
+        
+        // Find all articles with this tag
+        const rows = document.querySelectorAll('.article-row');
+        rows.forEach(row => {
+            const tags = row.getAttribute('data-tags').split(',');
+            if (tags.includes(tag)) {
+                const title = row.querySelector('.title-text').textContent;
+                const date = row.querySelector('.cell-date').textContent;
+                const onclickAttr = row.getAttribute('onclick');
+                const urlMatch = onclickAttr.match(/location\.href='([^']+)'/);
+                const url = urlMatch ? urlMatch[1] : '#';
+                
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="item-date">${date}</span>
+                    <span class="item-title">${title}</span>
+                `;
+                li.onclick = () => location.href = url;
+                filteredList.appendChild(li);
+            }
+        });
+
+        // Position and show the window
+        tagWindow.style.display = 'flex';
+        tagWindow.style.left = '50px';
+        tagWindow.style.top = '50px';
+        tagWindow.style.zIndex = ++highestZIndex;
+        
+        // Make tag window draggable too
+        if (!tagWindow.dataset.draggable) {
+            makeDraggable(tagWindow);
+            tagWindow.dataset.draggable = 'true';
+        }
+    };
+
+    window.closeTagFilter = function() {
+        tagWindow.style.display = 'none';
+    };
 });

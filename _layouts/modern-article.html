@@ -8,7 +8,7 @@
     <!-- CSS Dependencies -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link href="{{ '/css/syntax.css' | relative_url }}" rel="stylesheet" type="text/css">
-    <link href="{{ '/css/modern_article.css' | relative_url }}" rel="stylesheet" type="text/css">
+    <link href="{{ '/css/modern-article.css' | relative_url }}" rel="stylesheet" type="text/css">
     
     <!-- Favicon -->
     <link rel="shortcut icon" href="{{ '/images/favicon.ico' | relative_url }}" />
@@ -27,19 +27,12 @@
     </header>
 
     <div class="article-wrapper">
-        <aside class="article-sidebar">
-            <nav class="toc-sidebar">
-                <h4>CONTENTS</h4>
-                {% include toc.html html=content sanitize=true h_min=2 h_max=3 %}
-            </nav>
-        </aside>
-
         <main class="article-main">
             <article class="article-container">
                 <header class="article-header">
                     <h1>{{ page.title }}</h1>
                     <div class="article-meta">
-                        <span class="date">{{ page.date | date: "%Y-%m-%d" }}</span>
+                        <span class="date">{{ page.date | date_to_string }}</span>
                         {% if page.tags %}
                             {% for tag in page.tags %}
                                 <span class="tag">#{{ tag }}</span>
@@ -52,6 +45,7 @@
                     {{ content }}
                 </section>
             </article>
+
 
             <!-- Comments Section -->
             {% if page.comments %}
@@ -73,11 +67,19 @@
             </div>
             {% endif %}
         </main>
+
+        <aside class="article-sidebar">
+            <nav class="toc-sidebar">
+                <h4>CONTENTS</h4>
+                {% include toc.html html=content sanitize=true h_min=2 h_max=3 %}
+            </nav>
+        </aside>
+
     </div>
 
     <footer class="modern-footer">
         <div class="container">
-            <p>&copy; {{ site.time | date: "%Y" }} SODA FRIDGE. Built with passion and code.</p>
+            <p>&copy; {{ site.time | date: "%Y" }} Soda Fridge OS. Built with passion by <a href="https://twitter.com/Timothy_OwO"> Timothyhay</a></p>
         </div>
     </footer>
 

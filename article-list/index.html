@@ -27,12 +27,13 @@ javascript: /js/article-list.js
             <tbody>
                 {% for post in site.posts %}
                 <tr class="article-row" 
-                    onclick="location.href='{{ post.url | relative_url }}'"
-                    data-preview="{{ post.content | strip_html | truncate: 120 | escape }}">
+                    onclick="if(!event.target.classList.contains('tag-label')) location.href='{{ post.url | relative_url }}'"
+                    data-preview="{{ post.content | strip_html | truncate: 120 | escape }}"
+                    data-tags="{{ post.tags | join: ',' | upcase }}">
                     <td class="cell-date">{{ post.date | date: "%Y/%m/%d" }}</td>
                     <td class="cell-tags">
                         {% for tag in post.tags %}
-                        <span class="tag-label">{{ tag | upcase }}</span>
+                        <span class="tag-label" onclick="filterByTag('{{ tag | upcase }}')">{{ tag | upcase }}</span>
                         {% endfor %}
                     </td>
                     <td class="cell-title">
@@ -42,6 +43,21 @@ javascript: /js/article-list.js
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+
+    <!-- Tag Filter Window (Modal) -->
+    <div id="tag-filter-window" class="dialog-box tag-window" style="display: none;">
+        <div class="dialog-title-bar">
+            <span class="dialog-title">🔍 Tag: <span id="active-tag-name"></span></span>
+            <div class="dialog-title-controls">
+                <button class="dialog-close-button" onclick="closeTagFilter()">X</button>
+            </div>
+        </div>
+        <div class="dialog-content filter-results">
+            <ul id="filtered-article-list" class="pixel-list">
+                <!-- Filtered items will be injected here -->
+            </ul>
+        </div>
     </div>
 
     <!-- 悬浮预览框 (由 JS 控制显示) -->
