@@ -39,6 +39,22 @@
     </div>
 </div>
 
+<!-- HTML template for the dialog boxes (needed for System settings) -->
+<template id="dialogTemplate">
+    <div class="dialog-box">
+        <div class="dialog-title-bar">
+            <span class="dialog-title">Dialog Title</span>
+            <button class="dialog-close-button">X</button>
+        </div>
+        <div class="dialog-content">
+        </div>
+        <div class="dialog-buttons">
+            <button class="dialog-action-button">OK</button>
+            <button class="dialog-action-button">Cancel</button>
+        </div>
+    </div>
+</template>
+
 <script src="{{ '/js/identity.js' | relative_url }}"></script>
 {% if page.javascript and page.javascript != '/js/identity.js' %}
 <script src="{{ page.javascript | relative_url }}"></script>

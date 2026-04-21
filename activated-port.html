@@ -38,7 +38,7 @@ stylesheet: /css/portal.css
                     <div class="terminal-text">
                         > SYSTEM READY.<br>
                         > AWAITING PORT SELECTION...<br>
-                        > [TIP]: SELECT A DESTINATION FROM THE LEFT PANEL TO SCAN.
+                        > SELECT A DESTINATION FROM THE LEFT PANEL TO SCAN.
                     </div>
                 </div>
 
@@ -165,20 +165,34 @@ stylesheet: /css/portal.css
         });
     }
 
+    // --- Global Sidebar Fix ---
+    function ensureSidebarVisible() {
+        const navItems = document.querySelectorAll('.sidebar .nav-item');
+        if (navItems.length > 0 && !navItems[0].classList.contains('nav-item-visible')) {
+            navItems.forEach((item, index) => {
+                item.style.transitionDelay = `${index * 0.07}s`;
+                item.classList.add('nav-item-visible');
+            });
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         const win = document.getElementById('portalWindow');
+        const contentArea = document.getElementById('contentArea');
         makeDraggable(win);
+        ensureSidebarVisible();
         
-        const container = document.querySelector('.container');
-        const containerRect = container.getBoundingClientRect();
-        
-        // Initial centering logic
+        // Initial centering logic relative to contentArea
         setTimeout(() => {
+            const areaRect = contentArea.getBoundingClientRect();
             const winWidth = win.offsetWidth;
-            const centerX = (containerRect.width - winWidth) / 2 + 50; // Offset for sidebar
+            const winHeight = win.offsetHeight;
+            
+            const centerX = (areaRect.width - winWidth) / 2;
+            const centerY = Math.max(20, (areaRect.height - winHeight) / 2);
             
             win.style.left = `${centerX}px`;
-            win.style.top = `80px`;
+            win.style.top = `${centerY}px`;
             win.style.opacity = '1';
             win.style.transform = 'scale(1)';
         }, 100);
@@ -187,10 +201,10 @@ stylesheet: /css/portal.css
 
 <style>
     .portal-window {
-        position: absolute; /* Changed from fixed to absolute to align with container */
-        top: 40px;
+        position: absolute;
+        top: 50%;
         left: 50%;
-        transform: scale(0.95);
+        transform: translate(-50%, -50%) scale(0.95);
         opacity: 0;
         transition: opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         z-index: 1000;

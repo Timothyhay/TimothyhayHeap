@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.querySelector('.container');
 
     // Initialize z-index counter for dialog stacking.
-    let highestZIndex = 101;
+    // Set much higher to stay above normal app windows which usually start at 1000
+    let highestZIndex = 5000;
 
     // Configuration for dialog spawning
     const MAX_DIALOGS_TO_SPAWN = 10;
@@ -51,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Prevent multiple system dialogs
         const existingDialog = document.querySelector('.dialog-box.system-dialog-window');
         if (existingDialog) {
-            existingDialog.style.zIndex = ++highestZIndex;
+            existingDialog.style.zIndex = 9999; // Always absolute top
             document.querySelectorAll('.dialog-box.active').forEach(el => el.classList.remove('active'));
             existingDialog.classList.add('active');
             return;
@@ -97,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add a specific class to identify this dialog
         dialog.classList.add('system-dialog-window');
+        dialog.style.zIndex = 9999; // Set to very high value initially
 
         // --- Center the dialog manually ---
         const containerRect = container.getBoundingClientRect();
@@ -133,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         rebootBtn.addEventListener('click', () => {
             localStorage.setItem('sodaOS_skipBoot', 'false'); // Force boot screen once
-            window.location.href = '/identity.html';
+            window.location.href = '/';
         });
 
         resetBtn.addEventListener('click', () => {
@@ -174,6 +176,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Function to create and display a new dialog box ---
     function createDialog(data) {
+        if (!dialogTemplate) return null;
+
         const dialogClone = dialogTemplate.content.cloneNode(true);
         const dialogBox = dialogClone.querySelector('.dialog-box');
         const titleElement = dialogBox.querySelector('.dialog-title');
@@ -215,7 +219,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         closeButton.addEventListener('click', closeDialog);
         dialogBox.addEventListener('mousedown', () => {
-            dialogBox.style.zIndex = ++highestZIndex;
+            // System dialogs should stay above everything
+            if (dialogBox.classList.contains('system-dialog-window')) {
+                dialogBox.style.zIndex = 10000;
+            } else {
+                dialogBox.style.zIndex = ++highestZIndex;
+            }
             document.querySelectorAll('.dialog-box.active').forEach(el => el.classList.remove('active'));
             dialogBox.classList.add('active');
         }, true);
@@ -245,7 +254,13 @@ document.addEventListener('DOMContentLoaded', () => {
             isDragging = true;
             offsetX = e.clientX - element.getBoundingClientRect().left;
             offsetY = e.clientY - element.getBoundingClientRect().top;
-            element.style.zIndex = ++highestZIndex;
+            
+            if (element.classList.contains('system-dialog-window')) {
+                element.style.zIndex = 10000;
+            } else {
+                element.style.zIndex = ++highestZIndex;
+            }
+            
             titleBar.style.cursor = 'grabbing';
             document.querySelectorAll('.dialog-box.active').forEach(el => el.classList.remove('active'));
             element.classList.add('active');
@@ -280,6 +295,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startDialogSystem() {
+        // Only spawn random dialogs on the root index page
+        const isHomePage = window.location.pathname === '/' || window.location.pathname === '/index.html';
+        if (!isHomePage) return;
+
         const turboMode = localStorage.getItem('sodaOS_turboMode') === 'true';
         const initialDelay = turboMode ? 400 : 1200;
         const interval = turboMode ? 800 : 2200;
