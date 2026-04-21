@@ -14,49 +14,105 @@ javascript: /js/article-list.js
         </div>
     </div>
 
-    <!-- 列表内容区域 -->
-    <div class="dialog-content list-container">
-        <table class="article-table">
-            <thead>
-                <tr>
-                    <th class="col-date">Date</th>
-                    <th class="col-tags">Tags</th>
-                    <th class="col-title">Subject</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for post in site.posts %}
-                <tr class="article-row" 
-                    onclick="if(!event.target.classList.contains('tag-label')) location.href='{{ post.url | relative_url }}'"
-                    data-preview="{{ post.content | strip_html | truncate: 120 | escape }}"
-                    data-tags="{{ post.tags | join: ',' | upcase }}">
-                    <td class="cell-date">{{ post.date | date: "%Y/%m/%d" }}</td>
-                    <td class="cell-tags">
-                        {% for tag in post.tags %}
-                        <span class="tag-label" onclick="filterByTag('{{ tag | upcase }}')">{{ tag | upcase }}</span>
-                        {% endfor %}
-                    </td>
-                    <td class="cell-title">
-                        <span class="title-text">{{ post.title }}</span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Explorer Toolbar -->
+    <div class="explorer-toolbar">
+        <div class="toolbar-group">
+            <button class="toolbar-btn" onclick="location.href='/'" title="Back to Home">
+                <span class="btn-icon">⬅</span> Back
+            </button>
+            <div class="toolbar-divider"></div>
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="article-search" placeholder="Search Articles" oninput="searchArticles()">
+            </div>
+            <div class="toolbar-divider"></div>
+            <button class="toolbar-btn" id="view-mode-toggle" title="Switch View Mode">
+                <span class="btn-icon">▦</span> Tiles
+            </button>
+        </div>
     </div>
 
-    <!-- Tag Filter Window (Modal) -->
-    <div id="tag-filter-window" class="dialog-box tag-window" style="display: none;">
-        <div class="dialog-title-bar">
-            <span class="dialog-title">🔍 Tag: <span id="active-tag-name"></span></span>
-            <div class="dialog-title-controls">
-                <button class="dialog-close-button" onclick="closeTagFilter()">X</button>
+    <div class="window-body-main">
+        <!-- Sidebar for Tags/Categories -->
+        <aside class="explorer-sidebar">
+            <div class="sidebar-section">
+                <div class="section-header">📁 FOLDERS</div>
+                <ul class="sidebar-list">
+                    <li class="sidebar-item active" onclick="filterByTag('ALL')">
+                        <span class="item-icon">📂</span> All Articles
+                    </li>
+                </ul>
             </div>
-        </div>
-        <div class="dialog-content filter-results">
-            <ul id="filtered-article-list" class="pixel-list">
-                <!-- Filtered items will be injected here -->
-            </ul>
+            <div class="sidebar-section">
+                <div class="section-header">🏷️ TAGS</div>
+                <ul class="sidebar-list" id="sidebar-tags">
+                    <!-- Tags will be dynamically populated or hardcoded if needed -->
+                    {% assign all_tags = "" | split: "," %}
+                    {% for post in site.posts %}
+                        {% for tag in post.tags %}
+                            {% assign tag_up = tag | upcase %}
+                            {% unless all_tags contains tag_up %}
+                                {% assign all_tags = all_tags | push: tag_up %}
+                            {% endunless %}
+                        {% endfor %}
+                    {% endfor %}
+                    {% assign sorted_tags = all_tags | sort %}
+                    {% for tag in sorted_tags %}
+                    <li class="sidebar-item" onclick="filterByTag('{{ tag }}')">
+                        <span class="item-icon">🔖</span> {{ tag }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </aside>
+
+        <!-- 列表内容区域 -->
+        <div class="dialog-content list-container">
+            <div class="scanline-overlay"></div>
+            <table class="article-table" id="article-table">
+                <thead>
+                    <tr>
+                        <th class="col-date">Date</th>
+                        <th class="col-tags">Tags</th>
+                        <th class="col-title">Subject</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for post in site.posts %}
+                    <tr class="article-row" 
+                        onclick="if(!event.target.classList.contains('tag-label')) location.href='{{ post.url | relative_url }}'"
+                        data-preview="{{ post.content | strip_html | truncate: 120 | escape }}"
+                        data-tags="{{ post.tags | join: ',' | upcase }}"
+                        data-title="{{ post.title | upcase }}">
+                        <td class="cell-date">{{ post.date | date: "%Y/%m/%d" }}</td>
+                        <td class="cell-tags">
+                            {% for tag in post.tags %}
+                            <span class="tag-label" onclick="filterByTag('{{ tag | upcase }}')">{{ tag | upcase }}</span>
+                            {% endfor %}
+                        </td>
+                        <td class="cell-title">
+                            <span class="title-text">{{ post.title }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Tile View (Hidden by default) -->
+            <div class="article-tiles" id="article-tiles" style="display: none;">
+                {% for post in site.posts %}
+                <div class="article-card" 
+                     onclick="location.href='{{ post.url | relative_url }}'"
+                     data-tags="{{ post.tags | join: ',' | upcase }}"
+                     data-title="{{ post.title | upcase }}">
+                    <div class="card-icon">📄</div>
+                    <div class="card-info">
+                        <div class="card-title">{{ post.title }}</div>
+                        <div class="card-date">{{ post.date | date: "%Y/%m/%d" }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 
@@ -68,8 +124,8 @@ javascript: /js/article-list.js
 
     <!-- 底部状态栏 -->
     <div class="explorer-status-bar">
-        <div class="status-item">Total: {{ site.posts | size }} Article(s)</div>
-        <div class="status-item">Mode: Read-Only</div>
+        <div class="status-item" id="status-total">Total: {{ site.posts | size }} Article(s)</div>
+        <div class="status-item" id="status-filter">Filter: None</div>
         <div class="status-item">SodaFridge OS</div>
     </div>
 </div>
