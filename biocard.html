@@ -87,8 +87,9 @@ title: Digital Biocard 2026
 
     .biocard-window {
         position: absolute;
-        top: 100px;
-        left: 0;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.95);
         width: 850px;
         max-width: 95vw;
         max-height: 85vh;
@@ -98,10 +99,10 @@ title: Digital Biocard 2026
         display: flex;
         flex-direction: column;
         opacity: 0;
-        transform: scale(0.95);
         transition: opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         z-index: 1000;
         overflow: hidden;
+        animation: none !important; /* Disable default animation from identity.css */
     }
 
     .biocard-scroll-body {
@@ -364,8 +365,17 @@ title: Digital Biocard 2026
             const centerX = (viewportWidth - winWidth) / 2 - parentRect.left;
             const centerY = (viewportHeight - winHeight) / 2 - parentRect.top;
             
+            // Disable transition temporarily to set the initial pixel position
+            win.style.transition = 'none';
             win.style.left = `${centerX}px`;
             win.style.top = `${centerY}px`;
+            win.style.transform = 'scale(0.95)'; // Remove translate since we now have pixel left/top
+            
+            // Force reflow
+            win.offsetHeight;
+            
+            // Re-enable transition and show
+            win.style.transition = 'opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
             win.style.opacity = '1';
             win.style.transform = 'scale(1)';
         }, 100);
