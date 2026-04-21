@@ -8,7 +8,7 @@ stylesheet: /css/portal.css
     <div class="dialog-title-bar">
         <span class="dialog-title">📡 VOYAGER TERMINAL v1.0.4 - [SECURE CONNECTION]</span>
         <div class="dialog-title-controls">
-            <button class="dialog-close-button" onclick="location.href='/'">X</button>
+            <button class="dialog-close-button" onclick="closeWindow()">X</button>
         </div>
     </div>
 
@@ -164,6 +164,12 @@ stylesheet: /css/portal.css
             }
         });
     }
+
+    // --- Close Window Handler ---
+    window.closeWindow = function() {
+        sessionStorage.setItem('sodaOS_skipBootOnce', 'true');
+        location.href = '/';
+    };
 
     // --- Global Sidebar Fix ---
     function ensureSidebarVisible() {

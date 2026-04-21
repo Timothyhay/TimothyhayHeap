@@ -18,7 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Boot Sequence Handler ---
     function handleBootSequence() {
-        const skipBoot = localStorage.getItem('sodaOS_skipBoot') === 'true';
+        const skipBootSetting = localStorage.getItem('sodaOS_skipBoot') === 'true';
+        const skipBootOnce = sessionStorage.getItem('sodaOS_skipBootOnce') === 'true';
+        
         const crtOverlay = document.querySelector('.crt-overlay');
         const crtEnabled = localStorage.getItem('sodaOS_crtEnabled') !== 'false';
 
@@ -27,8 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
             crtOverlay.style.display = crtEnabled ? 'block' : 'none';
         }
 
-        if (!bootScreen || skipBoot) {
+        // Skip if setting is on OR if we just came back from an app window
+        if (!bootScreen || skipBootSetting || skipBootOnce) {
             if (bootScreen) bootScreen.remove();
+            if (skipBootOnce) sessionStorage.removeItem('sodaOS_skipBootOnce');
             startDialogSystem();
             animateSidebarItems();
             return;

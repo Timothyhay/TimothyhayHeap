@@ -17,9 +17,9 @@
 
     <header class="modern-header">
         <div class="container">
-            <a href="{{ '/' | relative_url }}" class="modern-logo">SODA FRIDGE</a>
+            <a href="{{ '/' | relative_url }}" class="modern-logo" onclick="sessionStorage.setItem('sodaOS_skipBootOnce', 'true');">SODA FRIDGE</a>
             <nav class="modern-nav">
-                <a href="{{ '/' | relative_url }}">HOME</a>
+                <a href="{{ '/' | relative_url }}" onclick="sessionStorage.setItem('sodaOS_skipBootOnce', 'true');">HOME</a>
                 <a href="{{ '/article-list' | relative_url }}">ARTICLES</a>
                 <a href="{{ '/biocard' | relative_url }}">ABOUT</a>
             </nav>

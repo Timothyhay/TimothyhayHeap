@@ -235,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
                 photoManagerWindow.style.opacity = '0';
+                sessionStorage.setItem('sodaOS_skipBootOnce', 'true');
                 setTimeout(() => window.location.href = '/', 300);
             });
         }

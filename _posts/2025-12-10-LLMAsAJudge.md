@@ -1,5 +1,5 @@
 ---
-layout: blogpage
+layout: modern-article
 title: LLM-as-a-judge .. reliable or not?
 comments: true
 tags: Deep-Learning

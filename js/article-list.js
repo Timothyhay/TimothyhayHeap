@@ -194,6 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
             closeBtn.addEventListener('click', () => {
                 listWindow.style.opacity = '0';
                 listWindow.style.transform = 'scale(0.95)';
+                sessionStorage.setItem('sodaOS_skipBootOnce', 'true');
                 setTimeout(() => window.location.href = '/', 300);
             });
         }
