@@ -1,145 +1,302 @@
-/* --- Photos App Specific Styles --- */
+/* =============================================== */
+/* ==         Photo Manager (Explorer View)     == */
+/* =============================================== */
 
-/* 主照片库窗口的特殊样式 */
-.photo-gallery-window {
-    width: 600px;  /* 默认宽度 */
-    height: 450px; /* 默认高度 */
-    max-width: 90vw;
-    max-height: 85vh;
-}
-
-/* 缩略图网格 */
-.photo-grid {
-    display: grid;
-    /* 响应式网格布局：自动填充，每列最小100px，最大1fr (平均分配剩余空间) */
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 12px; /* 网格间距 */
-    padding: 8px; /* 内边距 */
-    height: 100%; /* 继承 .dialog-content 的高度 */
-    overflow-y: auto; /* 内容超出时显示滚动条 */
-}
-
-/* 缩略图容器和图片 */
-.photo-thumbnail {
-    aspect-ratio: 1 / 1; /* 保持1:1的正方形比例 */
-    border: 2px solid var(--win98-border-dark);
-    border-right-color: var(--win98-border-light);
-    border-bottom-color: var(--win98-border-light);
-    background-color: #000;
-    cursor: pointer;
-    overflow: hidden; /* 隐藏超出部分的图片 */
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-    opacity: 0; /* 初始不可见，用于动画 */
-    transform: translateY(10px); /* 初始位置偏下，用于动画 */
-    animation: fadeInThumb 0.5s ease-out forwards; /* 应用入场动画 */
-}
-
-.photo-thumbnail:hover {
-    transform: scale(1.08); /* 悬停时放大 */
-    box-shadow: 0 0 0 3px var(--pale-blue), 0 0 10px rgba(0,0,0,0.5); /* 添加发光效果 */
-    z-index: 10; /* 确保阴影在其他缩略图之上 */
-    position: relative;
-}
-
-.photo-thumbnail img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* 裁剪图片以填充容器，保持比例 */
-    display: block;
-    image-rendering: pixelated; /* 保持像素风格 */
-}
-
-/* 缩略图入场动画 */
-@keyframes fadeInThumb {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-
-/* 照片库底部的状态栏 */
-.photo-gallery-statusbar {
+.photo-manager-window {
+    width: 90%;
+    height: 85%;
+    min-width: 600px;
     display: flex;
-    justify-content: space-between;
-    padding: 3px 8px;
-    font-size: 11px;
+    flex-direction: column;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out, width 0.3s ease-out, height 0.3s ease-out, top 0.3s ease-out, left 0.3s ease-out;
+    background-color: var(--win98-bg) !important;
+    border: 2px solid #ffffff;
+    border-right-color: var(--win98-border-dark);
+    border-bottom-color: var(--win98-border-dark);
+    box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+}
+
+/* Reuse same toolbar/sidebar logic from article-list for consistency */
+.explorer-toolbar {
+    display: flex;
+    padding: 4px 6px;
     background-color: var(--win98-bg);
-    border-top: 1px solid var(--win98-border-dark);
-    border-bottom: 1px solid var(--win98-border-light);
+    border-bottom: 1px solid var(--win98-border-dark);
+    gap: 10px;
+    align-items: center;
+}
+
+.toolbar-group { display: flex; align-items: center; gap: 5px; }
+
+.toolbar-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 2px 8px;
+    font-family: var(--pixel-font-latin);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.toolbar-btn:hover {
+    border-top: 1px solid #ffffff;
+    border-left: 1px solid #ffffff;
+    border-right: 1px solid var(--win98-border-dark);
+    border-bottom: 1px solid var(--win98-border-dark);
+}
+
+.toolbar-divider {
+    width: 2px;
+    height: 20px;
+    background-color: var(--win98-border-dark);
+    border-right: 1px solid #ffffff;
+    margin: 0 4px;
+}
+
+.search-container {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 1px solid var(--win98-border-dark);
+    border-top-color: #000;
+    border-left-color: #000;
+    padding: 2px 5px;
+    gap: 5px;
+}
+
+#photo-search {
+    border: none;
+    outline: none;
+    font-family: var(--pixel-font-latin);
+    font-size: 11px;
+    width: 170px;
+}
+
+#photo-search:focus { background-color: #ffffcc; }
+
+.window-body-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    background-color: #ffffff;
+    margin: 4px;
+    border: 2px solid var(--win98-border-dark);
+}
+
+.explorer-sidebar {
+    width: 200px;
+    background-color: var(--lighter-green);
+    border-right: 2px solid var(--win98-bg);
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0;
+    overflow-y: auto;
+}
+
+.section-header {
+    font-family: var(--pixel-font-latin);
+    font-size: 10px;
+    color: var(--win98-title-bg-dark);
+    opacity: 0.6;
+    padding: 0 10px;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+.sidebar-section {
+    margin-bottom: 25px;
+}
+
+.info-panel {
+    margin-top: auto;
+    border-top: 1px dashed var(--win98-border-dark);
+    padding-top: 15px;
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.sidebar-list { list-style: none; padding: 0; margin: 0; }
+
+.sidebar-item {
+    padding: 6px 15px;
+    font-family: var(--pixel-font-latin);
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: var(--dark-text);
 }
 
-.status-section {
-    padding: 0 10px;
-    border-right: 1px solid var(--win98-border-dark);
-    border-left: 1px solid var(--win98-border-light);
-}
-.status-section:first-child {
-    border-left: none;
-}
-.status-section:last-child {
-    border-right: none;
-}
+.sidebar-item:hover { background-color: var(--pale-green); }
+.sidebar-item.active { background-color: var(--win98-title-bg-mid); color: white; }
 
-
-/* 单个图片查看器窗口 */
-.image-viewer-window {
-    width: 420px; /* 默认宽度 */
-    max-width: 80vw;
-}
-
-/* 图片容器 */
-.image-container {
-    padding: 4px;
-    background-color: #000;
-    border: 1px solid var(--win98-border-dark);
-    margin-bottom: 10px;
-}
-
-.full-size-photo {
-    width: 100%;
-    display: block;
-    image-rendering: pixelated;
-}
-
-/* 照片信息 ("EXIF" 数据) */
-.photo-info {
+.sidebar-info-text {
+    margin: 10px;
+    padding: 8px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 10px;
     font-family: var(--pixel-font-cjk);
-    font-size: 11px;
-    line-height: 1.6;
-    color: #333;
+    color: #444;
+    line-height: 1.4;
 }
 
-.photo-info p {
-    margin: 0;
+/* Photo Grid Layout */
+.photo-grid-container {
+    flex: 1;
+    background-color: #ffffff !important;
+    padding: 0 !important;
+    overflow-y: auto !important;
+    position: relative;
 }
 
-.photo-info strong {
-    display: inline-block;
-    width: 80px; /* 对齐标签 */
-    font-weight: normal;
-    color: #000;
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 15px;
+    padding: 20px;
 }
 
-/* 为标题栏按钮组添加样式 */
-.dialog-title-bar {
-    /* 确保 dialog-title-bar 仍然是 flex 容器 */
+.photo-item {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    padding: 5px;
+    border: 1px solid transparent;
+    transition: all 0.1s;
+}
+
+.photo-item:hover {
+    background-color: rgba(0, 120, 215, 0.1);
+    border: 1px solid rgba(0, 120, 215, 0.3);
+}
+
+.photo-item.selected {
+    background-color: var(--win98-title-bg-mid);
+    border: 1px solid var(--win98-title-bg-dark);
+}
+
+.photo-thumb-wrapper {
+    width: 100px;
+    height: 100px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.photo-item.selected .photo-thumb-wrapper {
+    filter: brightness(0.8) sepia(0.5) hue-rotate(180deg);
+}
+
+.photo-item img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    /* High resolution handling: smooth rendering */
+    image-rendering: auto; 
+}
+
+.photo-label {
+    margin-top: 5px;
+    font-family: var(--pixel-font-latin);
+    font-size: 9px;
+    text-align: center;
+    width: 100px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.photo-item.selected .photo-label { color: white; }
+
+/* Status Bar */
+.explorer-status-bar {
+    display: flex;
+    padding: 4px 8px;
+    background-color: var(--win98-bg);
+    border-top: 1px solid var(--win98-border-dark);
+    font-size: 10px;
+    font-family: var(--pixel-font-latin);
+}
+
+.status-item {
+    border-left: 1px solid #ffffff;
+    border-right: 1px solid var(--win98-border-dark);
+    padding: 0 10px;
+    flex-grow: 1;
+}
+
+.status-item:first-child { border-left: none; flex-grow: 2; }
+
+/* Image Viewer Window */
+.image-viewer-window {
+    position: absolute;
+    z-index: 2000;
+    min-width: 300px;
+    max-width: calc(100% - 20px);
+    background-color: var(--win98-bg);
+    box-shadow: 10px 10px 0px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+}
+
+.viewer-main {
+    padding: 10px;
+    background-color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    flex: 1;
+    overflow: hidden;
+}
+
+.viewer-img-container {
+    width: 100%;
+    height: 100%;
+    max-height: 70vh;
+    overflow: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#viewer-img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    cursor: zoom-in;
+}
+
+#viewer-img.zoomed {
+    max-width: none;
+    cursor: zoom-out;
+}
+
+/* Control buttons in title bar */
+.photo-manager-window .dialog-title-controls,
+.image-viewer-window .dialog-title-controls {
+    display: flex;
+    gap: 2px;
     align-items: center;
 }
-.title-bar-buttons {
-    display: flex;
-    align-items: center;
-}
 
-/* !!! 最大化按钮的样式 (仿照关闭按钮) !!! */
-.dialog-maximize-button {
+.photo-manager-window .dialog-maximize-button,
+.photo-manager-window .dialog-close-button,
+.image-viewer-window .dialog-maximize-button,
+.image-viewer-window .dialog-close-button {
     font-family: 'Arial', sans-serif;
     font-weight: bold;
-    font-size: 12px;
-    line-height: 10px;
+    font-size: 10px;
     background-color: var(--win98-bg);
     color: black;
     border-top: 1px solid var(--win98-border-light);
@@ -153,31 +310,28 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 3px; /* 与关闭按钮的间距 */
 }
-.dialog-maximize-button:active {
+
+.photo-manager-window .dialog-maximize-button:active, 
+.photo-manager-window .dialog-close-button:active,
+.image-viewer-window .dialog-maximize-button:active, 
+.image-viewer-window .dialog-close-button:active {
     border-top: 1px solid var(--win98-border-dark);
     border-left: 1px solid var(--win98-border-dark);
     border-right: 1px solid var(--win98-border-light);
     border-bottom: 1px solid var(--win98-border-light);
 }
 
-/* 当 body 拥有 .window-maximized class 时... */
-/* Copyright 内容变得精简和透明 (Logo 已经在 identity.css 处理) */
-body.window-maximized .copyright {
-    opacity: 0.3;
-    transform: translateY(9px);
+/* Scanline */
+.scanline-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 5;
+    background: linear-gradient(rgba(180, 248, 200, 0) 50%, rgba(180, 248, 200, 0.05) 50%);
+    background-size: 100% 4px;
 }
 
-
-/* 响应式调整 */
-@media (max-width: 768px) {
-    .photo-gallery-window {
-        width: 90vw;
-        height: 70vh;
-    }
-    .photo-grid {
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-        gap: 8px;
-    }
+@media (max-width: 800px) {
+    .explorer-sidebar { display: none; }
 }

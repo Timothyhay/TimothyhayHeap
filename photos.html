@@ -1,52 +1,123 @@
 ---
-layout: pixel
-title: Photos - SodaFridge OS
+layout: pixel-app
+title: Photo Manager
 stylesheet: /css/photos.css
 javascript: /js/photos.js
 ---
-<main class="content-area" id="contentArea">
-</main>
 
-<template id="galleryWindowTemplate">
-    <div class="dialog-box photo-gallery-window">
-        <div class="dialog-title-bar">
-            <span class="dialog-title">🖼️ Ohh It's Photo Gallery v1.0</span>
-            <div class="title-bar-buttons">
-                <button class="dialog-maximize-button" title="Maximize">□</button>
-                <button class="dialog-close-button">X</button>
-            </div>
-        </div>
-        <div class="dialog-content">
-            <div class="photo-grid">
-            </div>
-        </div>
-        <div class="photo-gallery-statusbar">
-            <div class="status-section" id="photo-count">0 items</div>
-            <div class="status-section">1.44 MB on disk</div>
-        </div>
-    </div>
-</template>
-
-<template id="imageViewerTemplate">
-    <div class="dialog-box image-viewer-window">
-        <div class="dialog-title-bar">
-            <span class="dialog-title">Viewing Image...</span>
+<div class="dialog-box photo-manager-window">
+    <div class="dialog-title-bar">
+        <span class="dialog-title">🖼️ Photo Manager</span>
+        <div class="dialog-title-controls">
+            <button class="dialog-maximize-button">▢</button>
             <button class="dialog-close-button">X</button>
         </div>
-        <div class="dialog-content">
-            <div class="image-container">
-                <img src="" alt="Full size photo" class="full-size-photo">
-            </div>
-            <div class="photo-info">
-                <p><strong>Filename:</strong> <span class="info-filename">...</span></p>
-                <p><strong>Date Taken:</strong> <span class="info-date">...</span></p>
-                <p><strong>Location:</strong> <span class="info-location">...</span></p>
-                <p><strong>Lens:</strong> <span class="info-lens">Pixelator 50mm f/1.8</span></p>
+    </div>
+
+    <!-- Explorer Toolbar -->
+    <div class="explorer-toolbar">
+        <div class="toolbar-group">
+            <button class="toolbar-btn" onclick="location.href='/'" title="Back to Home">
+                <span class="btn-icon">⬅</span> Back
+            </button>
+            <div class="toolbar-divider"></div>
+            <div class="search-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="photo-search" placeholder="Search photos..." oninput="searchPhotos()">
             </div>
         </div>
     </div>
-</template>
 
-<script>
-    const PHOTO_DATA_FROM_JEKYLL = {{ site.data.photos | jsonify }};
-</script>
+    <div class="window-body-main" style="display: flex; flex: 1; overflow: hidden;">
+        <!-- Sidebar for Folders -->
+        <aside class="explorer-sidebar" style="display: flex !important;">
+            <div class="sidebar-section">
+                <div class="section-header">📁 COLLECTIONS</div>
+                <ul class="sidebar-list">
+                    <li class="sidebar-item active" onclick="filterByCategory('ALL')">
+                        <span class="item-icon">📂</span> All Photos
+                    </li>
+                    <li class="sidebar-item" onclick="filterByCategory('PHOTOS')">
+                        <span class="item-icon">📸</span> Photos
+                    </li>
+                    <li class="sidebar-item" onclick="filterByCategory('BANNER')">
+                        <span class="item-icon">🖼️</span> Banners
+                    </li>
+                    <li class="sidebar-item" onclick="filterByCategory('LOCATION')">
+                        <span class="item-icon">📍</span> Locations
+                    </li>
+                </ul>
+            </div>
+            <div class="sidebar-section info-panel">
+                <div class="section-header">🖼️ INFO</div>
+                <div id="selection-info" class="sidebar-info-text">
+                    No image selected.
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="dialog-content list-container photo-grid-container">
+            <div class="scanline-overlay"></div>
+            <div class="photo-grid" id="photo-grid">
+                <!-- New Photos -->
+                <div class="photo-item" data-category="PHOTOS" data-title="DSC01145" data-src="{{ '/images/photos/DSC01145.JPG' | relative_url }}">
+                    <div class="photo-thumb-wrapper">
+                        <img class="lazy-photo" data-src="{{ '/images/photos/DSC01145.JPG' | relative_url }}" alt="DSC01145">
+                    </div>
+                    <div class="photo-label">DSC01145.JPG</div>
+                </div>
+                <div class="photo-item" data-category="PHOTOS" data-title="DSC01282" data-src="{{ '/images/photos/DSC01282.JPG' | relative_url }}">
+                    <div class="photo-thumb-wrapper">
+                        <img class="lazy-photo" data-src="{{ '/images/photos/DSC01282.JPG' | relative_url }}" alt="DSC01282">
+                    </div>
+                    <div class="photo-label">DSC01282.JPG</div>
+                </div>
+
+                <!-- Banner Images -->
+                {% for i in (1..5) %}
+                <div class="photo-item" data-category="BANNER" data-title="Banner Image {{ i }}" data-src="{{ '/images/banner/banner-image' | append: i | append: '.jpg' | relative_url }}">
+                    <div class="photo-thumb-wrapper">
+                        <img class="lazy-photo" data-src="{{ '/images/banner/banner-image' | append: i | append: '.jpg' | relative_url }}" alt="Banner {{ i }}">
+                    </div>
+                    <div class="photo-label">banner_{{ i }}.jpg</div>
+                </div>
+                {% endfor %}
+
+                <!-- Location Images -->
+                {% assign locs = "Fuzhou,Quanzhou,Shanghai,Singapore,Tianjin,Weihai" | split: "," %}
+                {% for loc in locs %}
+                <div class="photo-item" data-category="LOCATION" data-title="{{ loc }}" data-src="{{ '/images/locations-' | append: loc | append: '.jpg' | relative_url }}">
+                    <div class="photo-thumb-wrapper">
+                        <img class="lazy-photo" data-src="{{ '/images/locations-' | append: loc | append: '.jpg' | relative_url }}" alt="{{ loc }}">
+                    </div>
+                    <div class="photo-label">{{ loc }}.jpg</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Status Bar -->
+    <div class="explorer-status-bar">
+        <div class="status-item" id="status-total">Total: 0 Items</div>
+        <div class="status-item" id="status-selected">Selected: 0</div>
+        <div class="status-item">SodaFridge OS</div>
+    </div>
+</div>
+
+<!-- Image Viewer Modal (Windows 98 Style) -->
+<div id="image-viewer-modal" class="dialog-box image-viewer-window" style="display: none;">
+    <div class="dialog-title-bar">
+        <span class="dialog-title" id="viewer-title">Image Viewer</span>
+        <div class="dialog-title-controls">
+            <button class="dialog-maximize-button" id="viewer-maximize-btn">▢</button>
+            <button class="dialog-close-button" onclick="closeImageViewer()">X</button>
+        </div>
+    </div>
+    <div class="dialog-content viewer-main">
+        <div class="viewer-img-container" id="viewer-container" title="Click to zoom in/out">
+            <img id="viewer-img" src="" alt="" style="cursor: zoom-in;" onclick="toggleZoom(this)">
+        </div>
+    </div>
+</div>
