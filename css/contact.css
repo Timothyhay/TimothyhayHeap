@@ -1,0 +1,212 @@
+:root {
+    --office-bg: #ffffff;
+    --office-side-bg: #f5f5f5;
+    --office-border: #808080;
+    --office-text: #333333;
+    --office-accent: #000080;
+}
+
+.contact-window {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.95);
+    width: 1000px;
+    max-width: 95vw;
+    height: 700px;
+    max-height: 85vh;
+    background-color: var(--win98-bg) !important;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transition: opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 1000;
+    overflow: hidden;
+    animation: none !important;
+}
+
+.contact-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    background: var(--win98-bg);
+    padding: 4px;
+    gap: 4px;
+}
+
+.contact-side {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    border-top: 2px solid var(--win98-border-dark);
+    border-left: 2px solid var(--win98-border-dark);
+    border-right: 2px solid var(--win98-border-light);
+    border-bottom: 2px solid var(--win98-border-light);
+    background: var(--office-side-bg);
+}
+
+.contact-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border-top: 2px solid var(--win98-border-dark);
+    border-left: 2px solid var(--win98-border-dark);
+    border-right: 2px solid var(--win98-border-light);
+    border-bottom: 2px solid var(--win98-border-light);
+    background: #fff;
+}
+
+.panel-header {
+    background: #e0e0e0;
+    color: #333;
+    padding: 4px 8px;
+    font-family: var(--pixel-font-latin);
+    font-size: 10px;
+    border-bottom: 1px solid #ccc;
+    font-weight: bold;
+}
+
+.side-content {
+    padding: 15px;
+    overflow-y: auto;
+}
+
+.avatar-placeholder {
+    width: 100%;
+    height: 150px;
+    background: #ddd;
+    border: 2px solid #888;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.avatar-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    image-rendering: pixelated;
+}
+
+.info-group {
+    margin-bottom: 10px;
+    font-size: 12px;
+}
+
+.info-label {
+    color: #666;
+    font-size: 9px;
+    font-family: var(--pixel-font-latin);
+}
+
+.info-value {
+    color: #000;
+    font-weight: bold;
+}
+
+.status-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: var(--pale-green);
+    border: 1px solid #008800;
+    margin-right: 4px;
+}
+
+/* Social Buttons */
+.social-links-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 10px 0;
+}
+
+.pixel-link-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+    font-size: 9px;
+    padding: 8px;
+    border: 1px solid transparent;
+    font-family: var(--pixel-font-latin);
+}
+
+.pixel-link-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid #aaa;
+    box-shadow: inset 1px 1px 0 #fff;
+}
+
+.pixel-link-btn img {
+    width: 24px;
+    height: 24px;
+    margin-bottom: 5px;
+}
+
+/* Blogroll */
+.blogroll {
+    padding: 10px 0;
+}
+
+.friend-item {
+    margin-bottom: 10px;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid #ddd;
+}
+
+.friend-item a {
+    color: var(--office-accent);
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.friend-item p {
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.system-msg {
+    font-size: 9px;
+    color: #aaa;
+    font-style: italic;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* Comments Section */
+.comments-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: var(--pale-purple); /* Classic SodaFridge Color */
+}
+
+.disqus-container {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid var(--office-border);
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.1);
+}
+
+/* Custom Scrollbar */
+.side-content::-webkit-scrollbar, .comments-wrapper::-webkit-scrollbar {
+    width: 8px;
+}
+.side-content::-webkit-scrollbar-track, .comments-wrapper::-webkit-scrollbar-track {
+    background: #eee;
+}
+.side-content::-webkit-scrollbar-thumb, .comments-wrapper::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border: 2px solid #eee;
+}
+
+@media (max-width: 850px) {
+    .contact-layout { flex-direction: column; }
+    .contact-side { width: 100%; height: auto; }
+    .contact-window { height: 95vh; }
+}

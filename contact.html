@@ -1,0 +1,88 @@
+---
+layout: pixel-app
+title: Contact & Links
+stylesheet: /css/contact.css
+javascript: /js/contact.js
+---
+
+<div class="dialog-box contact-window" id="contactWindow">
+    <div class="dialog-title-bar">
+        <span class="dialog-title">🌐 Network Neighborhood</span>
+        <div class="dialog-title-controls">
+            <button class="dialog-close-button" onclick="location.href='/'">X</button>
+        </div>
+    </div>
+
+    <div class="contact-layout">
+        <!-- Sidebar: Classic Info Panel -->
+        <div class="contact-side">
+            <div class="panel-header">
+                <span class="header-icon">▼</span> USER_PROFILE
+            </div>
+            <div class="side-content">
+                <div class="avatar-placeholder">
+                    <img src="{{ '/images/avatar_kirby.jpg' | relative_url }}" alt="Avatar">
+                </div>
+                
+                <div class="info-group">
+                    <div class="info-label">CODENAME:</div>
+                    <div class="info-value">TangerineSoda</div>
+                </div>
+                
+                <div class="info-group">
+                    <div class="info-label">NETWORK_STATUS:</div>
+                    <div class="info-value"><span class="status-dot"></span> ONLINE</div>
+                </div>
+
+                <div class="panel-header" style="margin-top: 20px; background: var(--pale-blue); color: #333;">
+                    <span class="header-icon">▼</span> SOCIAL_ACCESS
+                </div>
+                <div class="social-links-grid">
+                    <a href="https://x.com/Timothy_OwO" target="_blank" class="pixel-link-btn">
+                        <img src="{{ '/images/icons/twitter-pixel.svg' | relative_url }}" alt="X">
+                        X_Twitter
+                    </a>
+                    <a href="https://github.com/Timothyhay" target="_blank" class="pixel-link-btn">
+                        <img src="{{ '/images/icons/github-pixel.svg' | relative_url }}" alt="GH">
+                        GitHub
+                    </a>
+                </div>
+                
+                <div class="panel-header" style="margin-top: 20px; background: var(--pale-pink); color: #333;">
+                    <span class="header-icon">▼</span> FRIEND_NODES
+                </div>
+                <div class="blogroll">
+                    <div class="friend-item">
+                        <a href="https://blog.cedard.top/" target="_blank">四方喫茶舘 - Cedar</a>
+                        <p>懂历史的音乐家 / EE</p>
+                    </div>
+                    <div class="system-msg">Searching for neighboring nodes...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main: Messaging System -->
+        <div class="contact-main">
+            <div class="panel-header" style="background: var(--win98-title-bg-mid); color: #fff;">
+                <span class="header-icon">▶</span> MESSAGE_BOARD
+            </div>
+            <div class="comments-wrapper">
+                <div class="disqus-container">
+                    <div id="disqus_thread"></div>
+                    <script>
+                        var disqus_config = function () {
+                            this.page.url = '{{ page.url | absolute_url }}';
+                            this.page.identifier = '{{ page.url }}';
+                        };
+                        (function() {
+                            var d = document, s = d.createElement('script');
+                            s.src = 'https://razzorleaf.disqus.com/embed.js';
+                            s.setAttribute('data-timestamp', +new Date());
+                            (d.head || d.body).appendChild(s);
+                        })();
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
