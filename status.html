@@ -1,16 +1,363 @@
 ---
-layout: timeline
-title: StatusTimeline
-comments: false
+layout: pixel-app
+title: System Status
 ---
 
-{% for state in site.status %}
-	<div class="timeline__item timeline__item--{% increment Postcount %}">
-        <div class="timeline__item__station"></div>
-        <div class="timeline__item__content">
-            <h2 class="timeline__item__content__date">{{ state.title }}</h2>
-            <p class="timeline__item__content__description">{{ state.content }}</p>
+<div class="dialog-box status-window" id="statusWindow">
+    <div class="dialog-title-bar">
+        <span class="dialog-title">📟 SYSTEM_STATUS_MONITOR</span>
+        <div class="dialog-title-controls">
+            <button class="dialog-close-button" onclick="location.href='/'">X</button>
         </div>
-	</div>
-{% endfor %}
+    </div>
 
+    <div class="status-layout">
+        <!-- Main Logs Section -->
+        <div class="status-main">
+            <div class="panel-header">
+                <span class="header-icon">▼</span> INTERNAL_LOGS
+                <span class="header-stats" id="logCount">TOTAL_ENTRIES: {{ site.status | size }}</span>
+            </div>
+            
+            <div class="logs-container" id="logsContainer">
+                {% assign sorted_status = site.status | sort: 'date' | reverse %}
+                
+                <!-- Latest Log Entry (Shown by default) -->
+                <div class="view-latest">
+                    {% for state in sorted_status limit:1 %}
+                    <div class="log-entry latest-highlight">
+                        <div class="log-meta">
+                            <span class="log-id">LOG_LATEST</span>
+                            {% if state.datetime %}
+                                <span class="log-timestamp">[{{ state.datetime | date: "%Y.%m.%d %H:%M" }}]</span>
+                            {% elsif state.dateDash %}
+                                <span class="log-timestamp">[{{ state.dateDash | date: "%Y.%m.%d" }} unknown]</span>
+                            {% else %}
+                                <span class="log-timestamp">[unknown unknown]</span>
+                            {% endif %}
+                            <span class="log-status">LATEST_SYNC</span>
+                        </div>                        <div class="log-content">{{ state.content }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Full Archive (Hidden by default) -->
+                <div class="view-full">
+                    {% for state in sorted_status %}
+                    <div class="log-entry">
+                        <div class="log-meta">
+                            <span class="log-id">LOG_{{ forloop.index | prepend: '000' | slice: -3, 3 }}</span>
+                            {% if state.datetime %}
+                                <span class="log-timestamp">[{{ state.datetime | date: "%Y.%m.%d %H:%M" }}]</span>
+                            {% elsif state.dateDash %}
+                                <span class="log-timestamp">[{{ state.dateDash | date: "%Y.%m.%d" }} unknown]</span>
+                            {% else %}
+                                <span class="log-timestamp">[unknown unknown]</span>
+                            {% endif %}
+                            <span class="log-status">CONFIRMED</span>
+                        </div>
+                        <div class="log-content">{{ state.content }}</div>
+                        <div class="log-footer">--- END_OF_RECORD ---</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Twitter Sidebar -->
+        <div class="status-side">
+            <div class="panel-header">
+                <span class="header-icon">▶</span> EXTERNAL_FEED
+                <a href="https://x.com/Timothy_OwO" target="_blank" class="view-on-x">VIEW_ON_X</a>
+            </div>
+            <div class="twitter-wrapper" id="twitterWrapper">
+                <div class="twitter-loading" id="twitterLoading">CONNECTING TO X.COM SERVER...</div>
+                
+                <!-- Latest Tweet View -->
+                <div class="twitter-view-latest">
+                    <a class="twitter-timeline" 
+                       data-theme="dark" 
+                       data-tweet-limit="1"
+                       data-chrome="noheader nofooter noborders transparent" 
+                       href="https://twitter.com/Timothy_OwO?ref_src=twsrc%5Etfw">
+                    </a>
+                </div>
+
+                <!-- Full Timeline View -->
+                <div class="twitter-view-full">
+                    <a class="twitter-timeline" 
+                       data-theme="dark" 
+                       data-chrome="noheader nofooter noborders" 
+                       href="https://twitter.com/Timothy_OwO?ref_src=twsrc%5Etfw">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Control Bar -->
+    <div class="status-footer-controls">
+        <button class="expand-btn" id="expandBtn">
+            [ BROWSE_FULL_ARCHIVE ]
+        </button>
+    </div>
+</div>
+
+<style>
+    :root {
+        --log-bg: #0a0a0a;
+        --log-border: #1a1a1a;
+        --log-accent: #b4f8c8;
+        --log-text: #e0e0e0;
+        --log-dim: #666;
+    }
+
+    /* Toggle Visibility Logic */
+    .view-full, .twitter-view-full { display: none; }
+    
+    .status-window.is-expanded .view-latest, 
+    .status-window.is-expanded .twitter-view-latest { display: none; }
+    
+    .status-window.is-expanded .view-full, 
+    .status-window.is-expanded .twitter-view-full { display: block; }
+    
+    .status-window.is-expanded .status-footer-controls { display: none; }
+
+    .status-window {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.95);
+        width: 1000px;
+        max-width: 95vw;
+        height: 600px;
+        max-height: 85vh;
+        background-color: var(--win98-bg) !important;
+        display: flex;
+        flex-direction: column;
+        opacity: 0;
+        transition: opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), height 0.4s ease-in-out;
+        z-index: 1000;
+        overflow: hidden;
+        animation: none !important;
+    }
+
+    .status-window.is-expanded {
+        height: 800px;
+    }
+
+    .status-layout {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+        background: #000;
+        padding: 4px;
+        gap: 4px;
+    }
+
+    .status-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+        border: 1px solid var(--log-border);
+    }
+
+    .status-side {
+        width: 320px;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--log-border);
+    }
+
+    .panel-header {
+        background: #111;
+        color: var(--log-accent);
+        padding: 6px 10px;
+        font-family: var(--pixel-font-latin);
+        font-size: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--log-border);
+    }
+
+    .view-on-x {
+        font-size: 8px;
+        color: #fff;
+        background: #333;
+        padding: 2px 5px;
+        text-decoration: none;
+        border: 1px solid #555;
+    }
+
+    .logs-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background: var(--log-bg);
+        background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.05) 50%), 
+                          linear-gradient(90deg, rgba(255, 0, 0, 0.01), rgba(0, 255, 0, 0.005), rgba(0, 0, 255, 0.01));
+        background-size: 100% 2px, 2px 100%;
+    }
+
+    .log-entry {
+        margin-bottom: 30px;
+        border-left: 2px solid var(--log-dim);
+        padding-left: 15px;
+    }
+
+    .latest-highlight {
+        border-left: 4px solid var(--log-accent);
+        padding: 20px;
+        background: rgba(180, 248, 200, 0.03);
+    }
+
+    .log-meta {
+        font-size: 10px;
+        font-family: var(--pixel-font-latin);
+        margin-bottom: 12px;
+        display: flex;
+        gap: 15px;
+    }
+
+    .log-timestamp { color: var(--log-accent); }
+    .log-content { color: var(--log-text); font-size: 15px; line-height: 1.7; white-space: pre-wrap; }
+    .log-footer { margin-top: 15px; font-size: 8px; color: #333; letter-spacing: 2px; }
+
+    .status-footer-controls {
+        padding: 10px;
+        background: #000;
+        border-top: 1px solid var(--log-border);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .expand-btn {
+        background: transparent;
+        border: none;
+        color: var(--log-dim);
+        padding: 8px 20px;
+        font-family: var(--pixel-font-latin);
+        font-size: 11px;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: all 0.2s;
+    }
+
+    .expand-btn:hover {
+        color: var(--log-accent);
+        text-shadow: 0 0 8px var(--log-accent);
+    }
+
+    .twitter-wrapper { flex: 1; background: #000; overflow-y: auto; position: relative; }
+    .twitter-loading { position: absolute; top: 20px; left: 0; width: 100%; text-align: center; font-size: 9px; color: var(--log-dim); z-index: 1; }
+
+    .logs-container::-webkit-scrollbar { width: 8px; }
+    .logs-container::-webkit-scrollbar-track { background: #000; }
+    .logs-container::-webkit-scrollbar-thumb { background: #222; border: 1px solid #333; }
+
+    @media (max-width: 800px) {
+        .status-layout { flex-direction: column; }
+        .status-side { width: 100%; height: 300px; }
+        .status-window.is-expanded { height: 95vh; }
+    }
+</style>
+
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+<script>
+    let highestZIndex = 2000;
+
+    function makeDraggable(element) {
+        const titleBar = element.querySelector('.dialog-title-bar');
+        let offsetX, offsetY, isDragging = false;
+
+        titleBar.addEventListener('mousedown', (e) => {
+            if (e.target.closest('button')) return;
+            isDragging = true;
+            element.style.transition = 'none';
+            element.style.transform = 'none';
+            const rect = element.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            element.style.zIndex = ++highestZIndex;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            const parentRect = (element.offsetParent || document.body).getBoundingClientRect();
+            let newX = (e.clientX - offsetX) - parentRect.left;
+            let newY = (e.clientY - offsetY) - parentRect.top;
+            newY = Math.max(10, newY);
+            element.style.left = `${newX}px`;
+            element.style.top = `${newY}px`;
+        });
+
+        document.addEventListener('mouseup', () => { isDragging = false; });
+    }
+
+    function ensureSidebarVisible() {
+        const navItems = document.querySelectorAll('.sidebar .nav-item');
+        if (navItems.length > 0 && !navItems[0].classList.contains('nav-item-visible')) {
+            navItems.forEach((item, index) => {
+                item.style.transitionDelay = `${index * 0.07}s`;
+                item.classList.add('nav-item-visible');
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const win = document.getElementById('statusWindow');
+        const expandBtn = document.getElementById('expandBtn');
+        
+        makeDraggable(win);
+        ensureSidebarVisible();
+
+        // Expand logic
+        expandBtn.addEventListener('click', () => {
+            win.classList.add('is-expanded');
+            if (window.twttr && window.twttr.widgets) {
+                window.twttr.widgets.load(document.getElementById('twitterWrapper'));
+            }
+        });
+        
+        if (window.twttr) {
+            window.twttr.ready((twttr) => {
+                twttr.events.bind('rendered', (event) => {
+                    const loadingEl = document.getElementById('twitterLoading');
+                    if (loadingEl) loadingEl.style.display = 'none';
+                });
+            });
+        }
+
+        setTimeout(() => {
+            const loadingEl = document.getElementById('twitterLoading');
+            if (loadingEl && loadingEl.style.display !== 'none') {
+                loadingEl.innerHTML = 'CONNECTION_TIMEOUT: <a href="https://x.com/Timothy_OwO" target="_blank" style="color:var(--log-accent)">VIEW_ON_X</a>';
+            }
+        }, 6000);
+
+        if (window.twttr && window.twttr.widgets) {
+            window.twttr.widgets.load();
+        }
+
+        setTimeout(() => {
+            const parent = win.offsetParent || document.body;
+            const parentRect = parent.getBoundingClientRect();
+            const centerX = (window.innerWidth - win.offsetWidth) / 2 - parentRect.left;
+            const centerY = (window.innerHeight - win.offsetHeight) / 2 - parentRect.top;
+            
+            win.style.transition = 'none';
+            win.style.left = `${centerX}px`;
+            win.style.top = `${centerY}px`;
+            win.style.transform = 'scale(0.95)';
+            win.offsetHeight;
+            
+            win.style.transition = 'opacity 0.4s ease-out, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), height 0.4s ease-in-out';
+            win.style.opacity = '1';
+            win.style.transform = 'scale(1)';
+        }, 100);
+    });
+</script>
