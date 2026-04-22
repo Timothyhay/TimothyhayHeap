@@ -2,6 +2,7 @@
 layout: modern-article
 title: "SodaFridge OS: 像素风格重构开发记录"
 date: 2026-04-22
+comments: true
 tags: Jekyll
 ---
 
@@ -22,11 +23,12 @@ Gemini 为我做了本次重构的核心关键点总结：
 ### 2. 系统交互逻辑优化
 针对 OS 式网页的特殊性，我们优化了核心内核逻辑：
 - **双重持久化 BOOT 跳过机制**：
-    - **逻辑层**：作为算法工程师，你可能会对这个“状态机”感兴趣。我们使用了 `localStorage` 来存储用户的“永久偏好”（如“永远跳过动画”），而使用 `sessionStorage` 来处理“会话状态”。
+    - **逻辑层**：我们使用了 `localStorage` 来存储用户的“永久偏好”（如“永远跳过动画”），而使用 `sessionStorage` 来处理“会话状态”。
     - **实现**：当用户从应用子页（如 Biocard 或 Articles）点击关闭返回首页时，脚本会设置一个 `sodaOS_skipBootOnce: true` 的会话标志。`handleBootSequence` 函数在执行前会进行双重校验：只要任一标志位为 `true`，就会立即执行 `bootScreen.remove()` 并直接触发 `startDialogSystem()`。这种设计避免了在单次访问内频繁观看 4.5 秒动画的疲劳感，同时保留了初次访问时的仪式感。
 - **对话框生成的洗牌算法（Shuffle Algorithm）**：
     - 首页的弹窗系统并非简单的顺序读取，而是通过 **Fisher-Yates 洗牌算法** 对 `_data/dialogs.yml` 注入的索引数组进行打乱。
     - 在 `initializeAvailableDialogs()` 中，我们生成一个 `[0, 1, 2, ...n]` 的索引序列，通过随机置换保证了每次访问时弹窗出现的顺序都是不可预测的，从而模拟出“系统故障”或“内心戏”的随机感。
+> BTW，这里的“内心戏”是Gemini自己分析得到的结果。我在一开始做这个弹窗的时候不可避免的和其他千禧风/电波感/精神有点问题感的作品影响，想塑造出不断弹出的略显病娇的内容来展现精神状态的一种氛围，感觉 Gemini 捕捉得还是很到位的。
 - **窗口层级（Z-Index）调度**：
     - 重构了 Z-Index 系统。普通窗口采用递增步长（`highestZIndex++`），而系统设置窗口（System Control Panel）则被赋予了 5000+ 的硬性阈值。这种“分段式优先级”设计确保了关键管理界面永远拥有最高的“显示权重”。
 
@@ -49,3 +51,5 @@ Gemini 为我做了本次重构的核心关键点总结：
 
 ---
 *记录人：Timothyhay (via Gemini CLI)*
+
+> 这也是 Gemini 写的。实际上不如说记录人是我**和**它。
