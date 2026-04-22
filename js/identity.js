@@ -313,16 +313,23 @@ document.addEventListener('DOMContentLoaded', () => {
         dialogCreationInterval = setInterval(spawnNextDialog, interval);
     }
 
-    fetch('data/dialogs/dialogs-data.json')
-        .then(r => r.json())
-        .then(data => {
-            DIALOGS_DATA_FROM_JSON = data;
-            handleBootSequence();
-        })
-        .catch(e => {
-            console.error(e);
-            handleBootSequence();
-        });
+    // Use data injected from Jekyll _data/dialogs.yml if available
+    if (window.DIALOGS_DATA_FROM_JEKYLL) {
+        DIALOGS_DATA_FROM_JSON = window.DIALOGS_DATA_FROM_JEKYLL;
+        handleBootSequence();
+    } else {
+        // Fallback to fetching the JSON file (which is also generated from Jekyll now)
+        fetch('dialogs/dialogs.json')
+            .then(r => r.json())
+            .then(data => {
+                DIALOGS_DATA_FROM_JSON = data;
+                handleBootSequence();
+            })
+            .catch(e => {
+                console.error(e);
+                handleBootSequence();
+            });
+    }
 
     // Clock Logic
     function getWeekNumber(d) {

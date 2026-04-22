@@ -57,6 +57,11 @@
     </div>
 </template>
 
+    <!-- Inject Dialog Data from Jekyll _data/dialogs.yml -->
+    <script>
+        window.DIALOGS_DATA_FROM_JEKYLL = {{ site.data.dialogs | jsonify }};
+    </script>
+
     <!-- Link to the external JavaScript file -->
     <script src="{{ '/js/identity.js' | relative_url }}"></script>
     {% if page.javascript and page.javascript != '/js/identity.js' %}

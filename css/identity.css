@@ -737,7 +737,7 @@ padding: 5px 8px;
 }
 
 .win98-checkbox input[type="checkbox"]:checked::after {
-    content: 'âœ”';
+    content: '\2714';
     position: absolute;
     top: -2px;
     left: 1px;

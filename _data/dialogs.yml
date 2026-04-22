@@ -1,0 +1,44 @@
+- id: 0
+  title: "🍃 通知"
+  width: "260px"
+  content: "<p>并没有什么要通知。</p>"
+- id: 1
+  title: "💖 YOASOBI 在泡泡岛！"
+  width: "340px"
+  content: "<img src=\"images/banner/banner-image5.jpg\" alt=\"YOASOBI\"><p>YOASOBI 第一次来大陆演出。让你感觉想要流泪。</p>"
+- id: 2
+  title: "📅 更新计划"
+  width: "320px"
+  content: "<p>计划在6月重构旧网站代码。因为写得真的太乱太乱了。</p><p>现在就要看看到底有多乱吗？</p>"
+  yesLink: "https://world.tangerinesoda.fun/"
+- id: 3
+  title: "📢 News 2025.05.25"
+  width: "300px"
+  content: "<p><strong>新主页上线！</strong></p><p>最近一直在听ZUTOMAYO所以做了新主页。想做成坏掉的不停弹内心戏窗口的吓人风格但是忍住了。</p>"
+- id: 4
+  title: "⛓️‍💥 未整理的碎片 - 环球影城的回忆"
+  width: "320px"
+  content: "<img src=\"images/album/Adventure.jpg\" alt=\"ADVENTURE\"><p>还没有整理好环球影城的回忆。压力淹没了你，对忘记这些快乐细节感到焦虑。需要使用相关媒介唤醒旧回忆。</p>"
+- id: 5
+  title: "📔 新日记 - 我的所有周末"
+  width: "350px"
+  content: "<p><strong>啊 到底要怎么样才能过上有意义的快乐周末.. </strong></p><p>一起用实验论证一下？</p>"
+  yesLink: "/2024/12/01/AllMyWeekendFeelings.html"
+- id: 6
+  title: "✨ 特别通知 ✨"
+  width: "310px"
+  content: "<p>你还活着！好耶！</p><p>还要继续哦！</p>"
+- id: 7
+  title: "🎶 最近在循环"
+  width: "330px"
+  content: "<p>突击检查耳机！</p><p>在听ZUTOMAYO的Live哦。要不要一起？</p>"
+  yesLink: "https://open.spotify.com/album/6IldTWGIC42X8wAGl81YAf?si=1gsw8e_DQ6iGb1AGUAT0zw"
+- id: 8
+  title: "💿 ZUTOMAYO MV发布 5/22 21:00"
+  width: "350px"
+  content: "<p><strong>一起来去看看吗？</strong></p><p>新MV已经于 5月22日 21:00 (JST) 发布！快去看！</p>"
+  yesLink: "https://www.youtube.com/@ZUTOMAYO"
+- id: 9
+  title: "⛓️‍💥 未整理的碎片 - 工作"
+  width: "320px"
+  content: "<p>还没有整理好工作中的研究内容。压力淹没了你，对无尽的要做的事感到焦虑。</p>"
