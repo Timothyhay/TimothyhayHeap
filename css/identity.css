@@ -1,4 +1,4 @@
-/* --- Global Styles & Macaron Palette Definition --- */
+﻿/* --- Global Styles & Macaron Palette Definition --- */
 :root {
     /* Main color palette inspired by macaron tones */
     --pale-blue: #a0e7e5;       /* Light teal/blue for the main background */
@@ -20,7 +20,7 @@
 
     /* Font Stacks */
     --pixel-font-latin: 'Press Start 2P', cursive; /* Pixel font for Latin characters (e.g., LOGO) */
-    --pixel-font-cjk: 'SimSun', '宋体', sans-serif;  /* System font with pixel-like appearance for CJK characters (Chinese, Japanese, Korean) */
+    --pixel-font-cjk: 'SimSun', 'å®‹ä½“', sans-serif;  /* System font with pixel-like appearance for CJK characters (Chinese, Japanese, Korean) */
 }
 
 /* --- Basic Reset and Global Settings --- */
@@ -141,7 +141,7 @@ body {
     pointer-events: none;               /* Makes the logo text non-interactive (doesn't capture clicks) if it's purely decorative */
 
     /* Add smooth animation for transform & top/left */
-    /* transform-origin 确保缩放时以左上角为基点 */
+    /* transform-origin ç¡®ä¿ç¼©æ”¾æ—¶ä»¥å·¦ä¸Šè§’ä¸ºåŸºç‚¹ */
     transform-origin: top left;
     transition: transform 0.4s ease-in-out, top 0.4s ease-in-out, left 0.4s ease-in-out;
     animation: logo-glow 2s ease-in-out infinite alternate;
@@ -164,7 +164,7 @@ body.window-maximized .main-logo {
     transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
 }
 
-/* 移除容器顶部的留白，让窗口触顶 */
+/* ç§»é™¤å®¹å™¨é¡¶éƒ¨çš„ç•™ç™½ï¼Œè®©çª—å£è§¦é¡¶ */
 body.window-maximized .container {
     padding-top: 0 !important;
 }
@@ -173,7 +173,7 @@ body.window-maximized .sidebar {
     padding-top: 0 !important;
 }
 
-/* 缩进后的 LOGO 风格：保留像素字体和多层阴影，消除顶部空隙 */
+/* ç¼©è¿›åŽçš„ LOGO é£Žæ ¼ï¼šä¿ç•™åƒç´ å­—ä½“å’Œå¤šå±‚é˜´å½±ï¼Œæ¶ˆé™¤é¡¶éƒ¨ç©ºéš™ */
 body.window-maximized .sidebar .logo-retracted {
     display: block;
     font-family: var(--pixel-font-latin);
@@ -466,18 +466,15 @@ padding: 5px 8px;
     width: 100vw;
     height: 100vh;
     background-color: black;
-    color: #00ff00;
+    color: #80ff80;
     font-family: var(--pixel-font-latin);
     z-index: 20000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
+    display: block;
+    padding: 60px;
     transition: opacity 1s ease-in-out;
 }
 
 .boot-content {
-    max-width: 600px;
     width: 100%;
 }
 
@@ -502,10 +499,12 @@ padding: 5px 8px;
 }
 
 .boot-progress-bar {
-    width: 100%;
+    position: fixed;
+    bottom: 40px;
+    left: 40px;
+    right: 40px;
     height: 20px;
-    border: 2px solid #00ff00;
-    margin-top: 30px;
+    border: 2px solid #80ff80;
     padding: 2px;
     opacity: 0;
     animation: fadeIn 0.1s forwards 2.6s;
@@ -514,7 +513,7 @@ padding: 5px 8px;
 .boot-progress-fill {
     width: 0%;
     height: 100%;
-    background-color: #00ff00;
+    background-color: #80ff80;
     animation: progress 1.5s linear forwards 2.7s;
 }
 
@@ -738,7 +737,7 @@ padding: 5px 8px;
 }
 
 .win98-checkbox input[type="checkbox"]:checked::after {
-    content: '✔';
+    content: 'âœ”';
     position: absolute;
     top: -2px;
     left: 1px;
@@ -903,3 +902,20 @@ padding: 5px 8px;
         min-width: 40px;
     }
 }
+.boot-ascii {
+    position: absolute;
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: "Courier New", Courier, monospace;
+    white-space: pre;
+    line-height: 1.2;
+    opacity: 0;
+    animation: fadeIn 1s forwards 0.5s;
+    color: #80ff80;
+    text-align: left;
+}
+
+
+
+
