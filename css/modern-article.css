@@ -224,10 +224,27 @@ body {
 
 /* MathJax Display Optimization */
 mjx-container[display="true"] {
-    overflow-x: auto;
-    overflow-y: hidden;
+    overflow: visible !important; /* 允许溢出 */
     max-width: 100%;
-    padding: 10px 0;
+    padding: 15px 0;
+    font-size: 0.9em; /* 进一步调小字号 */
+    transition: font-size 0.3s ease;
+}
+
+/* 侧边栏基础透明度逻辑 */
+.article-sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+/* 当检测到公式重叠时激活的类 */
+.article-sidebar.is-overlapping {
+    opacity: 0.15; /* 变得很淡 */
+}
+
+.article-sidebar.is-overlapping:hover {
+    opacity: 1; /* 鼠标悬停时恢复，方便查看目录 */
 }
 
 /* --- Footer --- */

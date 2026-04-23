@@ -117,6 +117,34 @@
         document.getElementById("backToTop").onclick = function() {
             window.scrollTo({top: 0, behavior: 'smooth'});
         };
+
+        // Formula Overlap Detection
+        window.addEventListener('load', function() {
+            if (window.MathJax) {
+                MathJax.typesetPromise().then(() => {
+                    const containers = document.querySelectorAll('mjx-container[display="true"]');
+                    const mainContent = document.querySelector('.article-main');
+                    const sidebar = document.querySelector('.article-sidebar');
+                    
+                    if (!mainContent || !sidebar) return;
+
+                    let hasOverflow = false;
+                    const mainWidth = mainContent.offsetWidth;
+
+                    containers.forEach(container => {
+                        // 检查公式内部数学元素的实际宽度
+                        const mathElement = container.querySelector('mjx-math');
+                        if (mathElement && mathElement.offsetWidth > mainWidth - 20) {
+                            hasOverflow = true;
+                        }
+                    });
+
+                    if (hasOverflow) {
+                        sidebar.classList.add('is-overlapping');
+                    }
+                });
+            }
+        });
     </script>
 
 </body>
