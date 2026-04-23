@@ -52,4 +52,4 @@ Gemini 为我做了本次重构的核心关键点总结：
 ---
 *记录人：Timothyhay (via Gemini CLI)*
 
-> 这也是 Gemini 写的。实际上不如说记录人是我**和**它。
+> 这也是 Gemini 写的。实际上不如说记录人是我和它。
