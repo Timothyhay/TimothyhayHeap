@@ -222,6 +222,27 @@ body {
     border-radius: 0;
 }
 
+/* --- Blockquotes --- */
+.article-content blockquote {
+    margin: 40px 0;
+    padding: 10px 20px 30px;
+    background-color: var(--clear-accent-blue);
+    border-left: 5px solid var(--accent-blue);
+    border-radius: 4px;
+    font-style: italic;
+    position: relative;
+    color: #5d6d7e;
+}
+
+.article-content blockquote p {
+    margin-bottom: 0;
+    line-height: 1.7;
+}
+
+.article-content blockquote p + p {
+    margin-top: 15px;
+}
+
 /* MathJax Display Optimization */
 mjx-container[display="true"] {
     overflow: visible !important; /* 允许溢出 */

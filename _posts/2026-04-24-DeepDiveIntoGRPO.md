@@ -5,8 +5,8 @@ date: 2026-04-24
 tags: LLM
 comments: true
 ---
-
 > 这是一篇 AI 生成的内容，旨在测试新样式里引用、内联代码、代码块和不同长度公式的显示效果。
+>
 > 使用 AI 生成的文本作为几乎全部正文不符合这个博客的风格，所以在这里说明一下。
 
 在大型语言模型（LLM）的后训练阶段，强化学习（RL）已成为提升模型逻辑推理能力的关键。最近，DeepSeek 推出的 **GRPO (Group Relative Policy Optimization)** 算法因其在 DeepSeek-R1 中的出色表现而备受关注。
