@@ -6,9 +6,5 @@ disqus:
 gems: [jekyll-paginate]
 paginate: 12
 paginate_path: "articlelist/UwU/:num"
-lean_cloud:
-    enabled: true
-    app_id: ${{ secrets.APP_ID }}
-    app_key: ${{ secrets.APP_KEY }}
 collections:
 - status
