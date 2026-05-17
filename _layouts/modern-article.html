@@ -10,6 +10,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <link href="{{ '/css/syntax.css' | relative_url }}" rel="stylesheet" type="text/css">
     <link href="{{ '/css/modern-article.css' | relative_url }}" rel="stylesheet" type="text/css">
+    {% if page.gallery %}
+    <link href="{{ '/css/chocolat.css' | relative_url }}" rel="stylesheet" type="text/css" media="all">
+    {% endif %}
     
     <!-- MathJax -->
     <script>
@@ -147,6 +150,19 @@
             }
         });
     </script>
+
+    {% if page.gallery %}
+    <script src="{{ '/js/jquery-1.11.3.min.js' | relative_url }}"></script>
+    <script type="text/javascript" src="{{ '/js/jquery.chocolat.js' | relative_url }}"></script>
+    <script>
+        $(document).ready(function(){
+            $('.image-gallery').Chocolat({
+                imageSize: 'contain',
+                loop: true
+            });
+        });
+    </script>
+    {% endif %}
 
 </body>
 </html>

@@ -202,6 +202,30 @@ body {
     color: #2c3e50;
 }
 
+/* 1. Standard Image Style - For papers/essays */
+.standard-image {
+    margin: 40px auto;
+    text-align: center;
+    max-width: 90% !important;
+}
+
+.standard-image img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    border: 1px solid var(--border-color);
+    margin: 0 !important;
+}
+
+.standard-image .caption {
+    margin-top: 15px;
+    font-family: var(--pixel-font-cjk);
+    font-size: 12px;
+    color: var(--text-light);
+    font-style: italic;
+}
+
 .article-content img {
     max-width: 100%;
     height: auto;
@@ -284,6 +308,136 @@ mjx-container[display="true"] {
 
 .article-sidebar.is-overlapping:hover {
     opacity: 1; /* 鼠标悬停时恢复，方便查看目录 */
+}
+
+/* 2. Exhibition Gallery Style - Cool & Dynamic */
+.image-gallery {
+    column-count: 2;
+    column-gap: 25px;
+    margin: 60px 0;
+}
+
+@media (max-width: 800px) {
+    .image-gallery {
+        column-count: 1;
+    }
+}
+
+.gallery-item {
+    break-inside: avoid;
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 25px;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid var(--border-color);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.gallery-item::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(45deg, transparent 50%, rgba(160, 231, 229, 0.1) 50%);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.gallery-item img {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 0 !important;
+    filter: brightness(0.95);
+    transition: transform 0.6s, filter 0.6s;
+}
+
+.gallery-item:hover {
+    transform: scale(1.02) rotate(1deg);
+    box-shadow: 
+        5px 5px 0px var(--accent-green),
+        -5px -5px 0px var(--accent-pink);
+    border-color: transparent;
+}
+
+.gallery-item:hover img {
+    transform: scale(1.1);
+    filter: brightness(1);
+}
+
+.gallery-caption {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--accent-blue);
+    color: #444;
+    padding: 4px 8px;
+    font-family: var(--pixel-font-latin);
+    font-size: 8px;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: all 0.3s ease;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.gallery-item:hover .gallery-caption {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Staggered offsets for even more "cool" factor */
+.gallery-item:nth-child(even) {
+    transform: translateY(20px);
+}
+
+.gallery-item:nth-child(odd) {
+    transform: translateY(-20px);
+}
+
+.gallery-item:hover:nth-child(n) {
+    transform: scale(1.05) translateY(0) rotate(-1deg);
+}
+
+/* --- Lightbox Fixes --- */
+/* Ensure lightbox components are above the modern-header (z-index 1000) 
+   and correctly layered relative to each other. */
+.chocolat-overlay {
+    z-index: 2000 !important;
+    background-color: #000 !important;
+    opacity: 0.85 !important;
+}
+
+.chocolat-content {
+    z-index: 2001 !important;
+}
+
+.chocolat-wrapper {
+    z-index: 2002 !important;
+}
+
+/* Ensure UI elements inside the wrapper are clickable and on top of the image */
+.chocolat-wrapper .chocolat-left,
+.chocolat-wrapper .chocolat-right,
+.chocolat-wrapper .chocolat-top,
+.chocolat-wrapper .chocolat-bottom,
+.chocolat-wrapper .chocolat-close {
+    z-index: 2003 !important;
+    pointer-events: auto !important;
+}
+
+/* Force clear any filters on the lightbox image to fix "gray out" issue */
+.chocolat-img {
+    filter: none !important;
+    -webkit-filter: none !important;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+}
+
+/* Hide header slightly when lightbox is open for better focus */
+body.chocolat-open .modern-header {
+    transform: translateY(-100%);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* --- Footer --- */
