@@ -38,7 +38,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        console.log("%c SodaFridge OS v1.0.4 Initializing... ", "background: #000; color: #0f0; font-weight: bold;");
+        // Save preference after first boot animation so subsequent visits skip it by default
+        localStorage.setItem('sodaOS_skipBoot', 'true');
+
+        console.log("%c SodaFridge OS v1.0.5 Initializing... ", "background: #000; color: #0f0; font-weight: bold;");
         
         // After the progress bar animation (approx 4.2s total), fade out the boot screen
         setTimeout(() => {
