@@ -14,22 +14,27 @@ comments: true
 ## 1. 项目目标与问题定义
 
 ### 1.1 核心目标
-训练一个具备 Deep Research 能力的 Agent。模型需要学会在面对复杂、模糊、需要多步推理的问题（如 HotpotQA）时，自主、高效地使用本地 Search 工具进行探索，过滤冗余信息，纠正检索方向，并最终提炼出高准确度、含真实引用的最终报告。
+训练一个具备 Deep Research （也就是多轮检索推理）能力的 Agent。模型需要学会在面对复杂、模糊、需要多步推理的问题（如 HotpotQA）时，自主调用本地 Search 工具进行探索，过滤冗余信息，纠正检索方向，并最终提炼出高准确度、含真实引用的最终报告。
 
 ### 1.2 MDP（马尔可夫决策过程）形式化建模
 在 Agentic RL 中，我们将多轮 ReAct 交互建模为一个步长有限的 MDP：
-*   **状态空间 $S$**：当前轮次之前的完整对话历史，包括初始 $Prompt$、历史思考过程 $Thought_t$、历史动作 $Action_t$ 和环境反馈 $Observation_t$。
-*   **动作空间 $A$**：模型在当前步骤生成的 Token 序列，分为两类：
+*   **状态空间 $S$**：当前轮次之前的完整对话历史，包括初始 $Prompt$、历史思考过程 $Thought_t$、历史动作 $Action_t$（搜索） 和环境反馈 $Observation_t$。
+*   **动作空间 $A$**：模型在当前步骤生成的 Token 序列，think + tool_call(search)：
     1.  **内部动作（思考）**：`<think>...</think>` 内的推理文本。
     2.  **外部动作（工具调用）**：触发环境反馈的标签，如 `<call:search>query</call:search>`。
-*   **状态转移 $P(S_{t+1}|S_t, a_t)$**：当模型生成外部动作时，生成被暂停，外部环境（Python 检索服务）执行该 Action，将返回的 $Observation_t$ 拼接到 $S_t$ 后，形成下一轮的状态 $S_{t+1}$。
-*   **奖励 $R(S, A)$**：环境在模型输出终局答案 `<answer>...</answer>` 或达到最大步数（Max Turns）时，对整条轨迹进行综合打分。
+*   **状态转移 $P(S_{t+1}|S_t, a_t)$**：当模型生成外部动作时，生成被暂停、检索服务执行(Action)，将返回的 $Observation_t$ `<observation>...</observation>`拼接到 $S_t$ 后，形成下一轮的状态 $S_{t+1}$。
+*   **奖励 $R(S, A)$**：环境在模型输出最终答案 `<answer>...</answer>` 或达到最大步数时，对整条轨迹进行综合打分。
+
+> Anchor: 这跟单轮 RLHF 有何不同？
+> 状态在转移中被环境注入了非模型生成的 token（observation），因此必须做 loss masking（§3.3）；且奖励是轨迹级稀疏信号，credit assignment 更难（§3.4）。
 
 ---
 
 ## 2. 系统架构与实验流程
 
 系统采用 **Rollout 与 Training 物理解耦** 的分布式架构。通过 Ray 统一调度 8 卡 A100 的计算资源，规避传统单节点 RL 显存不足和推理吞吐低下的问题。
+
+> Idea: "生成轨迹的推理引擎"和"更新参数的训练引擎"分开，Ray 调度，避免推理慢、训练 OOM 互相拖累。
 
 ```
  [ Ray Cluster (8x A100) ]
@@ -53,6 +58,14 @@ comments: true
    └────────────────────┘
 ```
 
+这里有两种部署形态可以选择：
+
+1. Colocated / Hybrid Engine（veRL 默认）：同一批 GPU 上，rollout（vLLM）与训练（FSDP）分时复用，rollout 时把训练权重 offload，训练时收回。显存利用率最高，对短文本而言很合适，如果训练状态。	7B 首选，8 卡全用于 hybrid engine。
+2. Disaggregated（解耦）：少量卡常驻 vLLM，其余卡常驻 FSDP（如 Gemini 的 2+6）。省去权重搬运，但推理卡在训练时闲置。	仅当模型大 / 推理是瓶颈时考虑，我们的长链思考任务会占用大量 KV Cache，这部分交给vLLM的独占显存。
+
+> Anchor:2 卡 vLLM + 6 卡 FSDP 常驻是解耦式。为什么不用 colocated？单节点 8 卡训 7B，colocated 通常吞吐更高，因为解耦式在训练阶段那 2 张推理卡在空转。
+> 权衡点：解耦式省 reshard 开销但浪费卡；colocated 省卡但有权重 offload/reload 开销。而且我们的穿刺实验要上集群，到时候的模型 offload/reload 会成为严重瓶颈。
+
 ### 2.1 核心实验流程
 1.  **数据就绪**：使用 HotpotQA 的本地 Wikipedia 支撑段落，利用 BM25 算法在本地搭建轻量高并发检索服务（`search_server.py`），避免联网延迟。
 2.  **轨迹生成（Decoupled Rollout）**：
@@ -67,7 +80,7 @@ comments: true
 
 ## 3. 算法选择与技术细节
 
-本方案放弃了传统的 PPO，转而采用 **GRPO (Group Relative Policy Optimization)** 算法 [2]。
+本方案没有使用 PPO，而是尝试了 GRPO 后选择了改良的 Dr. GRPO。
 
 ### 3.1 Why GRPO?
 1.  **极大地节省显存**：PPO 需要维护一个与 Actor 相同规模的 **Critic（评论员）模型** 来预测状态价值（State Value），这在 8 卡节点上微调 7B+ 模型时极易造成 OOM。GRPO 取消了 Critic 模型，将显存和计算资源全部释放给 Actor。
@@ -75,20 +88,51 @@ comments: true
     $$A_i = \frac{r_i - \text{mean}(R)}{\text{std}(R)}$$
     这自然地建立了一个基线（Baseline），极大地稳定了强化学习的梯度更新。
 
-### 3.2 超参数与配置
-*   **组内采样数（Group Size $G$）**：5（保证优势估计具有足够的统计学意义）。
-*   **KL 散度约束系数（KL Coef）**：0.001（防止 Actor 漂移过快导致策略崩溃）。
-*   **学习率（Actor LR）**：$1 \times 10^{-6}$（Agent 训练需采用保守学习率，配合线性 Warmup）。
-*   **Max Response Length**：2048（为多步 ReAct 留足空间）。
-- **基础模型**：Qwen2.5-Coder-7B-Instruct，编程和工具调用能力都有一定基础
-- **显卡分配**
+
+### 3.2 现代改良：从 vanilla GRPO → Dr.GRPO / DAPO
+
+vanilla GRPO 的两个已知偏置，务必知道：
+
+1. **难度偏置**：除以 $\operatorname{std}(\mathbf{r})$ 会放大"极易/极难"题的权重。Dr. GRPO 取消这个缩放，平等对待所有题目。→ veRL 配置 `algorithm.norm_adv_by_std_in_grpo: False`。
+2. **长度偏置**：按序列长度平均会让"更长的错误答案"被低估惩罚。GRPO 按序列长度归一化会导致更长的错误回答被惩罚不足。Dr.GRPO 改用全局常数归一化以消除长度偏置。
+
+**DAPO 的四件套**（ByteDance，基于 verl 实现，长 CoT / 多轮场景强烈推荐）：Clip-Higher（非对称裁剪、上界更高）、Dynamic Sampling（重采样至组内有对有错）、Token-Level Policy Gradient Loss、Overlong Reward Shaping（惩罚过长回答）。其中：
+- **Clip-Higher** 治**熵坍缩**：初期观察到熵坍缩现象，通过增大重要性采样比的上裁剪范围来缓解。
+- **Dynamic Sampling** 就是 §索引③ 里 σ=0 空梯度的正解。
+- **Overlong Reward Shaping** 是软惩罚：设一个最大长度，对超过阈值（如 4096）的多余 token 温和降分，这种"软惩罚"避免模型啰嗦又不过于严厉。
+
+### 3.3 关键工程：Observation Token Masking（多轮 RL 的命门）
+在计算 log-prob 和 policy loss 时，**必须对 `<information>` 内的检索 token 置零 mask**，只对模型自己生成的 think/search/answer 计 loss。这是 Search-R1 最关键的创新之一：RL 期间检索内容被排除在优化之外，只有模型自己的推理参与更新，迫使模型"对检索结果做推理"而非"照抄"，从而提升稳定性与泛化。不做 mask 会让模型去拟合外部网页内容，导致学偏/坍缩。实验显示做 masking 训练更稳、提升更大。
+
+### 3.4 多轮 credit assignment
+轨迹级单标量 reward 广播到所有 turn 是最简做法，但 GRPO 在多轮设定下被广泛报告不稳定。更细的做法是 **turn-level 优化**：整条轨迹含多个"模型生成 + 环境反馈"回合，在环境反馈上做优化会引入不稳定，因此解耦模型生成 $o_t$ 与环境反馈 $f_t$，只在 $o_t$ 上做定向优化。代表工作：RAGEN 的 StarPO-s 用比例化轨迹过滤，GiGPO 结合状态级与轨迹级优势，MT-GRPO 展示 turn-level credit assignment 的收益。
+
+### 3.5 推荐超参（8×A100 / 14B / HotpotQA）
+
+| 项 | My Choice  | **Opus 4.8 建议值** | 理由 |
+| :--- | :--- | :--- | :--- |
+| Group size $G$ | 8 | **8~16** | 统计更稳；配合 dynamic sampling |
+| Advantage std 归一 | 除 std | **关闭**（Dr.GRPO）或保留但知其偏置 | 消除难度偏置 |
+| Dynamic sampling | 无 | **开启** | 消灭零方差空梯度组 |
+| KL coef | 0.001 | **0（DAPO 路线）或 1e-3（保守路线），二选一并能解释** | 见下 |
+| Actor LR | 1e-6 | 1e-6 ~ 5e-7 + linear warmup | Agent 训练要保守 |
+| max_response_length | 6144 | 完全没道理我删了 | 多轮会累积，对单轮考虑装下 think + search + answer 的空间 |
+| max_prompt_length | 4096 | Cover HotpotQA 和我们的问题即可 |
+| Loss 聚合 | 未提 | token-level（DAPO） | 长序列更精确 |
+| max_turns | 6 | | 和实际业务保持一致 |
+
+> **KL 二选一**：
+> 路线 A（DAPO/Dr.GRPO）——"结果奖励可验证 + 参考模型已是好起点，去 KL 让策略充分移动、避免拖后腿"；DAPO 在其方法中移除了 KL 散度。
+> 路线 B（保守）——"保留小 KL 防止在稀疏奖励早期策略崩溃/复读，代价是探索受限"。
+
+对多卡集群的放缩计划：
 
 
 ---
 
 ## 4. 核心：奖励设计与塑造（Reward Shaping）
 
-*在面试中，九成以上的 RL 面试官都会严厉挑战“奖励是如何设计的，如何防止 Reward Hacking（奖励作弊）” [2]。以下是本系统的工程实践方案：*
+
 
 ### 4.1 密集奖励公式设计 (Shaped Reward)
 最终奖励由多个惩罚项与一个终局奖励累加而成，以解决信号稀疏问题：
@@ -158,8 +202,6 @@ $$R_{total} = R_{format} + R_{validity} + R_{diversity} + R_{step} + R_{accuracy
 ---
 
 # 修订说明：Gemini 版的 5 个致命问题（面试会被打的点）
-
-> 面接官が最も突きやすい順に並べています。この「なぜ変えたか」を説明できることが、そのまま面接の武器になります。
 
 <details>
 <summary><b>① 最重要：重度 Reward Shaping 与当前 SOTA 方向相反（会被直接质疑"你在制造 Reward Hacking 表面积"）</b></summary>
