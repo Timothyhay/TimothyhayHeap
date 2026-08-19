@@ -1,0 +1,111 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='720' height='360' viewBox='0 0 720 360'>
+<rect width='720' height='360' fill='#fdfdfc'/>
+<text x='360.0' y='26' text-anchor='middle' fill='#111' font-size='15' font-weight='600' font-family='ui-monospace,Menlo,Consolas,monospace'>Cumulative prompt tokens over a 12-turn session</text>
+<text x='360.0' y='44' text-anchor='middle' fill='#666' font-size='12' font-family='ui-monospace,Menlo,Consolas,monospace'>the cache line climbs with every request; the fresh line is nearly flat — billed tokens are the ~90k in the top left corner</text>
+<rect x='74' y='62' width='496' height='246' fill='#fff' stroke='#ddd'/>
+<line x1='74' y1='308.0' x2='570' y2='308.0' stroke='#eee'/>
+<text x='66' y='312.0' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>0k</text>
+<line x1='74' y1='246.5' x2='570' y2='246.5' stroke='#eee'/>
+<text x='66' y='250.5' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>410k</text>
+<line x1='74' y1='185.0' x2='570' y2='185.0' stroke='#eee'/>
+<text x='66' y='189.0' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>820k</text>
+<line x1='74' y1='123.5' x2='570' y2='123.5' stroke='#eee'/>
+<text x='66' y='127.5' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>1,231k</text>
+<line x1='74' y1='62.0' x2='570' y2='62.0' stroke='#eee'/>
+<text x='66' y='66.0' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>1,641k</text>
+<polyline points='74.0,305.7 87.8,303.4 101.6,300.3 115.3,296.7 129.1,292.7 142.9,290.4 156.7,286.3 170.4,281.7 184.2,276.8 198.0,271.8 211.8,267.7 225.6,262.5 239.3,256.8 253.1,250.8 266.9,245.6 280.7,239.4 294.4,233.0 308.2,226.8 322.0,220.2 335.8,213.1 349.6,205.9 363.3,198.5 377.1,190.8 390.9,183.5 404.7,175.4 418.4,167.4 432.2,159.1 446.0,150.1 459.8,141.9 473.6,132.7 487.3,123.7 501.1,114.3 514.9,104.5 528.7,94.2 542.4,83.5 556.2,72.8 570.0,62.0' fill='none' stroke='#1f6f8b' stroke-width='2'/>
+<circle cx='74.0' cy='305.7' r='2.5' fill='#1f6f8b'/>
+<circle cx='87.8' cy='303.4' r='2.5' fill='#1f6f8b'/>
+<circle cx='101.6' cy='300.3' r='2.5' fill='#1f6f8b'/>
+<circle cx='115.3' cy='296.7' r='2.5' fill='#1f6f8b'/>
+<circle cx='129.1' cy='292.7' r='2.5' fill='#1f6f8b'/>
+<circle cx='142.9' cy='290.4' r='2.5' fill='#1f6f8b'/>
+<circle cx='156.7' cy='286.3' r='2.5' fill='#1f6f8b'/>
+<circle cx='170.4' cy='281.7' r='2.5' fill='#1f6f8b'/>
+<circle cx='184.2' cy='276.8' r='2.5' fill='#1f6f8b'/>
+<circle cx='198.0' cy='271.8' r='2.5' fill='#1f6f8b'/>
+<circle cx='211.8' cy='267.7' r='2.5' fill='#1f6f8b'/>
+<circle cx='225.6' cy='262.5' r='2.5' fill='#1f6f8b'/>
+<circle cx='239.3' cy='256.8' r='2.5' fill='#1f6f8b'/>
+<circle cx='253.1' cy='250.8' r='2.5' fill='#1f6f8b'/>
+<circle cx='266.9' cy='245.6' r='2.5' fill='#1f6f8b'/>
+<circle cx='280.7' cy='239.4' r='2.5' fill='#1f6f8b'/>
+<circle cx='294.4' cy='233.0' r='2.5' fill='#1f6f8b'/>
+<circle cx='308.2' cy='226.8' r='2.5' fill='#1f6f8b'/>
+<circle cx='322.0' cy='220.2' r='2.5' fill='#1f6f8b'/>
+<circle cx='335.8' cy='213.1' r='2.5' fill='#1f6f8b'/>
+<circle cx='349.6' cy='205.9' r='2.5' fill='#1f6f8b'/>
+<circle cx='363.3' cy='198.5' r='2.5' fill='#1f6f8b'/>
+<circle cx='377.1' cy='190.8' r='2.5' fill='#1f6f8b'/>
+<circle cx='390.9' cy='183.5' r='2.5' fill='#1f6f8b'/>
+<circle cx='404.7' cy='175.4' r='2.5' fill='#1f6f8b'/>
+<circle cx='418.4' cy='167.4' r='2.5' fill='#1f6f8b'/>
+<circle cx='432.2' cy='159.1' r='2.5' fill='#1f6f8b'/>
+<circle cx='446.0' cy='150.1' r='2.5' fill='#1f6f8b'/>
+<circle cx='459.8' cy='141.9' r='2.5' fill='#1f6f8b'/>
+<circle cx='473.6' cy='132.7' r='2.5' fill='#1f6f8b'/>
+<circle cx='487.3' cy='123.7' r='2.5' fill='#1f6f8b'/>
+<circle cx='501.1' cy='114.3' r='2.5' fill='#1f6f8b'/>
+<circle cx='514.9' cy='104.5' r='2.5' fill='#1f6f8b'/>
+<circle cx='528.7' cy='94.2' r='2.5' fill='#1f6f8b'/>
+<circle cx='542.4' cy='83.5' r='2.5' fill='#1f6f8b'/>
+<circle cx='556.2' cy='72.8' r='2.5' fill='#1f6f8b'/>
+<circle cx='570.0' cy='62.0' r='2.5' fill='#1f6f8b'/>
+<line x1='586' y1='80' x2='606' y2='80' stroke='#1f6f8b' stroke-width='2'/>
+<text x='612' y='84' fill='#333' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>served from cache</text>
+<polyline points='74.0,308.0 87.8,307.2 101.6,306.7 115.3,306.5 129.1,306.4 142.9,304.6 156.7,304.1 170.4,303.8 184.2,303.7 198.0,303.6 211.8,302.4 225.6,302.0 239.3,301.8 253.1,301.6 266.9,300.6 280.7,300.6 294.4,300.4 308.2,300.1 322.0,299.6 335.8,299.4 349.6,299.4 363.3,299.1 377.1,298.9 390.9,298.1 404.7,298.0 418.4,297.8 432.2,297.3 446.0,297.3 459.8,296.5 473.6,296.3 487.3,296.0 501.1,295.6 514.9,295.1 528.7,294.9 542.4,294.8 556.2,294.7 570.0,294.3' fill='none' stroke='#e07a3f' stroke-width='2'/>
+<circle cx='74.0' cy='308.0' r='2.5' fill='#e07a3f'/>
+<circle cx='87.8' cy='307.2' r='2.5' fill='#e07a3f'/>
+<circle cx='101.6' cy='306.7' r='2.5' fill='#e07a3f'/>
+<circle cx='115.3' cy='306.5' r='2.5' fill='#e07a3f'/>
+<circle cx='129.1' cy='306.4' r='2.5' fill='#e07a3f'/>
+<circle cx='142.9' cy='304.6' r='2.5' fill='#e07a3f'/>
+<circle cx='156.7' cy='304.1' r='2.5' fill='#e07a3f'/>
+<circle cx='170.4' cy='303.8' r='2.5' fill='#e07a3f'/>
+<circle cx='184.2' cy='303.7' r='2.5' fill='#e07a3f'/>
+<circle cx='198.0' cy='303.6' r='2.5' fill='#e07a3f'/>
+<circle cx='211.8' cy='302.4' r='2.5' fill='#e07a3f'/>
+<circle cx='225.6' cy='302.0' r='2.5' fill='#e07a3f'/>
+<circle cx='239.3' cy='301.8' r='2.5' fill='#e07a3f'/>
+<circle cx='253.1' cy='301.6' r='2.5' fill='#e07a3f'/>
+<circle cx='266.9' cy='300.6' r='2.5' fill='#e07a3f'/>
+<circle cx='280.7' cy='300.6' r='2.5' fill='#e07a3f'/>
+<circle cx='294.4' cy='300.4' r='2.5' fill='#e07a3f'/>
+<circle cx='308.2' cy='300.1' r='2.5' fill='#e07a3f'/>
+<circle cx='322.0' cy='299.6' r='2.5' fill='#e07a3f'/>
+<circle cx='335.8' cy='299.4' r='2.5' fill='#e07a3f'/>
+<circle cx='349.6' cy='299.4' r='2.5' fill='#e07a3f'/>
+<circle cx='363.3' cy='299.1' r='2.5' fill='#e07a3f'/>
+<circle cx='377.1' cy='298.9' r='2.5' fill='#e07a3f'/>
+<circle cx='390.9' cy='298.1' r='2.5' fill='#e07a3f'/>
+<circle cx='404.7' cy='298.0' r='2.5' fill='#e07a3f'/>
+<circle cx='418.4' cy='297.8' r='2.5' fill='#e07a3f'/>
+<circle cx='432.2' cy='297.3' r='2.5' fill='#e07a3f'/>
+<circle cx='446.0' cy='297.3' r='2.5' fill='#e07a3f'/>
+<circle cx='459.8' cy='296.5' r='2.5' fill='#e07a3f'/>
+<circle cx='473.6' cy='296.3' r='2.5' fill='#e07a3f'/>
+<circle cx='487.3' cy='296.0' r='2.5' fill='#e07a3f'/>
+<circle cx='501.1' cy='295.6' r='2.5' fill='#e07a3f'/>
+<circle cx='514.9' cy='295.1' r='2.5' fill='#e07a3f'/>
+<circle cx='528.7' cy='294.9' r='2.5' fill='#e07a3f'/>
+<circle cx='542.4' cy='294.8' r='2.5' fill='#e07a3f'/>
+<circle cx='556.2' cy='294.7' r='2.5' fill='#e07a3f'/>
+<circle cx='570.0' cy='294.3' r='2.5' fill='#e07a3f'/>
+<line x1='586' y1='100' x2='606' y2='100' stroke='#e07a3f' stroke-width='2'/>
+<text x='612' y='104' fill='#333' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>billed fresh</text>
+<text x='74.0' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>1</text>
+<text x='115.3' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>4</text>
+<text x='156.7' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>7</text>
+<text x='198.0' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>10</text>
+<text x='239.3' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>13</text>
+<text x='280.7' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>16</text>
+<text x='322.0' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>19</text>
+<text x='363.3' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>22</text>
+<text x='404.7' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>25</text>
+<text x='446.0' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>28</text>
+<text x='487.3' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>31</text>
+<text x='528.7' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>34</text>
+<text x='570.0' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>37</text>
+<text x='322.0' y='348' text-anchor='middle' fill='#333' font-size='12' font-family='ui-monospace,Menlo,Consolas,monospace'>request #</text>
+<text x='16' y='185.0' fill='#333' font-size='12' transform='rotate(-90 16 185.0)' text-anchor='middle' font-family='ui-monospace,Menlo,Consolas,monospace'>cumulative tokens</text>
+</svg>
