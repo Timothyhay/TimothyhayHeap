@@ -1,7 +1,7 @@
 ---
 layout: modern-article
 title: How WhalePod Raise KVCache Hit Rate - My Design of Agent Harness
-tags: LLM
+tags: Agent LLM
 comments: true
 ---
 
@@ -48,7 +48,11 @@ $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q K^T}{\sqrt{d_k}}\right
 
 ### 0.2 在我们动手之前，还发生了什么
 
-由于长上下文与并发请求会导致 KV Cache 显存爆炸（$O(\text{Batch} \times \text{Length} \times \text{Layers} \times \text{Heads} \times d)$），工业界和学术界围绕 KV Cache 衍生出了一系列关键技术。其中与提高缓存命中率相关的：
+由于长上下文与并发请求会导致 KV Cache 显存爆炸：
+
+$O(\text{Batch} \times \text{Length} \times \text{Layers} \times \text{Heads} \times d)$
+
+工业界和学术界围绕 KV Cache 衍生出了一系列关键技术。其中与提高缓存命中率相关的：
 
 #### 1. 模型架构级优化
 主要在减少 KV Head 数量与维度上。
