@@ -5,30 +5,76 @@ tags: LLM
 comments: true
 ---
 
-本文主要讨论 KVCache 在 Agent Harness 设计上如何做到更好的利用，来减少 Agent 使用开销。
+本文主要讨论 KVCache 在 Agent Harness 设计上如何做到更好的利用，在保证正确率的情况下，尽可能减少 Agent 使用开销。
 
 所有实验基于我的开源项目 [WhalePod](https://github.com/Timothyhay/whale-pod)，项目中也包含了 benchmark 代码和本文中的结果。
 
-> 注意 - WhalePod 的上下文管理实验复现有一条隐形要求：**DeepSeek-V4 的自动前缀缓存能在长对话中持续生效（因为梁圣的 KVCache 保存时间目前是最久的，长达 2h）**，在此基础上让请求的字节前缀保持稳定。
+> 注意 - WhalePod 的上下文管理实验复现有一条隐形要求：**确保你的模型（DeepSeek-V4 比如）的自动前缀缓存能在长对话中持续生效（因为梁圣的 KVCache 保存时间目前是最久的，似乎长达 2h）**，在此基础上让请求的字节前缀保持稳定。
  
-本报告从架构原理、评测系统设计和完整实验数据三个层面，系统性地验证让前缀字节流稳定产生的增益。
 
-报告涵盖两条互补轨道的完整流程：离线预测（`bench/validate.py`，零网络/API key）和在线实测（`bench/live_acceptance.py`，真实服务器），以及两个维度的评价指标——可复用前缀份额（reusable prefix ratio）和命中率（cache hit rate）。
+本文的设计则是在应用层，在其他层间各种设计的基础上，如何真正在使用 Agent 的过程中利用好 KVCache 带来的增益。
+
+接下来我们从架构原理、评测系统设计和完整实验数据三个层面，系统性地验证让前缀字节流稳定产生的增益。
+
+涵盖两条互补轨道的完整流程：离线预测（零网络/API key 得到的理论结果）和在线实测（请求 DeepSeek 看看花了多少钱），以及两个维度的评价指标——可复用前缀份额（reusable prefix ratio）和命中率（cache hit rate）。
 
 全文用 60 个独立 session、三种对话长度（6/12/18 轮）和三种推理回放策略（never/tool/always）的数据来论证设计的稳健性。在`bench`目录可以找到素有实验的复现入口。
 
 ---
 
-## 目录
+# 0. 稍等，我刚来，你们在聊的 KVCache 是什么？
 
-1. [评测目标](#1-评测目标)
-2. [代码文件](#2-代码文件)
-3. [Agent 架构设计：为何前缀缓存能命中](#3-agent-架构设计为何前缀缓存能命中)
-4. [评测架构](#4-评测架构)
-5. [实验流程](#5-实验流程)
-6. [实验结果](#6-实验结果)
-7. [解读指标与图表](#7-解读指标与图表)
-8. [结论](#8-结论)
+## 0.1 理论
+
+KV Cache 是基于 Transformer 架构的自回归 LLM 在**推理解码（Decode）阶段**使用的一种以空间换时间的显存优化机制。
+
+首先我们知道，标准的多头自注意力机制（Self-Attention）是：
+$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q K^T}{\sqrt{d_k}}\right) V$$
+
+在自回归文本生成过程中，模型按是按步（时间） $t$ 逐个生成 Token 的：
+* **Prefill 阶段**：模型对输入的 长度为 $N$ Prompt 序列并行计算所有 Token 的投影矩阵，得到 $Q_{1:N}, K_{1:N}, V_{1:N}$，完成第一次注意力计算，并将生成的 $K_{1:N}$ 和 $V_{1:N}$ 暂存在显存中。
+* **Decode 阶段**：当生成第 $t+1$ 个 Token 时，KVCache 的设计使模型**只需针对新 Token 生成单行查询向量 $q_{t+1}$ 以及对应的 $k_{t+1}, v_{t+1}$**。接下来将新计算的键值向量追加至缓存中：
+  $$K_{1:t+1} = [K_{1:t} \,;\, k_{t+1}], \quad V_{1:t+1} = [V_{1:t} \,;\, v_{t+1}]$$
+  然后仅通过 $q_{t+1}$ 与完整的 $K_{1:t+1}, V_{1:t+1}$ 计算单向量对矩阵的注意力：
+  $$\text{Attention}(q_{t+1}, K_{1:t+1}, V_{1:t+1}) = \text{softmax}\left(\frac{q_{t+1} K_{1:t+1}^T}{\sqrt{d_k}}\right) V_{1:t+1}$$
+
+
+本质上，KVCache 做的事情是一个 **消除冗余计算** 的任务。也就是避免了每生成一个新 Token 都对历史所有 Token 重新算 $K$ 和 $V$ 向量（重新执行投影线性变换，Linear Projections），使每一步的计算复杂度由全局重算的 $O(t^2 \cdot d)$ 降低为增量计算的 $O(t \cdot d)$。
+> 这里的 $d$ 指 hidden layers 的总维度，因为每生成一个 Token，需要与历史 $t$ 个 Token 的向量分别做内积计算，每个向量的长度是 $d$。
+
+由于这个**空间换时间**的做法，KV Cache 让解码阶段系统吞吐瓶颈从算力变成了 GPU 显存容量与 HBM 读写带宽。
+
+
+### 0.2 在我们动手之前，还发生了什么
+
+由于长上下文与并发请求会导致 KV Cache 显存爆炸（$O(\text{Batch} \times \text{Length} \times \text{Layers} \times \text{Heads} \times d)$），工业界和学术界围绕 KV Cache 衍生出了一系列关键技术。其中与提高缓存命中率相关的：
+
+#### 1. 模型架构级优化
+主要在减少 KV Head 数量与维度上。
+* **MQA (Multi-Query Attention)**：所有 Query Head 共享单一组 Key/Value Head，KV Cache 显存占用直接降低到原本的 $1/H$（$H$ 为注意力头数）。
+* **GQA (Grouped-Query Attention)**：折中方案（如 Llama 2/3、Mistral），将 Query Head 分组，每组共享一对 Key/Value Head，在保持模型精度的同时大幅削减 KV 显存。
+* **MLA (Multi-Head Latent Attention)**：DeepSeek-V2/V3 提出的创新架构。将 Key 和 Value 联合投影压缩为一个低维的**隐向量（Latent Vector）**，仅缓存该隐向量，在推理时通过矩阵吸收（Matrix Absorption）还原计算，将 KV 显存开销降低至原本的 10%~20% 左右。
+
+#### 2. 显存管理与系统级优化
+* **PagedAttention (vLLM)**：借鉴操作系统虚拟内存分页的思想，将连续的 KV Cache 离散存储在固定大小的物理显存块（Block）中，彻底解决了显存内外部碎片问题，将显存浪费率从 >60% 降至 <4%。
+分页机制消除了内部与外部显存碎片，相当于释放出来的有效显存可以容纳更多并发与前缀块，其实是间接提升了命中率的上限。
+* **RadixAttention / 前缀树缓存 (SGLang 等)**：采用基数树（Radix Tree）管理 KV Cache，实现跨请求、跨轮次、树形搜索（Tree-of-Thought）分支场景下的前缀精确复用与自适应 LRU 淘汰。
+主要是因为 Radix Tree 在内存中维护所有历史请求的 KV Cache，这样对多轮对话（显然）直接把上轮的上下文全复用了；同一 Prompt 分叉生成多个候选回答时，分叉前的公共前缀只需计算一次；对不同用户的不同请求只要开头一致，树结构也可以精确匹配并直接命中前缀。
+
+#### 3. 缓存压缩与稀疏化 / Compression & Eviction
+* **KV 极低比特量化**：
+  * 将 KV Cache 从 FP16/BF16 量化为 **FP8、INT8 或 INT4**（如 KIVI、Q-Serve），直接让显存占用减半甚至降低至 $1/4$，成倍扩大并发容量。
+  比如将每个 KV 浮点数从 16 位压缩到 8 位甚至 4 位， Token 的显存占用变小了，内存中缓存的条目就翻倍了。
+* **Token 动态淘汰与稀疏注意力**：
+  * **StreamingLLM**：保留最开头的几个“注意力汇聚点（Attention Sinks）”和最新的局部滑动窗口 Token，丢弃中间大部分 KV Cache，以固定显存支持无限长上下文流式输出。
+  * **H2O (Heavy Hitter Oracle) / Scissorhands**：基于历史注意力权重，动态识别并保留贡献最大的“Heavy Hitter Token”，丢弃不重要的 Token 缓存。
+
+#### 4. 分布式与分层存储 / Disaggregated & Tiered Caching
+* **分层缓存卸载（Hierarchical KV Caching，如 Mooncake）**：构建 `GPU HBM -> Host DRAM -> 本地 NVMe SSD -> 分布式存储` 的多级缓存系统，在超长文本及海量 Prompt 共享场景下，把不活跃的 KVCache 换到成本低容量大的地方存。
+即使很久没被调用，也能在 CPU 内存中命中并快速拉回 GPU，避免冷启动重新计算。
+
+
+背景到这里结束。站在其他设计的肩膀上，我们来看看 Agent 本身是否存在设计范式来提升 KVCache 利用率。
 
 ---
 
@@ -105,7 +151,7 @@ KV cache 的命中率是一个成本指标，不是一个正确性指标。我�
 
 KV cache 的命中率不取决于调参，取决于**代码结构**。以下七个设计决策是 95% 命中率的基石。
 
-### 3.1 两区消息存储 — 不可变前缀 + 只追加历史
+### 3.1 两区消息存储 - 不可变前缀 + 只追加历史
 
 WhalePod 的消息管理器（`whalepod/core/messages.py`）把消息分成两个区：
 
@@ -121,7 +167,9 @@ Zone 2 — append-only 历史                          ⟵ 从未被就地改写
 └── ...
 ```
 
-**为什么重要：** KV cache 以最长公共前缀为 key。Zone 1 在全部请求中不变，Zone 2 只追加不修改。所以每个新请求的前缀都等于"Zone 1 + Zone 2 的已发送部分"，和上一个请求的前缀完全重叠。server 不会因为"中间某个消息被改了内容"而触发冷 miss。
+**分区原则：** Zone 1 完全不变、Zone 2 只新增不修改。在此基础上越容易改变的的内容放在越后面。
+
+**为什么重要：** KV cache 以最长公共前缀为 key。根据我们的设计原则所以每个新请求的前缀都等于"Zone 1 + Zone 2 的已发送部分"，和上一个请求的前缀完全重叠。server 不会因为"中间某个消息被改了内容"而触发冷 miss。
 
 prompt 放在 repo-map **前面**不是偶然。prompt 是 session 直不变的，repo-map 在 `/refresh` 后可能更新。如果 prompt 在 repo-map 之后，一次 `/refresh` 会破坏整个系统提示词的缓存——这意味着剩下的 byte 全部被重新计费。prompt 在前意味着 `/refresh` 只破坏 map 的那一小段尾缀。
 
