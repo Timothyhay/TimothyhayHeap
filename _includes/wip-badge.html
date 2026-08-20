@@ -1,20 +1,24 @@
 <style>
 .wip-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    margin: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 420px;
+    margin: 28px auto;
+    gap: 16px;
+    text-indent: 0;
     font-family: 'Press Start 2P', 'Consolas', 'Courier New', monospace;
-    font-size: 11px;
-    line-height: 1.4;
-    font-weight: bold;
-    color: #6b4f1d;
-    background: linear-gradient(180deg, #ffe9b8, #ffd37a);
-    border: 2px solid #e8a33d;
-    border-radius: 4px;
-    box-shadow: 2px 2px 0 rgba(0,0,0,0.12);
-    vertical-align: middle;
-    letter-spacing: 1px;
-    white-space: nowrap;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: rgba(55, 165, 160, 0.85);
+}
+.wip-badge::before,
+.wip-badge::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(112, 205, 199, 0.5), transparent);
 }
 </style>
 <script>
