@@ -1,23 +1,22 @@
 ---
 layout: modern-article
-title: Long Sequence
+title: Experience of Long Sequence SFT 
 date: 2026-04-24
 tags: LLM
 comments: true
 ---
 
 
-使用长序列 Agent Trajectory Data 训练 LLM，来赋予其复杂任务规划、工具调用/Agentic能力短
+本文介绍使用长序列 Agent Trajectory Data 训练 LLM，来赋予其复杂任务规划、工具调用/Agentic能力的流程、经验与注意点。
 
-Agent 轨迹通常包含交替出现的序列：**状态 (State) -> 思考 (Thought) -> 动作 (Action) -> 观察/环境反馈 (Observation) -> ...**
+这里的 Agent 轨迹指交替出现的序列：**状态 (State) -> 思考 (Thought) -> 动作 (Action) -> 观察/环境反馈 (Observation) -> ...**
 
 由于序列极长且具有强烈的时序因果关系，训练过程与普通的文本对话微调有显著不同。以下是具体的训练方法和核心注意事项：
 
 ---
 
-### 一、总统流程
+### 一、总体流程
 
-### 一、 核心训练流程与方法
 
 #### 1. 数据重构与格式化 (Data Formatting)
 在训练前，必须将复杂的轨迹数据标准化。通常采用类似 **ReAct (Reasoning and Acting)** 的框架：
