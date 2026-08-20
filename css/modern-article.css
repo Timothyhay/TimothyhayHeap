@@ -195,6 +195,18 @@ body {
     margin-bottom: 30px;
 }
 
+.article-content a {
+    color: #2b9e99;
+    text-decoration: underline;
+    text-decoration-color: rgba(43, 158, 153, 0.35);
+    transition: color 0.2s, text-decoration-color 0.2s;
+}
+
+.article-content a:hover {
+    color: #1f7d78;
+    text-decoration-color: rgba(31, 125, 120, 0.6);
+}
+
 .article-content h2, .article-content h3 {
     font-family: 'Georgia', "PingFang SC", sans-serif;
     margin-top: 50px;
