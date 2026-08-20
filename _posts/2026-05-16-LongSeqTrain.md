@@ -6,6 +6,7 @@ tags: LLM
 comments: true
 ---
 
+[WIP]
 
 本文介绍使用长序列 Agent Trajectory Data 训练 LLM，来赋予其复杂任务规划、工具调用/Agentic能力的流程、经验与注意点。
 
@@ -69,6 +70,13 @@ comments: true
     *   重度依赖**梯度累积（Gradient Accumulation）**以维持等效 Batch Size。
     *   开启**梯度检查点（Gradient Checkpointing）**，用计算时间换取显存空间。
     *   丢弃历史不重要的环境反馈，采用滑动窗口（Sliding Window）阶段性截断不再使用的极早期 Observation。
+
+
+
+## 二、参数选择
+
+
+## 三、环境与实际问题
 
 ### 总结
 用长序列 Agent 轨迹训练 LLM，本质上不仅是在教模型“说话”，而是在教它“做事”。**高质量的轨迹数据（尤其是包含试错与反思的轨迹）、精准的 Loss Masking 策略、以及对长序列上下文能力的底层优化**，是决定最终 Agent 智商高低的关键三要素。
