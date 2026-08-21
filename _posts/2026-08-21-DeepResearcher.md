@@ -94,8 +94,6 @@ Note: 这篇文章还在施工中。
 - 生成报告 / Report Generation：生成带引用链接的长文本，同时应该有图表、摘要等专业内容。
 - 自定义形式 / Customize Report：允许类似 NotebookLM 一样以 HTML、PPT等形式生成结果。
 
----
-
 
 # 2. 架构实现
 
@@ -104,9 +102,31 @@ Note: 这篇文章还在施工中。
 用户原始查询 query 进来 ->
 - Step 1: ClarifierAgent 先判断用户请求是否清晰，不清楚的话请求用户澄清
 - Step 2: RewriteAgent 结合对话历史，改写为独立、完整、无歧义的研究查询
-- Step 3: OrchestratorAgent （背后是 Qwen3-Coder 480B）
-  - 3.1 规划：判断任务类型（广度、深度、直接回答）；选择子Agent数量（1~20），同时约定输出格式（依赖任务队列和子任务队列）。这里会有一个解析回答后
-  - 3.2 执行：
+- Step 3: OrchestratorAgent （背后是 Qwen3-Coder-480B）
+  - **规划**：预研究与问题分解。判断任务类型（广度、深度、直接回答）；计划一个解决通路，然后选择 Worker(ResearchAgent) 数量（1~20），然后把初始节点子 Agent 和依赖的子 Agent 要研究的话题润色好，标记好依赖关系送进队列。
+  - **认知更新**：研究计划不是一成不变的，OrchestratorAgent会监听ResearchAgent的`decompose`动作，并实时更新研究地图（DAG）。
+  - **执行**：
+    - 循环寻找并执行无依赖 + pending 状态的节点启动。
+    - 每次启动会实例化一个 ResearchAgent 并发执行，最多执行 7 步 ReAct循环。
+      - 思考
+      - 检索：首先进行 Action 去重（查字典） + 跨搜索缓存提取；RAG 检索 + 内部门户网站检索 + LLM 评估再过滤。
+      - 完成后返回一个 {summary, source, new_topics} 的结构
+      
+- Step 4：使用Sy写入最终答案。的、
+
+Quick questions:
+
+为什么选了 Orchestrator-Worker 架构的多 Agent 设计，你是 A\ 粉丝吗？
+
+我不是，我没有。核心原因在于研究问题天然具有可变的**分解粒度**和**依赖拓扑**。
+
+在**并行性**上，调研类的任务需要多 Agent (Worker) 来实现分时动态（在不同时间启动）并发。对单 Agent 只能严格顺序运行， Workflow 可预设并行但流程更死。
+在**依赖管理**上，考虑到单个子 Agent 上下文长度有限，
+
+有关检索部分的细节：
+
+首先需要在ResearcherAgent的Action中调用search[query]工具时触发，这个工具自带一个重复动作去重/读取缓存的功能。
+RAG核心流程是默认高斯多路召回原创服务 + rerank top5；playbook 场景启动本地向量+BM25双路召回。这里还有一个去重，过滤掉重复的文档块。
 
 
 # 3.
