@@ -4,7 +4,6 @@ title: 从零开始连接世界知识 - 我的 DeepResearch 产品成长记录
 tags: Agent
 comments: true
 ---
-
 Note: 这篇文章还在施工中。
 [WIP]
 
@@ -37,7 +36,7 @@ Note: 这篇文章还在施工中。
 5. 信息难辨别 - 查到的东西真真假假难以验证溯源，但是正经研究又需要保证严谨性
 
 > 总算是都压缩到了五个字。不过我也准备了专业一些的表达以应对潜在需要聊这个的英文和面试之类的正式场合，也就是：
-> 
+>
 > 1. 信息过载 / Info Overload
 > 2. 信息孤岛 / Info Silos
 > 3. 高认知负担 / High Cognitive Load
@@ -107,32 +106,31 @@ DMI 能对复杂问题进行任务分解、并行研究、信息汇总和报告�
 
 **核心 Agent 包括：**
 
-* Orchestrator (DeepResearch Agent)：负责宏观规划和管理。将主问题分解为子任务，创建并调度Researcher Agent，并对结果进行组织和综合。  
+* Orchestrator (DeepResearch Agent)：负责宏观规划和管理。将主问题分解为子任务，创建并调度Researcher Agent，并对结果进行组织和综合。
 * Researcher (DeepSearch Agent)：负责微观执行。每个Researcher是一个独立的 ReAct Agent，专注于一个具体的子任务，通过搜索、评估、筛选等操作得出针对某个单一话题的结论。
 * Rewriter：结合对话历史，把内容改写为独立、完整、无歧义的研究查询
 * Clarifier：负责用户提出问题后的澄清
 * Formatter：负责把最终的结论整理成研究报告，PPT或者HTML
 
 **公共能力：**
-提供跨模块的通用服务，如预算控制、摘要等。这些特性实际被 Orchestrator 和 Researcher 等 Agent调用。
+提供跨模块的通用服务，如预算控制、摘要等。这些特性实际被 Orchestrator 和 Researcher 等 Agent 调用。
 
 我们从请求的执行链路开始，大约会经历 4 个阶段：
 
-首先用户原始查询 query 进来 ->
+首先用户原始查询 query 进来 -
 
 - Step 1: Clarifier 先判断用户请求是否清晰，不清楚的话请求用户澄清
 - Step 2: Rewriter 结合对话历史，改写为独立、完整、无歧义的研究查询
 - Step 3: Orchestrator （背后是 Qwen3-Coder-480B）
-  
-  - **规划**：预研究与问题分解。判断任务类型（广度、深度、直接回答）；计划一个解决通路，然后选择 Worker(Researcher 数量（1~20），然后把初始节点子 Agent 和依赖的子 Agent 要研究的话题润色好，标记好依赖关系送进队列。
-  - **认知更新**：研究计划不是一成不变的，Orchestrator会监听Researcher的`decompose`动作，并实时更新研究地图（DAG）。
+  - **规划**：预研究与问题分解。判断任务类型（广度、深度、直接回答）；计划一个解决通路，然后选择 Worker(Researcher) 数量（1~20），然后把初始节点子 Agent 和依赖的子 Agent 要研究的话题润色好，标记好依赖关系送进队列。
+  - **认知更新**：研究计划不是一成不变的，Orchestrator会监听Researcher的 `decompose`动作，并实时更新研究地图（DAG）。
   - **实例化 Worker(Researcher)**：
     - 循环寻找并执行无依赖 + pending 状态的节点启动。
     - 每次启动会实例化一个 Researcher 并发执行，最多执行 7 步 ReAct循环。Researcher 的行为包括：
-      - ReAct 循环：Thought -> Action:search[query] -> Observation
-      - 检索时：首先进行 Action 去重（查字典） + 跨搜索缓存提取；RAG 检索 + 内部门户网站检索 + LLM 评估再过滤。
-      - 完成后：返回一个 {summary, source, new_topics} 的结果，结果的总结`summary`会追加到 Orchestrator 的 Factlist 里。这里的`new_topics`来自于 Researcher的判断，会动态创建新的研究话题到队列中。把这个节点的任务标记为 complete。
-  - **总结**：分为 快速总结`QuickSummarize` 和 链路总结`ChainSummarize`，分别用于总结某个节点的关键信息，以及一条有依赖关系的链路中的脉络，呈现形式不同；快速总结强调要点，链路总结要求像短文。
+      - **ReAct 循环**：Thought -> Action:search[query] -> Observation
+      - **检索时**：首先进行 Action 去重（查字典） + 跨搜索缓存提取；RAG 检索 + 内部门户网站检索 + LLM 评估再过滤。
+      - **完成后**：返回一个包含 `{summary, source, new_topics}` 的结果，结果的总结 `summary `会追加到 Orchestrator 的 Factlist 里。这里的 `new_topics`来自于 Researcher的判断，会动态创建新的研究话题到队列中。把这个节点的任务标记为 complete。
+  - **总结**：分为 快速总结 `QuickSummarize` 和 链路总结 `ChainSummarize`，分别用于总结某个节点的关键信息，以及一条有依赖关系的链路中的脉络，呈现形式不同；快速总结强调要点，链路总结要求像短文。
 - Step 4：格式化所有链路的报告，使用长思考模型（temperature=0.2，较为确定）。对较长的文本分步处理，返回最终字符串。
 
 Quick questions:
@@ -152,7 +150,7 @@ Quick questions:
 RAG核心流程是多路召回 + rerank top5；
 
 > 如果判断挂载的知识库超过1个，策略会升级为全量召回：
-> 
+>
 > 分库独立召回topK，然后每库结果min-max归一化，再RRF做跨库合并，最后去重+rerank精排。
 
 向量路的query对象是一定要模型改写很多次之后才能传的，有大量例子提供给LLM改写。为k个问法各自生成一路检索请求。
@@ -161,12 +159,12 @@ RAG核心流程是多路召回 + rerank top5；
 
 后续我们统一去重，过滤掉重复的文档块。
 
-然后LLM会多检索、爬取结果打分，配合playwright爬虫补全正文和`crawl_record`跨轮缓存。
+然后LLM会多检索、爬取结果打分，配合playwright爬虫补全正文和 `crawl_record`跨轮缓存。
 
 > 关于为啥要补爬虫正文：因为我们的内部门户网站接口 API 只返回摘要，得我们自己去抓内网界面转成 markdown 再供 LLM 消费。
-> 
+>
 > 没有什么特别的技术，无非是给界面注入Cookie，然后随机延迟模拟人类行为，智能滚动一下防止懒加载DOM里没有获取到全文。
-> 最后用readability算法获取主体的正文，然后 markdownify 转 markdown。拿到之后交给`crawl_record`，它会记录有没有爬过、以及有没有用。
+> 最后用readability算法获取主体的正文，然后 markdownify 转 markdown。拿到之后交给 `crawl_record`，它会记录有没有爬过、以及有没有用。
 
 异常处理：检索失败给提示，不阻塞流程；重排失败给默认分。
 
@@ -177,4 +175,3 @@ RAG核心流程是多路召回 + rerank top5；
 
 首先我们对长文档进行按预设规则（段落标记优先，否则定长）切块，根据 query 内容分别请求 embedding model，分别计算每块的余弦相似度。
 然后我们选择总得分最高的连续块作为命中单元，所谓连续块就是在一定窗口内的多个相邻 chunk。考虑在阈值内选择 0 ~ 3 个块来保证文章关键信息不遗漏。
-
