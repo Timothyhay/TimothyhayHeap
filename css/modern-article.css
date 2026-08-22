@@ -113,6 +113,21 @@ body {
     padding: 0;
 }
 
+.toc-sidebar ul ul {
+    padding-left: 0px;
+    margin-top: 6px;
+}
+
+.toc-sidebar li.toc-h1 > a {
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.toc-sidebar li.toc-h3 > a {
+    color: #91acc0;
+    font-size: 11px;
+}
+
 .toc-sidebar li {
     margin-bottom: 10px;
     font-size: 11px;
