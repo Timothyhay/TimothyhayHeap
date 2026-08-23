@@ -146,9 +146,9 @@ DMI 能对复杂问题进行任务分解、并行研究、信息汇总和报告�
 
 这里我想插一句，在完成 多Agent/单Agent 架构选型之前，看到了两篇观点相反的文章：
 
-Cognition (Devin 的开发团队) 在他们的博客里直接说 ”Dont Build Multi-Agent“ [1]，但是同期 Anthropic 有一篇详细描述如何构造多 Agent 系统的博客[3]，也有介绍他们构造 Research Agent 实践的[2]。
+Cognition (Devin 的开发团队) 在他们的博客里直接说 "Don't Build Multi-Agents"[^dont-build-multi-agents]，但是同期 Anthropic 有一篇详细介绍如何构造 Agent 系统的博客[^building-effective-agents]，也有介绍他们多 Agent Research System 实践的[^multi-agent-research-system]。
 
-这两篇文章都是在相近的时间被我看到的，当时就也不止我在思考[4]。最后我选择了多 Agent 架构，倒不是因为 Anthropic 直接给出了很详细的实践，而是我认为其实他们的观点本质上并不冲突。
+这两篇文章都是在相近的时间被我看到的，当时在思考这个问题的也不止我一个[^reddit-single-or-multi]。最后我选择了多 Agent 架构，倒不是因为 Anthropic 直接给出了很详细的实践，而是我认为其实他们的观点本质上并不冲突。
 
 Congition （很有可能他们接的外部模型效果也一般）的场景主要是代码仓、SWE相关的任务，文章里提到的问题主要和写操作相关（write-heavy 任务），属于代码依赖关系复杂的工程任务，盲目引入复杂的并行多 Agent，确实很容易导致每个 Agent 想的不一样导致隐式冲突，和他们最为抨击的上下文碎片化（多 Agent 无法看到彼此工作细节，导致犯错）。对写代码这个操作而言，确实不能把长链任务交给多 Agent，完了还要保证其他 Agent 总结回来的信息一点不丢失细节、彼此都对复杂项目做了最优修改。
 
@@ -194,9 +194,7 @@ RAG核心流程是多路召回 + rerank top5；
 
 # Reference
 
-[1] Don’t Build Multi-Agents - https://cognition.com/blog/dont-build-multi-agents
-
-[2] How we built our multi-agent research system - https://www.anthropic.com/engineering/multi-agent-research-system
-[3] Build Effective Agents - https://www.anthropic.com/engineering/building-effective-agents
-
-[4] Multi Agent or Single Agent? - https://www.reddit.com/r/AI_Agents/comments/1lb0zb3/multiagent_or_single_agent/
+[^dont-build-multi-agents]: Cognition (Devin 开发团队) 工程博客：Walden Yan, [*Don't Build Multi-Agents*](https://cognition.com/blog/dont-build-multi-agents), 2025.
+[^building-effective-agents]: Anthropic 工程博客：Erik Schluntz & Barry Zhang, [*Building Effective Agents*](https://www.anthropic.com/engineering/building-effective-agents), 2024.
+[^multi-agent-research-system]: Anthropic 工程博客：[*How we built our multi-agent research system*](https://www.anthropic.com/engineering/multi-agent-research-system), 2025.
+[^reddit-single-or-multi]: Reddit r/AI_Agents 社区讨论：[*Multi Agent or Single Agent?*](https://www.reddit.com/r/AI_Agents/comments/1lb0zb3/multiagent_or_single_agent/), 2025.
