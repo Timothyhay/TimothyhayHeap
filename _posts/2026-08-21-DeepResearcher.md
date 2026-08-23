@@ -133,14 +133,28 @@ DMI 能对复杂问题进行任务分解、并行研究、信息汇总和报告�
   - **总结**：分为 快速总结 `QuickSummarize` 和 链路总结 `ChainSummarize`，分别用于总结某个节点的关键信息，以及一条有依赖关系的链路中的脉络，呈现形式不同；快速总结强调要点，链路总结要求像短文。
 - Step 4：格式化所有链路的报告，使用长思考模型（temperature=0.2，较为确定）。对较长的文本分步处理，返回最终字符串。
 
-Quick questions:
 
-为什么选了 Orchestrator-Worker 架构的多 Agent 设计，你是 A\ 粉丝吗？
 
-我不是，我没有。核心原因在于研究问题天然具有可变的**分解粒度**和**依赖拓扑**。
+
+**Quick questions:** 为什么选了 Orchestrator-Worker 架构的多 Agent 设计，你是 A\ 粉丝吗？
+
+我不是，我没有。核心原因在于研究问题天然具有可变的**分解粒度**和**依赖拓扑，单 Agent 没法并行、Workflow 无法做到动态可变**。
 
 在**并行性**上，调研类的任务需要多 Agent (Worker) 来实现分时动态（在不同时间启动）并发。对单 Agent 只能严格顺序运行， Workflow 可预设并行但流程更死。
-在**依赖管理**上，考虑到单个子 Agent 上下文长度有限，
+在**依赖管理**上，我们希望实现的非常重要的一个特性是**含依赖关系的，以 DAG 格式呈现的**知识网络动态拓扑。那单个 Agent 上下文长度有限，我们就很自然地希望每个子 Agent 只负责一个话题的调查；同时依赖关系不需要在单个 Agent 内部用上下文描述，我们用系统内结构化存储的 DAG 网络来描述。同时配合跨 Agent 的已知事实列表，预算控制等机制可以让每个子 Agent (Researcher) 都专注地把自己的研究任务做到极致，其他的事情交给专业的公共能力和 Orchestator 处理。
+
+
+这里我想插一句，在完成 多Agent/单Agent 架构选型之前，看到了两篇观点相反的文章：
+
+Cognition (Devin 的开发团队) 在他们的博客里直接说 ”Dont Build Multi-Agent“ [1]，但是同期 Anthropic 有一篇详细描述如何构造多 Agent 系统的博客[3]，也有介绍他们构造 Research Agent 实践的[2]。
+
+这两篇文章都是在相近的时间被我看到的，当时就也不止我在思考[4]。最后我选择了多 Agent 架构，倒不是因为 Anthropic 直接给出了很详细的实践，而是我认为其实他们的观点本质上并不冲突。
+
+Congition （很有可能他们接的外部模型效果也一般）的场景主要是代码仓、SWE相关的任务，文章里提到的问题主要和写操作相关（write-heavy 任务），属于代码依赖关系复杂的工程任务，盲目引入复杂的并行多 Agent，确实很容易导致每个 Agent 想的不一样导致隐式冲突，和他们最为抨击的上下文碎片化（多 Agent 无法看到彼此工作细节，导致犯错）。对写代码这个操作而言，确实不能把长链任务交给多 Agent，完了还要保证其他 Agent 总结回来的信息一点不丢失细节、彼此都对复杂项目做了最优修改。
+
+但是 Anthropic 的话一直是在一个读相关（read-heavy 任务）的场景做推广，比如 DeepResearch 任务，Agent 之间本身是弱耦合、高并行性的，像我们严格控制每个 Agent 研究的内容，反而需要做严格的上下文压缩和隔离，这种和需要面对同一个代码仓做修改、需要了解全部上下文中修改细节的 write-heavy 任务完全不一样。
+
+所以其实多 Agent 的选型是不矛盾的，只是场景不同选择不同罢了。
 
 # 3. 模块详细设计
 
@@ -161,7 +175,7 @@ RAG核心流程是多路召回 + rerank top5；
 
 然后LLM会多检索、爬取结果打分，配合playwright爬虫补全正文和 `crawl_record`跨轮缓存。
 
-> 关于为啥要补爬虫正文：因为我们的内部门户网站接口 API 只返回摘要，得我们自己去抓内网界面转成 markdown 再供 LLM 消费。
+> 关于为什么要补爬虫正文：因为我们的内部门户网站接口 API 只返回摘要，得我们自己去抓内网界面转成 markdown 再供 LLM 消费。
 >
 > 没有什么特别的技术，无非是给界面注入Cookie，然后随机延迟模拟人类行为，智能滚动一下防止懒加载DOM里没有获取到全文。
 > 最后用readability算法获取主体的正文，然后 markdownify 转 markdown。拿到之后交给 `crawl_record`，它会记录有没有爬过、以及有没有用。
@@ -175,3 +189,14 @@ RAG核心流程是多路召回 + rerank top5；
 
 首先我们对长文档进行按预设规则（段落标记优先，否则定长）切块，根据 query 内容分别请求 embedding model，分别计算每块的余弦相似度。
 然后我们选择总得分最高的连续块作为命中单元，所谓连续块就是在一定窗口内的多个相邻 chunk。考虑在阈值内选择 0 ~ 3 个块来保证文章关键信息不遗漏。
+
+
+
+# Reference
+
+[1] Don’t Build Multi-Agents - https://cognition.com/blog/dont-build-multi-agents
+
+[2] How we built our multi-agent research system - https://www.anthropic.com/engineering/multi-agent-research-system
+[3] Build Effective Agents - https://www.anthropic.com/engineering/building-effective-agents
+
+[4] Multi Agent or Single Agent? - https://www.reddit.com/r/AI_Agents/comments/1lb0zb3/multiagent_or_single_agent/
