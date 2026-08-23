@@ -4,6 +4,7 @@ title: 从零开始连接世界知识 - 我的 DeepResearch 产品成长记录
 tags: Agent
 comments: true
 ---
+
 Note: 这篇文章还在施工中。
 [WIP]
 
@@ -36,7 +37,7 @@ Note: 这篇文章还在施工中。
 5. 信息难辨别 - 查到的东西真真假假难以验证溯源，但是正经研究又需要保证严谨性
 
 > 总算是都压缩到了五个字。不过我也准备了专业一些的表达以应对潜在需要聊这个的英文和面试之类的正式场合，也就是：
->
+> 
 > 1. 信息过载 / Info Overload
 > 2. 信息孤岛 / Info Silos
 > 3. 高认知负担 / High Cognitive Load
@@ -133,16 +134,12 @@ DMI 能对复杂问题进行任务分解、并行研究、信息汇总和报告�
   - **总结**：分为 快速总结 `QuickSummarize` 和 链路总结 `ChainSummarize`，分别用于总结某个节点的关键信息，以及一条有依赖关系的链路中的脉络，呈现形式不同；快速总结强调要点，链路总结要求像短文。
 - Step 4：格式化所有链路的报告，使用长思考模型（temperature=0.2，较为确定）。对较长的文本分步处理，返回最终字符串。
 
-
-
-
 **Quick questions:** 为什么选了 Orchestrator-Worker 架构的多 Agent 设计，你是 A\ 粉丝吗？
 
 我不是，我没有。核心原因在于研究问题天然具有可变的**分解粒度**和**依赖拓扑，单 Agent 没法并行、Workflow 无法做到动态可变**。
 
 在**并行性**上，调研类的任务需要多 Agent (Worker) 来实现分时动态（在不同时间启动）并发。对单 Agent 只能严格顺序运行， Workflow 可预设并行但流程更死。
 在**依赖管理**上，我们希望实现的非常重要的一个特性是**含依赖关系的，以 DAG 格式呈现的**知识网络动态拓扑。那单个 Agent 上下文长度有限，我们就很自然地希望每个子 Agent 只负责一个话题的调查；同时依赖关系不需要在单个 Agent 内部用上下文描述，我们用系统内结构化存储的 DAG 网络来描述。同时配合跨 Agent 的已知事实列表，预算控制等机制可以让每个子 Agent (Researcher) 都专注地把自己的研究任务做到极致，其他的事情交给专业的公共能力和 Orchestator 处理。
-
 
 这里我想插一句，在完成 多Agent/单Agent 架构选型之前，看到了两篇观点相反的文章：
 
@@ -164,7 +161,7 @@ Congition （很有可能他们接的外部模型效果也一般）的场景主�
 RAG核心流程是多路召回 + rerank top5；
 
 > 如果判断挂载的知识库超过1个，策略会升级为全量召回：
->
+> 
 > 分库独立召回topK，然后每库结果min-max归一化，再RRF做跨库合并，最后去重+rerank精排。
 
 向量路的query对象是一定要模型改写很多次之后才能传的，有大量例子提供给LLM改写。为k个问法各自生成一路检索请求。
@@ -176,11 +173,21 @@ RAG核心流程是多路召回 + rerank top5；
 然后LLM会多检索、爬取结果打分，配合playwright爬虫补全正文和 `crawl_record`跨轮缓存。
 
 > 关于为什么要补爬虫正文：因为我们的内部门户网站接口 API 只返回摘要，得我们自己去抓内网界面转成 markdown 再供 LLM 消费。
->
+> 
 > 没有什么特别的技术，无非是给界面注入Cookie，然后随机延迟模拟人类行为，智能滚动一下防止懒加载DOM里没有获取到全文。
 > 最后用readability算法获取主体的正文，然后 markdownify 转 markdown。拿到之后交给 `crawl_record`，它会记录有没有爬过、以及有没有用。
 
 异常处理：检索失败给提示，不阻塞流程；重排失败给默认分。
+
+### 搜索去重
+
+三层去重机制：
+
+1. 单 Researcher 内去重：使用执行过的 Action 字典，以工具名、参数为key（实际上就是query内容）重复动作跳过并返回之前查过的结果。
+2. 话题去重：由 TaskManager 处理，在 append 话题时按 topic 去重，相同任务不添加。
+3. prompt 级别引导：Orchestrator prompt 要求子话题之间边界清晰且易于理解，避免重叠。需要研究的新话题不在当前上下文出现，而是选择研究完成后请求新话题放进研究队列。
+
+# 4.
 
 ### 长网页提取最优文本段
 
@@ -190,11 +197,13 @@ RAG核心流程是多路召回 + rerank top5；
 首先我们对长文档进行按预设规则（段落标记优先，否则定长）切块，根据 query 内容分别请求 embedding model，分别计算每块的余弦相似度。
 然后我们选择总得分最高的连续块作为命中单元，所谓连续块就是在一定窗口内的多个相邻 chunk。考虑在阈值内选择 0 ~ 3 个块来保证文章关键信息不遗漏。
 
-
-
 # Reference
 
 [^dont-build-multi-agents]: Cognition (Devin 开发团队) 工程博客：Walden Yan, [*Don't Build Multi-Agents*](https://cognition.com/blog/dont-build-multi-agents), 2025.
+
 [^building-effective-agents]: Anthropic 工程博客：Erik Schluntz & Barry Zhang, [*Building Effective Agents*](https://www.anthropic.com/engineering/building-effective-agents), 2024.
+
 [^multi-agent-research-system]: Anthropic 工程博客：[*How we built our multi-agent research system*](https://www.anthropic.com/engineering/multi-agent-research-system), 2025.
+
 [^reddit-single-or-multi]: Reddit r/AI_Agents 社区讨论：[*Multi Agent or Single Agent?*](https://www.reddit.com/r/AI_Agents/comments/1lb0zb3/multiagent_or_single_agent/), 2025.
+
