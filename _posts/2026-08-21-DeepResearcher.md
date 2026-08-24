@@ -228,11 +228,11 @@ BTW，三层去重机制：
 然后我们选择总得分最高的连续块作为命中单元，所谓连续块就是在一定窗口内的多个相邻 chunk。考虑在阈值内选择 0 ~ 3 个块来保证文章关键信息不遗漏。
 
 
-## 3.3 Foramtter
+## 3.3 Formatter
 
 **流程**：
 
-已获得的参考文献块 → Embedding 粗筛（BGE-M3 ） → NLI / 精排信息蕴含核验（BGE-Reranker-v2-m3）→ LLM 兜底
+已获得的参考文献块 → ~~Embedding 粗筛（BGE-M3 ）~~ → NLI / 精排信息蕴含核验（BGE-Reranker-v2-m3）→ LLM 兜底
 
 实际上 LLM 兜底是很后期才做的，并行起来效率还可以。
 
