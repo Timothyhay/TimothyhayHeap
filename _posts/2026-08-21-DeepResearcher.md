@@ -4,7 +4,6 @@ title: 从零开始连接世界知识 - 我的 DeepResearch 产品成长记录
 tags: Agent
 comments: true
 ---
-
 Note: 这篇文章还在施工中。
 [WIP]
 
@@ -37,7 +36,7 @@ Note: 这篇文章还在施工中。
 5. 信息难辨别 - 查到的东西真真假假难以验证溯源，但是正经研究又需要保证严谨性
 
 > 总算是都压缩到了五个字。不过我也准备了专业一些的表达以应对潜在需要聊这个的英文和面试之类的正式场合，也就是：
-> 
+>
 > 1. 信息过载 / Info Overload
 > 2. 信息孤岛 / Info Silos
 > 3. 高认知负担 / High Cognitive Load
@@ -124,15 +123,17 @@ DMI 能对复杂问题进行任务分解、并行研究、信息汇总和报告�
 - Step 2: Rewriter 结合对话历史，改写为独立、完整、无歧义的研究查询
 - Step 3: Orchestrator （背后是 Qwen3-Coder-480B）
   - **规划**：预研究与问题分解。判断任务类型（广度、深度、直接回答）；计划一个解决通路，然后选择 Worker(Researcher) 数量（1~20），然后把初始节点子 Agent 和依赖的子 Agent 要研究的话题润色好，标记好依赖关系送进队列。
-  - **认知更新**：研究计划不是一成不变的，Orchestrator会监听Researcher的 `decompose`动作，并实时更新研究地图（DAG）。
   - **实例化 Worker(Researcher)**：
     - 循环寻找并执行无依赖 + pending 状态的节点启动。
     - 每次启动会实例化一个 Researcher 并发执行，最多执行 7 步 ReAct循环。Researcher 的行为包括：
       - **ReAct 循环**：Thought -> Action:search[query] -> Observation
       - **检索时**：首先进行 Action 去重（查字典） + 跨搜索缓存提取；RAG 检索 + 内部门户网站检索 + LLM 评估再过滤。
       - **完成后**：返回一个包含 `{summary, source, new_topics}` 的结果，结果的总结 `summary `会追加到 Orchestrator 的 Factlist 里。这里的 `new_topics`来自于 Researcher的判断，会动态创建新的研究话题到队列中。把这个节点的任务标记为 complete。
+  - **认知更新**：研究计划不是一成不变的，Orchestrator会监听Researcher的 `decompose`动作，并实时更新研究地图（DAG）。
   - **总结**：分为 快速总结 `QuickSummarize` 和 链路总结 `ChainSummarize`，分别用于总结某个节点的关键信息，以及一条有依赖关系的链路中的脉络，呈现形式不同；快速总结强调要点，链路总结要求像短文。
 - Step 4：格式化所有链路的报告，使用长思考模型（temperature=0.2，较为确定）。对较长的文本分步处理，返回最终字符串。
+
+<br>
 
 **Quick questions:** 为什么选了 Orchestrator-Worker 架构的多 Agent 设计，你是 A\ 粉丝吗？
 
@@ -155,39 +156,67 @@ Congition （很有可能他们接的外部模型效果也一般）的场景主�
 
 # 3. 模块详细设计
 
-有关检索部分的细节：
+这里我补充一些几个核心 Agent 的设计细节。
+
+## 3.1 Orchestrator
+
+**规划部分**：即预研究与问题分解。也就是判断任务类型（广度、深度、直接回答）；
+计划一个解决通路，然后分析用户查询复杂度，从而选择 Worker(Researcher) 数量（1~20）；
+
+**子问题准备**：把初始节点子 Agent 和依赖的子 Agent 要研究的话题润色好，标记好依赖关系送进任务队列。
+
+**认知更新**：研究计划不是一成不变的，根据研究中其他Researcher的新发现动态更新研究地图（DAG）。同时维护一个 Factlist，随着子任务的结束不断更新认知。
+这里还有一个**已经调研过的子任务话题**和**已经查过的内容**的缓存，避免重复操作（主要是为了省钱）。
+
+**并发管理**：同时调度多个Researcher来处理没有依赖关系的子任务（一次性尽可能多的获取所有可执行的任务），来缩短研究总耗时。这是我们选多Agent架构的最核心原因。
+
+**组织结果**：即总结。分为 快速总结 `QuickSummarize` 和 链路总结 `ChainSummarize`，分别用于总结某个节点的关键信息，以及一条有依赖关系的链路中的脉络，呈现形式不同；快速总结强调要点，链路总结要求像短文。
+
+## 3.2 Researcher
+
+**决策去重**
+
+**爬虫与搜索**
 
 首先需要在ResearcherAgent的Action中调用search[query]工具时触发，这个工具自带一个重复动作去重/读取缓存的功能。
 RAG核心流程是多路召回 + rerank top5；
 
 > 如果判断挂载的知识库超过1个，策略会升级为全量召回：
-> 
+>
 > 分库独立召回topK，然后每库结果min-max归一化，再RRF做跨库合并，最后去重+rerank精排。
 
-向量路的query对象是一定要模型改写很多次之后才能传的，有大量例子提供给LLM改写。为k个问法各自生成一路检索请求。
+向量路的query对象是一定要模型改写很多次之后才能传的，有例子提供给LLM改写。模型自己为1~3种问法各自生成一路检索请求。
 
-结果我们简单extend拼接，不做加权融合。
+对部分内部来源（比如个人知识库）做多路召回 + rerank；余下的结果我们简单extend拼接，不做加权融合。
+
+因为调用现场搜索接口时已经按相关性排序了，我们都只选top 5结果，让模型看一下。这里召回的也不是完整网页，是大小合适的chunk。
 
 后续我们统一去重，过滤掉重复的文档块。
 
 然后LLM会多检索、爬取结果打分，配合playwright爬虫补全正文和 `crawl_record`跨轮缓存。
 
 > 关于为什么要补爬虫正文：因为我们的内部门户网站接口 API 只返回摘要，得我们自己去抓内网界面转成 markdown 再供 LLM 消费。
-> 
+>
 > 没有什么特别的技术，无非是给界面注入Cookie，然后随机延迟模拟人类行为，智能滚动一下防止懒加载DOM里没有获取到全文。
 > 最后用readability算法获取主体的正文，然后 markdownify 转 markdown。拿到之后交给 `crawl_record`，它会记录有没有爬过、以及有没有用。
 
 异常处理：检索失败给提示，不阻塞流程；重排失败给默认分。
 
+**语料评估**：一次对话内对大量URL进行打分，考虑4个因素：
+- 时效性：网页时间戳
+- 路径结构：分析URL路径结构判断聚合情况、结构高频出现认为权重变高
+- 语义相关性：上文检索时完成，但 LLM 会在选择中再次考虑
+- 语料质量：LLM 整体评价时也考虑语料质量
+
+
 ### 搜索去重
 
-三层去重机制：
+BTW，三层去重机制：
 
 1. 单 Researcher 内去重：使用执行过的 Action 字典，以工具名、参数为key（实际上就是query内容）重复动作跳过并返回之前查过的结果。
 2. 话题去重：由 TaskManager 处理，在 append 话题时按 topic 去重，相同任务不添加。
 3. prompt 级别引导：Orchestrator prompt 要求子话题之间边界清晰且易于理解，避免重叠。需要研究的新话题不在当前上下文出现，而是选择研究完成后请求新话题放进研究队列。
 
-# 4.
 
 ### 长网页提取最优文本段
 
@@ -197,13 +226,23 @@ RAG核心流程是多路召回 + rerank top5；
 首先我们对长文档进行按预设规则（段落标记优先，否则定长）切块，根据 query 内容分别请求 embedding model，分别计算每块的余弦相似度。
 然后我们选择总得分最高的连续块作为命中单元，所谓连续块就是在一定窗口内的多个相邻 chunk。考虑在阈值内选择 0 ~ 3 个块来保证文章关键信息不遗漏。
 
+
+## 3.3 Foramtter
+
+**流程**：
+
+已获得的参考文献块 → Embedding 粗筛（BGE-M3 ） → NLI / 精排信息蕴含核验（BGE-Reranker-v2-m3）→ LLM 兜底
+
+实际上 LLM 兜底是很后期才做的，并行起来效率还可以。
+
+
+
 # Reference
 
 [^dont-build-multi-agents]: Cognition (Devin 开发团队) 工程博客：Walden Yan, [*Don't Build Multi-Agents*](https://cognition.com/blog/dont-build-multi-agents), 2025.
-
+    
 [^building-effective-agents]: Anthropic 工程博客：Erik Schluntz & Barry Zhang, [*Building Effective Agents*](https://www.anthropic.com/engineering/building-effective-agents), 2024.
-
+    
 [^multi-agent-research-system]: Anthropic 工程博客：[*How we built our multi-agent research system*](https://www.anthropic.com/engineering/multi-agent-research-system), 2025.
-
+    
 [^reddit-single-or-multi]: Reddit r/AI_Agents 社区讨论：[*Multi Agent or Single Agent?*](https://www.reddit.com/r/AI_Agents/comments/1lb0zb3/multiagent_or_single_agent/), 2025.
-
