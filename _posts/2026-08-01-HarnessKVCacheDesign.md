@@ -19,7 +19,7 @@ comments: true
 涵盖两条互补轨道的完整流程：离线预测（零网络/API key 得到的理论结果）和在线实测（请求 DeepSeek 看看花了多少钱），以及两个维度的评价指标——可复用前缀份额（reusable prefix ratio）和命中率（cache hit rate）。
 
 全文用 60 个独立 session、三种对话长度（6/12/18 轮）和三种推理回放策略（never/tool/always）的数据来论证设计的稳健性。在`bench`目录可以找到素有实验的复现入口。
-如果你很急，也可以直接看 [评测目标](#1-评测目标)、我们的[Agent 架构设计：为何前缀缓存能命中](#3-agent-架构设计为何前缀缓存能命中)，或者[实验结果](#6-实验结果)。
+如果你很急，也可以直接看 [评测目标](#1-评测目标)、我们的[Agent 架构设计：为何前缀缓存能命中](#3-agent-架构设计为何前缀缓存能命中)、[实验结果](#6-实验结果)，或者[和市面主流 Agent 的对比](#8-和市面上其他-coding-agent-的区别在哪)。
 
 ---
 
@@ -154,9 +154,9 @@ KV cache 的命中率是一个成本指标，不是一个正确性指标。我�
 
 ## 3. Agent 架构设计：为何前缀缓存能命中
 
-KV cache 的命中率不取决于调参，取决于**代码结构**。以下七个设计决策是 95% 命中率的基石。
+KV cache 的命中率不取决于任何模型调参，取决于**代码结构**。以下七个设计决策是 95% 命中率的基石。
 
-### 3.1 两区消息存储 - 不可变前缀 + 只追加历史
+### 3.1 两区消息存储：不可变前缀 + 只追加历史
 
 WhalePod 的消息管理器（`whalepod/core/messages.py`）把消息分成两个区：
 
@@ -174,13 +174,16 @@ Zone 2 — append-only 历史                          ⟵ 从未被就地改写
 
 **分区原则：** Zone 1 完全不变、Zone 2 只新增不修改。在此基础上越容易改变的的内容放在越后面。
 
-**为什么重要：** KV cache 以最长公共前缀为 key。根据我们的设计原则所以每个新请求的前缀都等于"Zone 1 + Zone 2 的已发送部分"，和上一个请求的前缀完全重叠。server 不会因为"中间某个消息被改了内容"而触发冷 miss。
+**为什么重要：** KV cache 以最长公共前缀为 key。根据我们的设计原则所以每个新请求的前缀都等于"Zone 1 + Zone 2 的已发送部分"，和上一个请求的前缀完全重叠。
 
-prompt 放在 repo-map **前面**不是偶然。prompt 是 session 直不变的，repo-map 在 `/refresh` 后可能更新。如果 prompt 在 repo-map 之后，一次 `/refresh` 会破坏整个系统提示词的缓存——这意味着剩下的 byte 全部被重新计费。prompt 在前意味着 `/refresh` 只破坏 map 的那一小段尾缀。
+prompt 放在 repo-map **前面**不是偶然。prompt 是 session 直不变的，repo-map 在 `/refresh` 后可能更新。
+如果 prompt 在 repo-map 之后，一次 `/refresh` 会破坏整个系统提示词的缓存，剩下的 byte 全部被重新计费。
+prompt 在前意味着 `/refresh` 只破坏 map 的那一小段尾缀。
 
-### 3.2 Context Ledger — 拦截重复读
+### 3.2 Context Ledger: 拦截重复读
 
-`whalepod/core/ledger.py` 记录了每个已送入上下文的文件范围（path + start + end）+ 文件身份（mtime_ns + size）。当模型请求某个文件时，Agent 走两条路径（`whalepod/core/agent.py:_run_read`）：
+`whalepod/core/ledger.py` 记录了每个已送入上下文的**文件范围**（path + start + end）+ **文件身份**（mtime_ns + size）。
+当模型请求某个文件时，Agent 走两条路径（`whalepod/core/agent.py:_run_read`）：
 
 ```
 模型请求 read_file("messages.py", start=1, end=50)
@@ -197,8 +200,9 @@ ledger.hit(path="messages.py", start=1, end=50)?
 
 **为什么重要：** 在 turn 4、7、9、11 中，模型重复请求了已经读完的文件。没有 ledger，每次重复读都会往上千 token。12 轮 session 中，ledger 省下了 ~17k token（离线测量）。在更长 session 中效果更大。
 
-### 3.3 Provider Affinity — 前缀缓存是单机状态
+### 3.3 Provider Affinity：前缀缓存始终单机
 
+这个设置只对 OpenRouter 等会路由到不同推理服务提供商的接口才有意义。
 `whalepod/core/base.py:extra_body` 在 OpenRouter 上把请求 pin 到一个 `provider: {order: ["DeepInfra"], allow_fallbacks: false}`。前缀缓存在某**一台**服务器的 KV cache 中，聚合器的正常行为是把每个请求路由到不同 provider，每个请求都是冷 miss。
 
 实测数据：同一 11.2k 前缀，不 pin **0.4%** 命中率，pin 到指定 provider **98.4%**。
@@ -224,9 +228,33 @@ DeepSeek 明确要求没有工具调用时中介 assistant 的 reasoning_content
 
 ### 3.5 每个工具自带使用规则，不通用的不会留在前缀里
 
-`whalepod/tools/registry.py` — 每个 tool-definition 带 `guidelines`（使用指南）。`build_system_prompt` 从当前会话中实际激活的工具中收集指南，"Using the tools" 段落是动态生成的。但生成后 **session 全程不变**（工具集是 session 开始时锁定的）。
+Zone 1 里除了 system prompt 还挂着 tool definitions。WhalePod 把"这个工具怎么用"的使用指南（`guidelines`）和工具的 JSON schema 写进**同一个定义**（`whalepod/tools/registry.py:_schema`），而不是散落在某个单体 prompt 文件里：
 
-在 readonly 沙盒中写工具不被提供，它们的用法指南也不会留在 prompt 中——所以前缀里不浪费 token 给不可用的工具。
+```python
+_schema("edit_file",
+        "Replace an exact substring in a file...",   # ← wire schema 的 description
+        {...},
+        guidelines=[                                  # ← prompt 行，不进 wire schema
+            "`edit_file` needs an `old` string that occurs exactly once, "
+            "copied verbatim from the file including indentation...",
+            ...
+        ])
+```
+
+session 启动时，`ToolRegistry.__init__` 按 sandbox 模式**一次性**过滤出启用的工具集并锁定全程：readonly 沙盒直接剔除所有写工具。之后两条输出路径各取所需：
+
+- `schemas()` 返回**同一批缓存对象**，同时剥掉 `guidelines` 键，因为某些 provider 对 tool 定义里的未知键直接返回 400；
+- `guidelines()` 只从**已启用**的工具收集指南，去重、按工具顺序排列，交给 `build_system_prompt` 拼出 "Using the tools" 段落。
+
+所以 prompt 确实是按当前工具集"动态组装"的，但组装发生在 session 起点、之后字节冻结——**动态性被限制在 session 边界内，运行期享受静态前缀的全部缓存收益**。
+
+**为什么重要：**
+
+1. **不可用工具的 token 根本不进前缀。** 比如 plan模式（readonly 会话），写工具的所有内容都不出现在 Zone 1。我们的工具规则、工具列表动态装载（开始运行后就冻结了）。
+2. **工具描述事实来源防工具理解漂移。** 指南和 schema 物理上写在同一个 `_schema()` 调用里。使 schemas 和 guidelines 在 Agent 上下文中只会同时更新、同时访问。这看起来并没有直接省 token，但能防止 Agent 对工具的理解过时而犯更大错误。
+3. **与每请求动态组装的设计划清界限。** 有些 harness 每轮重建系统提示词（注入 cwd、时间、会话模式），等于每轮主动制造一次全前缀失效。WhalePod 把变化的自由度收敛到 session 起点做一次性解析，换来整个 session 的字节稳定。
+
+当然这里其实还有工具去重（不过是字符级别的）的操作，略去不谈。
 
 ### 3.6 Compaction 取代盲 Prune
 
@@ -236,7 +264,7 @@ Compaction 用同一切线和同样的前缀失效成本，只是用一个小模
 
 **为什么重要：** 窗口超限时只有一刀（一次全前缀失效），不管是 prune 还是 compaction 都一样。Compaction 多了一次小型 API 调用，换回了丢失的信息，让前缀在恢复后依然可以工作。
 
-### 3.7 行结束符归一化 — 保证 BPE 稳定
+### 3.7 行结束符归一化：保证 BPE 稳定
 
 `whalepod/tools/textfile.py` — 读取时文件内容归一化为 LF，写入时恢复为文件的原始行结束符。没有这个处理，在 CRLF checkout 上做编辑，`old` 文本不匹配实际文件，编辑失败；重新读取不帮忙，因为 read_file 的输出也是 LF。
 
@@ -656,7 +684,43 @@ aggregate 的细粒度版本是 **[`live_hit_rate_band.svg`](/images/illustratio
 
 ---
 
-## 8. 结论
+## 8. 和市面上其他 Coding Agent 的区别在哪？
+
+写到这里必须诚实回答一个问题：这些设计和市面上的主流 Agent 比起来，到底是独立思考还是殊途同归？
+
+### 8.1 先说实话：核心原则已经行业收敛
+
+Claude Code 团队 2026 年 4 月的博客 [*Lessons from building Claude Code: Prompt caching is everything*](https://claude.com/blog/lessons-from-building-claude-code-prompt-caching-is-everything) 公开的经验，和本文 §3 的设计高度重合：
+
+- 静态内容前置、动态内容后置（对应 §3.1 两区布局）；
+- 不改 system prompt，而是往 messages 里追加 `<system-reminder>`（对应"volatile facts belong in the user turn"）；
+- plan mode 做成工具调用而不是模式切换，状态转换不触碰前缀；
+- session 内不增删工具，MCP 工具用 `defer_loading` stub 占位保持前缀稳定（对应 §3.5 工具集锁定）。
+
+**两区布局、append-only、compaction 这些"原则"已经不是差异点，是行业共识。** Claude Code 甚至把命中率当 SLO 监控、命中率过低按事故（SEV）处理——这和本文把 KVCache 当工程指标评测的立场一致。
+
+反面教材也存在：Cline 的系统提示内嵌 cwd、时间、模式等环境细节，随请求变化，曾有用户报告一个 "hello" 就触发近 10k token 的系统提示传输（[issue #4047](https://github.com/cline/cline/issues/4047)）；Cursor 则把缓存标记完全交给服务端透明处理，用户无法控制。这类"每请求动态组装"的设计正是 §3.5 划清界限的对象。
+
+### 8.2 真正的差异在三个层面
+
+| 维度 | 主流做法 | WhalePod 的不同 |
+|:---|:---|:---|
+| **上下文治理方向** | **驱逐导向**：Anthropic 的 [context editing](https://platform.claude.com/docs/en/build-with-claude/context-editing) 按阈值清除旧 tool result / thinking block，compaction 把历史换成摘要——都是"内容进来了再扔出去"，且每次清除都在前缀上开一刀 | **入口去重**：ContextLedger 让重复内容根本不进入窗口（一行指针替代上千 token 的文件内容）。两者互补，但"防患于未然"这条路几乎没人做——这是本项目最独特的部分 |
+| **稳定性保证机制** | 靠**纪律和约定**：官方文档告诉你"别中途换模型"、"别动系统提示"，违反了就缓存失效 | 靠**构造**：工具集在 session 构造时过滤锁定（§3.5）、prompt 一次组装后字节冻结、指南与 schema 同体定义防漂移——违规在结构上不可能发生 |
+| **验证文化** | 闭源团队内部有告警，但开源 Agent 几乎没人测量并公布命中率数据 | 离线字节级预测器 + 在线实测 MAE 对照 + 22 session P10/P90 分布 + 四种设计变体消融实验（§6.1），每一项决策的贡献都有数字 |
+
+### 8.3 第二梯队的细节差异
+
+- **Reasoning 回放策略**：DeepSeek 系模型的特有问题（CoT 是否回放）。西方 Agent 主要面向 Anthropic/OpenAI，不面对这个选择；WhalePod 用三策略 × 10 session 的 A/B 实验量化了旋钮代价（§6.4），而不是拍脑袋定默认值。
+- **Provider pinning**：OpenRouter 场景下 0.4% → 98.4% 的实测对比（§3.3），大家知道该做，但很少给出数字。
+- **BPE 级细节**：CRLF 归一化保证 tokenizer 输出稳定（§3.7）——这种粒度的坑只有自己踩过才知道。
+- **反例也要认**：Claude Code 的 `defer_loading` + tool search 处理大规模 MCP 工具集，比 WhalePod 的"启动时锁死"更灵活——工具多到几百个时，静态全量 schema 本身就是负担。这是值得借鉴的方向。
+
+一句话总结：**原则层面大家已经趋同——Claude Code 的官方博客基本是在给这套设计背书。真正的区别在于：主流把前缀稳定性当作编码规范来遵守、把旧内容当作待清理的负担来治理；WhalePod 把它当作类型系统的约束来构造、把重复内容当作不该发生的输入来拦截，并且用一套离线预测 + 在线对照的评测体系证明每一项决策的贡献。**
+
+---
+
+## 9. 结论
 
 WhalePod 的 two-zone + append-only + context-ledger 设计在 DeepSeek V4 官方 API 上通过了统计学意义上的验证：
 
