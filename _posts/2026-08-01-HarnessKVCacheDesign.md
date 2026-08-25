@@ -228,7 +228,8 @@ DeepSeek 明确要求没有工具调用时中介 assistant 的 reasoning_content
 
 ### 3.5 每个工具自带使用规则，不通用的不会留在前缀里
 
-Zone 1 里除了 system prompt 还挂着 tool definitions。WhalePod 把"这个工具怎么用"的使用指南（`guidelines`）和工具的 JSON schema 写进**同一个定义**（`whalepod/tools/registry.py:_schema`），而不是散落在某个单体 prompt 文件里：
+Zone 1 里除了 system prompt 还包含 tool definitions。
+WhalePod 把工具的使用指南（`guidelines`）和工具的 JSON schema 写进**同一个定义**（`whalepod/tools/registry.py:_schema`）。注意 `guidelines` 是自留的备注字段，不属于 wire schema。
 
 ```python
 _schema("edit_file",
@@ -241,20 +242,37 @@ _schema("edit_file",
         ])
 ```
 
-session 启动时，`ToolRegistry.__init__` 按 sandbox 模式**一次性**过滤出启用的工具集并锁定全程：readonly 沙盒直接剔除所有写工具。之后两条输出路径各取所需：
+session 启动时，`ToolRegistry.__init__` 按 sandbox 姿态一次性过滤出启用的工具集，之后整个 session 不再变化——用户只选择姿态（默认 `confirm`、`--no-tools` 强制 `readonly`、`--yes` 自动批准），工具集是姿态的确定性推导，从不手动挑选。e.g. readonly 沙盒直接剔除所有写工具。
 
-- `schemas()` 返回**同一批缓存对象**，同时剥掉 `guidelines` 键，因为某些 provider 对 tool 定义里的未知键直接返回 400；
-- `guidelines()` 只从**已启用**的工具收集指南，去重、按工具顺序排列，交给 `build_system_prompt` 拼出 "Using the tools" 段落。
+同一个定义随后被拆成**两条渠道**寄送：
 
-所以 prompt 确实是按当前工具集"动态组装"的，但组装发生在 session 起点、之后字节冻结——**动态性被限制在 session 边界内，运行期享受静态前缀的全部缓存收益**。
+```
+一个工具的定义（schema + 使用指南）
+        │
+        ├─ schema 部分 ──→ 走 API 的 tools 参数
+        │     schemas() 返回同一批缓存对象（源码注释原话：
+        │     "a re-worded schema is a cache miss"），并剥掉 guidelines 键。
+        │     API 只认标准格式字段（name/description/parameters），
+        │     多塞一个私有字段，严格的服务商会拒收整个请求（400）
+        │
+        └─ 指南部分 ────→ 走 system prompt 文本
+              guidelines() 只收集已启用工具的指南，
+              按字符串精确匹配去重、按工具顺序排列，
+              交给 build_system_prompt 拼出 "Using the tools" 段落，
+              以普通文字的形式让模型读到
+```
+
+一句话：**同一份资料按两种渠道各自的规矩拆开寄送——schema 是递给 API 的标准格式名片（格式严格，多了拒收），指南是自己念给模型听的说明书（自由文本）。**
+
+所以 prompt 确实是按当前工具集动态组装的，但组装发生在 session 起点，之后字节级别冻结，运行期享受静态前缀的全部缓存收益。
 
 **为什么重要：**
 
-1. **不可用工具的 token 根本不进前缀。** 比如 plan模式（readonly 会话），写工具的所有内容都不出现在 Zone 1。我们的工具规则、工具列表动态装载（开始运行后就冻结了）。
-2. **工具描述事实来源防工具理解漂移。** 指南和 schema 物理上写在同一个 `_schema()` 调用里。使 schemas 和 guidelines 在 Agent 上下文中只会同时更新、同时访问。这看起来并没有直接省 token，但能防止 Agent 对工具的理解过时而犯更大错误。
+1. **不可用工具的 token 根本不进前缀。** 比如 readonly 会话（`--no-tools`），写工具的所有内容都不出现在 Zone 1。工具规则与工具列表在启动时一次组装，开始运行后就冻结了。
+2. **工具描述事实来源防工具理解漂移。** 指南和 schema 物理上写在同一个 `_schema()` 调用里，二者只能成对变更（源码级）、成对出现（运行时过滤）。这看起来并没有直接省 token，但能防止 Agent 对工具的理解过时而犯更大错误。
 3. **与每请求动态组装的设计划清界限。** 有些 harness 每轮重建系统提示词（注入 cwd、时间、会话模式），等于每轮主动制造一次全前缀失效。WhalePod 把变化的自由度收敛到 session 起点做一次性解析，换来整个 session 的字节稳定。
 
-当然这里其实还有工具去重（不过是字符级别的）的操作，略去不谈。
+**一个推论：能力变更应该发生在 session 边界。** tool schema 挂在前缀头部，假如支持会话中途添加写工具，改一个字节，后面全部对话历史的缓存一起作废；而退出重启只冷一次 Zone 1（~2k token）——重启严格便宜于运行中改能力。安全性（readonly 无提权通道）、缓存经济学、错误语义（未提供的工具返回 unknown tool 而非看似可修复的权限错误）三者在同一个决策上对齐。
 
 ### 3.6 Compaction 取代盲 Prune
 
