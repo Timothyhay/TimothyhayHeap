@@ -44,5 +44,55 @@ $
 
 我们从 Memory 开始。
 
+先来介绍一下今天（2026年8月）在简洁方面有口皆碑的 Pi Agent 的实践。
+
+没有太多个性化的内容，主要包含会话压缩和持久化。
+
+## 1.1 压缩
+
+有关压缩的描述可以在这里(`packages/coding-agent/docs/compaction.md`)找到。
+做法和主流 Agent 完全一样，就是 LLM 黑盒压缩 + 凑点东西进新上下文。
+具体而言，流程分为 5 步：
+
+1. 寻找切割点：从最新消息回溯，累积 token 估算直到达到 keepRecentTokens（默认 20k）
+2. 提取消息：收集从上次保留边界到切割点的消息
+3. 生成摘要：调用 LLM 按结构化格式总结，并把上一次摘要作为迭代上下文传入
+4. 追加条目：保存 CompactionEntry，包含摘要和 firstKeptEntryId
+5. 重建上下文：下次请求时用 摘要 + firstKeptEntryId 之后的消息。
+
+所谓 Compaction Entry，是一个包含压缩状态的 JSON，它存储旧消息的摘要，并标记从哪个位置开始的消息要还原到上下文。
+
+```js
+interface CompactionEntry<T = unknown> {  
+  type: "compaction";  
+  id: string;  
+  parentId: string;  
+  timestamp: number;  
+  summary: string;  
+  firstKeptEntryId: string;  
+  tokensBefore: number;  
+  usage?: Usage;  
+  fromHook?: boolean;  
+  details?: T;  
+}
+```
+
+CompactionEntry 数据结构负责记录摘要。
+
+摘要使用固定的结构化格式（Goal / Progress / Key Decisions / Next Steps / Critical Context 等），并在多次压缩时保留之前的信息、更新进展状态。
+
+**分割 Turn 的处理**
+有一个细节处理（甚至比 CC 还好）：如果单个 turn 本身超出 keepRecentTokens，会产生"split turn"，
+此时会生成两份摘要（历史摘要 + turn 前缀摘要）并合并。
+
+也有一些 pi 的分支实现做到了并发地compaction来提升体验；具体在压缩的时候怎么存的问题，TencentDB Memory 有一个存 mermaid 图的设计。
+总之，存什么和怎么存是一个重要问题。
+
+## 1.2 上下文持久化 / Session Persistence
+
+pi 有一个树状的会话历史记录设计。
+整个 会话以 JSONL 文件树形结构存储在 ~/.pi/agent/sessions/，每个条目有 id/parentId，支持用户原地分支（/tree, /fork, /clone）。
+
+**这个压缩是有损的，但是支持完整还原。** 完整历史仍保留在 JSONL 文件中，可以通过 /tree 找回。
 
 
