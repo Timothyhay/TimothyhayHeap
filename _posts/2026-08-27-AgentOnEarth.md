@@ -38,8 +38,6 @@ $
 *这里预计不含 long-horizon LLM 后训练相关内容，将在其他文章中展开。
 
 
-
-
 # 1. Memory
 
 我们从 Memory 开始。
@@ -48,7 +46,7 @@ $
 
 没有太多个性化的内容，主要包含会话压缩和持久化。
 
-## 1.1 压缩
+## 1.1 Compaction
 
 有关压缩的描述可以在这里(`packages/coding-agent/docs/compaction.md`)找到。
 做法和主流 Agent 完全一样，就是 LLM 黑盒压缩 + 凑点东西进新上下文。
@@ -88,11 +86,23 @@ CompactionEntry 数据结构负责记录摘要。
 也有一些 pi 的分支实现做到了并发地compaction来提升体验；具体在压缩的时候怎么存的问题，TencentDB Memory 有一个存 mermaid 图的设计。
 总之，存什么和怎么存是一个重要问题。
 
-## 1.2 上下文持久化 / Session Persistence
+## 1.2 Session Persistence
 
 pi 有一个树状的会话历史记录设计。
-整个 会话以 JSONL 文件树形结构存储在 ~/.pi/agent/sessions/，每个条目有 id/parentId，支持用户原地分支（/tree, /fork, /clone）。
+整个会话以 JSONL 文件树形结构存储在 ~/.pi/agent/sessions/，每个条目有 id/parentId，支持用户原地分支（/tree, /fork, /clone）。
 
-**这个压缩是有损的，但是支持完整还原。** 完整历史仍保留在 JSONL 文件中，可以通过 /tree 找回。
+**这个压缩是有损的，但是支持完整还原。** 完整历史仍保留在 JSONL 文件中，可以通过 /tree 找回。这就是所谓上下文持久化。
+
+# 2. Planning
+
+pi 的文档[2]提到 pi 有意跳过了 sub agents 和 plan mode 这类功能。pi 的核心因此只是一个持续的简单 agent loop：
+
+user query → 输出（可能带工具调用的）assistant message → 执行工具 → observation 给 LLM → 继续下一轮，直到没有工具调用为止。
+这套 loop 没规划步骤，只是逐轮响应式地根据 LLM 的工具调用推进，而不是提前生成一个多步计划再执行。
+
+p.s. 这个流程中有钩子（beforeToolCall/afterToolCall/shouldStopAfterTurn）可以介入执行流程。
 
 
+# Reference
+
+[2] https://pi.dev/
