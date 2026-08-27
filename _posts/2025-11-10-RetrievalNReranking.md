@@ -1,5 +1,5 @@
 ---
-layout: blogpage
+layout: modern-article
 title: Retrieval and Reranking for Code Snippet
 comments: true
 tags: Deep-Learning
