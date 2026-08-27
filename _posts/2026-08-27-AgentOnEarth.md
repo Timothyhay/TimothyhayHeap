@@ -5,6 +5,9 @@ tags: Agent
 comments: true
 ---
 
+Note: 这篇文章还在施工中。
+[WIP]
+
 2023年6月，OpenAI Head of Safety Systems - Lilian Weng 发表了一篇讨论非常广的文章：LLM Powered Autonomous Agents，
 以至于一整年内有关 Agent 组成部分的截图都持续地在各大公司/高校组会/咨询公司或者公众号的材料中出现。
 
