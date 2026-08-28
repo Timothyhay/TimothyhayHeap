@@ -121,6 +121,12 @@ user query → 输出（可能带工具调用的）assistant message → 执行�
 
 p.s. 这个流程中有钩子（beforeToolCall/afterToolCall/shouldStopAfterTurn）可以介入执行流程。
 
+[WIP]
+
+# 3. Tool Use
+
+
+# 4. Collaboration
 
 # Reference
 
