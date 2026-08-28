@@ -232,7 +232,7 @@ BTW，三层去重机制：
 
 **流程**：
 
-已获得的参考文献块 → ~~Embedding 粗筛（BGE-M3 ）~~ → NLI / 精排信息蕴含核验（BGE-Reranker-v2-m3）→ LLM 兜底
+已获得的参考文献块 → ~~Embedding 粗筛（BGE-M3 ）~~ → NLI / 精排信息关联度核验（BGE-Reranker-v2-m3）→ LLM 兜底
 
 实际上 LLM 兜底是很后期才做的，并行起来效率还可以。
 
