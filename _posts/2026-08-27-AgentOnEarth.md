@@ -46,7 +46,9 @@ $
 
 没有太多个性化的内容，主要包含会话压缩和持久化。
 
-## 1.1 Compaction
+## Pi 的对话压缩与持久化
+
+**Compaction**：
 
 有关压缩的描述可以在这里(`packages/coding-agent/docs/compaction.md`)找到。
 做法和主流 Agent 完全一样，就是 LLM 黑盒压缩 + 凑点东西进新上下文。
@@ -86,12 +88,50 @@ CompactionEntry 数据结构负责记录摘要。
 也有一些 pi 的分支实现做到了并发地compaction来提升体验；具体在压缩的时候怎么存的问题，TencentDB Memory 有一个存 mermaid 图的设计。
 总之，存什么和怎么存是一个重要问题。
 
-## 1.2 Session Persistence
+**Session Persistence**：
 
 pi 有一个树状的会话历史记录设计。
 整个会话以 JSONL 文件树形结构存储在 ~/.pi/agent/sessions/，每个条目有 id/parentId，支持用户原地分支（/tree, /fork, /clone）。
 
 **这个压缩是有损的，但是支持完整还原。** 完整历史仍保留在 JSONL 文件中，可以通过 /tree 找回。这就是所谓上下文持久化。
+
+## 记忆与上下文管理
+
+在我参与设计产品里，我给Coding Agent 的问答场景划分了三种上下文管理模式：
+**上下文隔离**、**上下文整理**和**上下文丰富**。
+
+- 上下文隔离：主题检测、SubAgent、沙箱、[Skills的渐进式披露]
+- 上下文整理：黑盒压缩和可逆压缩、多源异构大文件问答、Agent间通信
+- 上下文丰富：to-do list等规划方法、集成拓展（比如环境信息）、动态上下文拼接（*.md，文件引用）
+
+意思是如果真的要展开设计特性，可以围绕这些地方提升能力，但是应该做到哪些？
+
+笔者认为应该把绝对通用的能力留下来。比如我要演进我的[WhalePod](https://github.com/Timothyhay/whale-pod)，
+一个重要能力就是多Agent交互时也保证省token、高KVCache命中率。所以多Agent交互一定是我我要考虑的特性，这部分的 memory 管理可能也会更复杂一些。
+
+[WIP]
+
+但上下文管理的做法现在有了一个新思路：
+
+DeepSeek Harness 讨论了一个问题，对带很多需要动态加载的插件的现代复杂系统中，存在两个问题：
+1. **卸载副作用**：插件卸载后，其注册的监听器、状态改变或钩子容易遗漏，导致系统状态污染。
+2. **依赖管理混乱**：组件间的依赖关系在动态变化时难以自动响应与有序调度。
+
+换句话说，他们把造成的挑战分为了两个维度：
+1. 时间可组合性（Temporal Composability）：组件在被移除或替换时，能够完整撤销（Revert）其产生的全部副作用。
+2. 空间可组合性（Spatial Composability）：能够声明并响应式地解析不同组件之间的跨模块依赖。
+
+DSH 将编程语言理论中的 Effect（效应） 与 Coeffect（余效应 / 上下文需求） 概念提升至运行时机制，提出了以下核心设计：
+
+> - 可逆效应（Revertible Effects - 解决时间维度）
+> 每个对上下文进行的修改或状态转换，运行时都会自动持有并维护其对应的逆操作。当插件卸载时，运行时会自动按序反向执行逆操作，实现安全卸载。
+> - 响应式余效应（Reactive Coeffects - 解决空间维度）
+> 组件以声明式的方式定义自己对外部环境/服务的依赖需求（Coeffect Specification）。当环境中的服务出现、变化或销毁时，系统自动驱动该组件的激活或休眠，保证依赖关系的响应式自治。
+> - 上下文范式（The Context Paradigm）
+> 将 Effect 上下文和 Coeffect 上下文统一为单一的 Context 类型。所有组件的副作用和依赖都通过上下文进行调解，确保不同组件交错运行时互不干扰，满足观测等价性（Observational Equivalence）。
+> - 动态组合演算（Calculus of Dynamic Composition）
+> 给出了形式化的演算规则与元理论，证明了时空可组合性可以从单一组件无缝扩展到整个由多组件交织构成的复杂系统。
+
 
 # 2. Planning
 
@@ -102,6 +142,12 @@ user query → 输出（可能带工具调用的）assistant message → 执行�
 
 p.s. 这个流程中有钩子（beforeToolCall/afterToolCall/shouldStopAfterTurn）可以介入执行流程。
 
+[WIP]
+
+# 3. Tool Use
+
+
+# 4. Collaboration
 
 # Reference
 
