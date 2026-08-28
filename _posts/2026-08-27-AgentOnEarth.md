@@ -46,7 +46,9 @@ $
 
 没有太多个性化的内容，主要包含会话压缩和持久化。
 
-## 1.1 Compaction
+## Pi 的对话压缩与持久化
+
+**Compaction**：
 
 有关压缩的描述可以在这里(`packages/coding-agent/docs/compaction.md`)找到。
 做法和主流 Agent 完全一样，就是 LLM 黑盒压缩 + 凑点东西进新上下文。
@@ -86,12 +88,29 @@ CompactionEntry 数据结构负责记录摘要。
 也有一些 pi 的分支实现做到了并发地compaction来提升体验；具体在压缩的时候怎么存的问题，TencentDB Memory 有一个存 mermaid 图的设计。
 总之，存什么和怎么存是一个重要问题。
 
-## 1.2 Session Persistence
+**Session Persistence**：
 
 pi 有一个树状的会话历史记录设计。
 整个会话以 JSONL 文件树形结构存储在 ~/.pi/agent/sessions/，每个条目有 id/parentId，支持用户原地分支（/tree, /fork, /clone）。
 
 **这个压缩是有损的，但是支持完整还原。** 完整历史仍保留在 JSONL 文件中，可以通过 /tree 找回。这就是所谓上下文持久化。
+
+## 记忆与上下文管理
+
+在我参与设计产品里，我给Coding Agent 的问答场景划分了三种上下文管理模式：
+**上下文隔离**、**上下文整理**和**上下文丰富**。
+
+- 上下文隔离：主题检测、SubAgent、沙箱、[Skills的渐进式披露]
+- 上下文整理：黑盒压缩和可逆压缩、多源异构大文件问答、Agent间通信
+- 上下文丰富：to-do list等规划方法、集成拓展（比如环境信息）、动态上下文拼接（*.md，文件引用）
+
+意思是如果真的要展开设计特性，可以围绕这些地方提升能力，但是应该做到哪些？
+
+笔者认为应该把绝对通用的能力留下来。比如我要演进我的[WhalePod](https://github.com/Timothyhay/whale-pod)，
+一个重要能力就是多Agent交互时也保证省token、高KVCache命中率。所以多Agent交互一定是我我要考虑的特性，这部分的 memory 管理可能也会更复杂一些。
+
+[WIP]
+
 
 # 2. Planning
 
