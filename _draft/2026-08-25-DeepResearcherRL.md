@@ -1,22 +1,24 @@
 ---
 layout: modern-article
-title: SFT Theory Note
+title: LLM Agentic RL w/ hand-made vanilla Deep Researcher Agent
 tags: LLM
 comments: true
 ---
 
-# LLM Agentic RL w/ vanilla ReAct Deep Researcher Agent
+本文记录了在 8 卡 A100 节点上，基于 **veRL (Ray + vLLM + FSDP)** 框架，对大语言模型进行 Multi-turn Agent 强化学习训练的实践，
+以及后续放缩到 910B 集群的迁移方案。
 
-本文记录了在 8 卡 A100 节点上，基于 **veRL (Ray + vLLM + FSDP)** 框架，对大语言模型进行 Multi-turn Agent 强化学习训练的完整方案。
+## 1. 我们为何出发
 
----
+[书接上回](/2026/08/21/DeepResearcher.html)，我们从第一性原理出发，手搓了一个架构和工具都保持简单的 ReAct DeepResearch Agent。
 
-## 1. 项目目标与问题定义
+我们的最终目标是训练其中的 Researcher Agent，让他具备在复杂、模糊、需要多步推理的问题中自主、高效使用本地 search 工具的能力。
+同时能过滤掉冗余信息、自动纠正检索方向，并能最终获得引用正式的高准确度回答。
 
-### 1.1 核心目标
-训练一个具备 Deep Research （也就是多轮检索推理）能力的 Agent。模型需要学会在面对复杂、模糊、需要多步推理的问题（如 HotpotQA）时，自主调用本地 Search 工具进行探索，过滤冗余信息，纠正检索方向，并最终提炼出高准确度、含真实引用的最终报告。
+接下来我们谈从问题建模、训练环境搭建开始，如何从单节点到多卡集群构建自定义 Agent 的训练。
 
-### 1.2 MDP（马尔可夫决策过程）形式化建模
+
+### 1.1 MDP 形式化建模
 在 Agentic RL 中，我们将多轮 ReAct 交互建模为一个步长有限的 MDP：
 *   **状态空间 $S$**：当前轮次之前的完整对话历史，包括初始 $Prompt$、历史思考过程 $Thought_t$、历史动作 $Action_t$（搜索） 和环境反馈 $Observation_t$。
 *   **动作空间 $A$**：模型在当前步骤生成的 Token 序列，think + tool_call(search)：
@@ -125,7 +127,7 @@ vanilla GRPO 的两个已知偏置，务必知道：
 > 路线 A（DAPO/Dr.GRPO）——"结果奖励可验证 + 参考模型已是好起点，去 KL 让策略充分移动、避免拖后腿"；DAPO 在其方法中移除了 KL 散度。
 > 路线 B（保守）——"保留小 KL 防止在稀疏奖励早期策略崩溃/复读，代价是探索受限"。
 
-### 3.6 对多卡集群的放缩计划
+### 3.6 对多卡集群的放缩方案
 
 
 
