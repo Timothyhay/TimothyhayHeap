@@ -89,10 +89,10 @@ KV cache 的命中率是一个成本指标，不是一个正确性指标。我�
 
 两条轨道：
 
-| 轨道 | 环境 | 测量对象 | 输出 |
-|:---|:---|:---|:---|
-| **离线 (`validate.py`)** | 零网络、零 API key | 请求之间的字节前缀可复用比（理论上限） | 四种上下文设计的对比 |
-| **在线 (`live_acceptance.py`)** | 真实服务器 | 服务器报告的 `prompt_cache_hit_tokens`（实际命中） | 命中率验证 + 预测一致性 |
+| 轨道                          | 环境 | 测量对象 | 输出 |
+|:----------------------------|:---|:---|:---|
+| **离线`validate.py`**         | 零网络、零 API key | 请求之间的字节前缀可复用比（理论上限） | 四种上下文设计的对比 |
+| **在线`live_acceptance.py`**  | 真实服务器 | 服务器报告的 `prompt_cache_hit_tokens`（实际命中） | 命中率验证 + 预测一致性 |
 
 离线说实验的意义在于说明*理论上*最多应该有多少token复用；在线实验则实际查看服务器确实有多少复用。
 两者之间的差距（MAE）衡量我们的理解与服务器行为的一致程度。
@@ -101,16 +101,16 @@ KV cache 的命中率是一个成本指标，不是一个正确性指标。我�
 
 ## 2. 代码文件
 
-评测系统全部驻留在 `bench/` 目录下，外加 `whalepod/core/tokenizer.py` 和 `tests/test_bench_encoding.py` 两个支撑文件。每个文件职责如下：
+评测系统全部放在 `bench/` 目录下，外加 `whalepod/core/tokenizer.py` 和 `tests/test_bench_encoding.py` 两个支撑文件。每个文件职责如下：
 
-### `bench/validate.py` — 离线验证引擎
+### 离线验证引擎
 
-完全不依赖网络。其工作机制：
+`bench/validate.py` 完全不依赖网络。其工作机制：
 
 1. **`ScriptedEndpoint`**（继承 `VLLMEndpoint`）：替代真实 HTTP 连接，在内存中按预设脚本复读应答。因为走的是真实的 `_payload()` 构建消息、真实的 Agent 循环，所以测量的是**生产代码路径**，不是手工模拟。
 2. **`wire_text(payload)`**：将发出的 OpenAI 格式 JSON 转为模型**真正接收**的输入字符串。调用的是 `bench/dsv4_encoding.py` 里的 `encode_messages()`，该函数来自 DeepSeek V4-Flash-0731 的官方仓库，处理 BOS、角色分隔符（`<|User|>` / `<|Assistant|>`）、tool schema 挂载到 system message、tool result 合并到 user message 等所有细节。
 3. **`common_prefix_len(a, b)`**：对两个连续请求的输入字符串做二分查找，找最长公共前缀（字节级）。
-4. **`estimate_tokens(shared_prefix)`**：用 DeepSeek V4 的官方 BPE tokenizer（`whalepod/core/tokenizer.py` → `deepseek-v4 (tokenizer.json)`）数 token，然后按 64-token 块边界截断（block-aligned）。
+4. **`estimate_tokens(shared_prefix)`**：用 （DeepSeek V4 的）官方 BPE tokenizer 计算数 token，然后按 64-token 块边界截断。
 5. **`measure(payloads)`**：对全部请求对执行 `wire_text → common_prefix_len → estimate_tokens → blocks`，输出每个请求的 `RequestMetrics`。
 
 五个独立实验：
@@ -131,19 +131,16 @@ KV cache 的命中率是一个成本指标，不是一个正确性指标。我�
 | `--only prune` | 同上，但窗口缩小到 ~45k（强制 prune） |
 | `--only pin-check` | Provider affinity A/B：同一 prefix，pin 到 provider vs 自由路由 |
 
-### `bench/dsv4_encoding.py` - from DeepSeek V4 官方消息编码器
+### DeepSeek V4 官方消息编码器
 
-从 HuggingFace `deepseek-ai/DeepSeek-V4-Flash-0731` vendor 来的，MIT 许可。独立于任何框架（无 `transformers` 依赖），完全自包含。对外接口：
+`bench/dsv4_encoding.py`，从 HuggingFace `deepseek-ai/DeepSeek-V4-Flash-0731` vendor 来的，MIT 许可。
 
-- **`encode_messages(messages, thinking_mode, drop_thinking, reasoning_effort)`**：把 OpenAI 格式的消息列表转为模型需要的输入字符串（BOS + 角色分隔符 + tool schema 渲染 + tool-result 合并）。
-- **`merge_tool_messages(messages)`**：把 `role="tool"` 的消息合并到前一个 user message 中（V4 不支持独立的 tool 角色）。
-- **`parse_message_from_completion_text(text)`**：从模型输出的字符串中还原 `reasoning_content` / `content` / `tool_calls`。
+`wire_text` 调用 `encode_messages` 把 OpenAI 格式的消息列表转为模型需要的输入字符串（BOS + 角色分隔符 + tool schema 渲染 + tool-result 合并）。
+而非自造的 JSON dump，使得离线测量的字节流和服务器实际 tokenize 的完全一致。
 
-`wire_text` 调用 `encode_messages` 而非自造的 JSON dump，使得离线测量的字节流和服务器实际 tokenize 的完全一致。
+### 回归测试
 
-### `tests/test_bench_encoding.py` — 回归测试
-
-八个测试用例覆盖：
+`tests/test_bench_encoding.py` 八个测试用例覆盖：
 - tokenizer 优先级：无 dsv4 tokenizer 时回退到 tiktoken/heuristic
 - `wire_text` 确定性：相同 payload 产生相同字节
 - `wire_text` encoder 验证：输出包含 BOS、`<|User|>`、`<|Assistant|>`，不包含 `"role":"system"`
@@ -226,10 +223,11 @@ DeepSeek 明确要求没有工具调用时中介 assistant 的 reasoning_content
 服务端对新请求做 tokenize 会把这些文本按普通 BPE token 重新切分，导致服务端生成的控制 token 与客户端回发时切好的普通文本 token 在 BPE 结果上不一致。
 这是一种现代推理服务 tokenize 之前的安全机制，不然人人都可以随意注入 special token 了。
 
-### 3.5 每个工具自带使用规则，不通用的不会留在前缀里
+### 3.5 扩充工具描述，但只放可用工具
 
 Zone 1 里除了 system prompt 还包含 tool definitions。
-WhalePod 把工具的使用指南（`guidelines`）和工具的 JSON schema 写进**同一个定义**（`whalepod/tools/registry.py:_schema`）。注意 `guidelines` 是自留的备注字段，不属于 wire schema。
+WhalePod 把工具的使用指南（`guidelines`）和工具的 JSON schema 写进**同一个定义**位置（`whalepod/tools/registry.py:_schema`）。
+注意 `guidelines` 是自留的备注字段，不属于 wire schema。
 
 ```python
 _schema("edit_file",
@@ -242,16 +240,16 @@ _schema("edit_file",
         ])
 ```
 
-session 启动时，`ToolRegistry.__init__` 按 sandbox 姿态一次性过滤出启用的工具集，之后整个 session 不再变化——用户只选择姿态（默认 `confirm`、`--no-tools` 强制 `readonly`、`--yes` 自动批准），工具集是姿态的确定性推导，从不手动挑选。e.g. readonly 沙盒直接剔除所有写工具。
+session 启动时，一次性过滤出启用的工具集，之后整个 session 不再变化。
+用户只选择模式（默认 `confirm`、`--no-tools` 强制 `readonly`、`--yes` 自动批准），
+工具集是模式的确定性推导，在实验（和目前的项目功能中）不手动选择。 e.g. readonly 沙盒直接剔除所有写工具。
 
-同一个定义随后被拆成**两条渠道**寄送：
-
+两个字段在一个地方定义后分别送往：
 ```
 一个工具的定义（schema + 使用指南）
         │
         ├─ schema 部分 ──→ 走 API 的 tools 参数
-        │     schemas() 返回同一批缓存对象（源码注释原话：
-        │     "a re-worded schema is a cache miss"），并剥掉 guidelines 键。
+        │     schemas() 返回同一批缓存对象，并剥掉 guidelines 键。
         │     API 只认标准格式字段（name/description/parameters），
         │     多塞一个私有字段，严格的服务商会拒收整个请求（400）
         │
@@ -262,25 +260,25 @@ session 启动时，`ToolRegistry.__init__` 按 sandbox 姿态一次性过滤出
               以普通文字的形式让模型读到
 ```
 
-一句话：**同一份资料按两种渠道各自的规矩拆开寄送——schema 是递给 API 的标准格式名片（格式严格，多了拒收），指南是自己念给模型听的说明书（自由文本）。**
-
-所以 prompt 确实是按当前工具集动态组装的，但组装发生在 session 起点，之后字节级别冻结，运行期享受静态前缀的全部缓存收益。
+prompt 的组装发生在 session 起点，之后字节级别冻结，运行期间整个前缀全部缓存收。
 
 **为什么重要：**
 
 1. **不可用工具的 token 根本不进前缀。** 比如 readonly 会话（`--no-tools`），写工具的所有内容都不出现在 Zone 1。工具规则与工具列表在启动时一次组装，开始运行后就冻结了。
-2. **工具描述事实来源防工具理解漂移。** 指南和 schema 物理上写在同一个 `_schema()` 调用里，二者只能成对变更（源码级）、成对出现（运行时过滤）。这看起来并没有直接省 token，但能防止 Agent 对工具的理解过时而犯更大错误。
+2. **工具描述事实来源防工具理解漂移。** 指南和 schema 物理上写在同一个 `_schema()` 调用里，二者只能成对变更、成对出现。这看起来并没有直接省 token，但能防止 Agent 对工具的理解过时而犯更大错误。
 3. **与每请求动态组装的设计划清界限。** 有些 harness 每轮重建系统提示词（注入 cwd、时间、会话模式），等于每轮主动制造一次全前缀失效。WhalePod 把变化的自由度收敛到 session 起点做一次性解析，换来整个 session 的字节稳定。
 
-**一个推论：能力变更应该发生在 session 边界。** tool schema 挂在前缀头部，假如支持会话中途添加写工具，改一个字节，后面全部对话历史的缓存一起作废；而退出重启只冷一次 Zone 1（~2k token）——重启严格便宜于运行中改能力。安全性（readonly 无提权通道）、缓存经济学、错误语义（未提供的工具返回 unknown tool 而非看似可修复的权限错误）三者在同一个决策上对齐。
+**一个推论：** 能力变更应该发生在 session 边界。重启严格便宜于中途改变 Agent 能力，也在安全性上（防止读脏工具等）更好。
 
-### 3.6 Compaction 取代盲 Prune
+### 3.6 Compaction 取代粗暴 Prune
 
 `whalepod/compaction.py`：prune 在窗口超限时删除旧 turn 并留一个 marker。但 prune 掉的东西往往是 session 开头用户说的目标——永久丢失，浪费前缀也是重新计算的。
 
 Compaction 用同一切线和同样的前缀失效成本，只是用一个小模型调用把要删除的 turn 总结成一份包含文件清单和行号范围的摘要。Compaction 失败会回退到 prune，所以用户的 turn 永远不会失败。
+这里的设计其实各大产品都使用类似的黑盒压缩，Whalepod也实现了类似 pi 的消息树状的消息管理，不过这里的 compaction 无论如何都会丢失缓存，所以它的要点就变成了：
+如何更好、更全面保存关键信息。树状消息缓存指针可以是解决方案之一。
 
-**为什么重要：** 窗口超限时只有一刀（一次全前缀失效），不管是 prune 还是 compaction 都一样。Compaction 多了一次小型 API 调用，换回了丢失的信息，让前缀在恢复后依然可以工作。
+**为什么重要：** 窗口超限时一次压缩所有前缀失效，不管是 prune 还是 compaction 都一样。Compaction 和消息指针尽可能保留了丢失的信息，让前缀在恢复后依然可以工作。
 
 ### 3.7 行结束符归一化：保证 BPE 稳定
 
@@ -332,7 +330,7 @@ Turn 4, 7, 9, 11 是重复读（same file 已经在前面的 turn 中读过）�
 
 离线提供上限（字节层面能复用多少），在线提供实测（服务器实际给了多少缓存），两者的 MAE 衡量预测精度。MAE 小（<3 点）说明离线模型贴切；MAE 大（>10 点）说明要么 tokenizer 不对，要么字符编码模型和服务器不一致，要么 provider 端的 KV cache 被驱逐。
 
-### 离线计算链路（一张图的完整路径）
+### 离线计算链路
 
 以 as-built 变体第 2 个请求为例：
 
@@ -354,113 +352,13 @@ dsv4_encoding.encode_messages()
   reusable_frac = 192 / total_prompt_tokens
 ```
 
-在线则是服务器直接告诉你 `prompt_cache_hit_tokens`（也就是它内部分配 KV cache 块时命中的 token 数）。
+在线则是官方服务接口直接返回 `prompt_cache_hit_tokens`（也就是它内部分配 KV cache 块时命中的 token 数）。
 
 ---
 
 ## 5. 实验流程
 
-### 5.1 环境准备
-
-```bash
-# 创建 venv + 安装依赖
-python -m venv .venv
-pip install -e ".[treesitter,tokenizer,dev]"
-
-# 一次性下载 DeepSeek V4 的 tokenizer（公开 HF 仓库，无需 API key）
-python bench/fetch_tokenizer.py
-# → 下载到 ~/.whalepod/tokenizers/deepseek-v4-flash/tokenizer.json (~6.4 MB)
-```
-
-### 5.2 离线验证
-
-不需要网络，不需要 API key。
-
-```bash
-# 全量跑（五种实验 + 全部 SVG 图表）
-python bench/validate.py
-
-# 只看 variants 对比（快，适合 CI）
-python bench/validate.py --only variants --no-charts
-
-# 输出:
-#   bench/results/validation.json    ← 机器可读
-#   bench/results/validation.txt     ← 人类可读
-#   bench/results/*.svg              ← SVG 图表
-```
-
-生成的 SVG 图表：
-
-- **[`reusable_prefix.svg`](/images/illustration/2026-08-01/reusable_prefix.svg)** — 四种设计的 per-request 可复用前缀折线（1M 窗口）
-- **[`reusable_prefix_small_window.svg`](/images/illustration/2026-08-01/reusable_prefix_small_window.svg)** — 同上，45k 窗口（强迫 prune）
-- **[`prompt_tokens_split.svg`](/images/illustration/2026-08-01/prompt_tokens_split.svg)** — 四种设计的 prompt token 堆叠图（绿色 = 可复用，灰色 = 新鲜）
-- **[`prompt_cost.svg`](/images/illustration/2026-08-01/prompt_cost.svg)** — 四种设计的提示词成本对比
-- **[`prompt_cost_small_window.svg`](/images/illustration/2026-08-01/prompt_cost_small_window.svg)** — 同上，45k 窗口
-- **[`prune_recovery.svg`](/images/illustration/2026-08-01/prune_recovery.svg)** — as-built 在 45k 窗口下，prune 后前缀恢复曲线（▼ 标记 prune 点）
-- **[`repo_map_budget.svg`](/images/illustration/2026-08-01/repo_map_budget.svg)** — repo map 在不同 token budget 下的渲染大小
-
-### 5.3 在线实测
-
-需要 API key（通过环境变量，不会落地到文件）。
-
-```bash
-# PowerShell
-$env:WHALEPOD_API_KEY = "sk-..."
-
-# 主 session + prune session + provider affinity A/B (+ pin-check)
-python bench/live_acceptance.py
-
-# 大规模重复跑（用 --repeat N 拿到多 session 统计分布）
-python bench/live_acceptance.py --repeat 10
-
-```
-
-生成的 SVG 图表：
-
-- **[`live_hit_rate.svg`](/images/illustration/2026-08-01/live_hit_rate.svg)** — 实测命中率 vs 离线预测（run 1）；如果 `--only prune` 也会展示 prune 恢复曲线
-- **[`live_tokens_split.svg`](/images/illustration/2026-08-01/live_tokens_split.svg)** — 单个 session 的 cached vs fresh 堆叠图
-- **[`live_prune.svg`](/images/illustration/2026-08-01/live_prune.svg)** — prune 窗口下的命中率恢复曲线
-- **[`live_provider_affinity.svg`](/images/illustration/2026-08-01/live_provider_affinity.svg)** — Pin vs Unpin A/B 测试（仅 `OpenRouter`，需运行 `--only pin-check` 才会生成）
-
-`--reasoning-strip` 三种策略（never/tool/always）各跑一次后，用 `bench/reasoning_compare.py` 生成横向对比图：
-
-- **[`reasoning_modes_hit_rate.svg`](/images/illustration/2026-08-01/reasoning_modes_hit_rate.svg)** — 三种策略的 session 命中率中位数
-- **[`reasoning_modes_per_request.svg`](/images/illustration/2026-08-01/reasoning_modes_per_request.svg)** — 三种策略的 per-request 命中率折线
-- **[`reasoning_modes_tokens.svg`](/images/illustration/2026-08-01/reasoning_modes_tokens.svg)** — 三种策略的 cached vs fresh 堆叠图
-
-跨 run 的比较图（多 session 分布、不同对话长度、推理回放成本）由 `bench/article_charts.py` 从已提交的 JSON 生成（[§6.3](#63-不同对话长度的对比)、[§6.4](#64-推理回放策略-ab2026-08-11deepinfra-pin)、[§6.5](#65-单-session-内的累积成本结构)）：
-
-- **[`live_hit_rate_band.svg`](/images/illustration/2026-08-01/live_hit_rate_band.svg)** — 22 session 的 per-request median + P10/P90 带宽
-- **[`turns_comparison.svg`](/images/illustration/2026-08-01/turns_comparison.svg)** — 三种对话长度的命中率对比
-- **[`mae_by_length.svg`](/images/illustration/2026-08-01/mae_by_length.svg)** — 离线预测误差随对话长度的变化
-- **[`prompt_tokens_by_length.svg`](/images/illustration/2026-08-01/prompt_tokens_by_length.svg)** — 三种长度的 cached vs fresh 堆叠图
-- **[`reasoning_tokens_by_mode.svg`](/images/illustration/2026-08-01/reasoning_tokens_by_mode.svg)** — 三种策略每 session 的 reasoning token 量
-- **[`cumulative_cache_growth.svg`](/images/illustration/2026-08-01/cumulative_cache_growth.svg)** — 单 session 内缓存/新鲜 token 的累积曲线
-
-### 5.4 大规模统计测试
-
-单次 session 是点估计。服务器侧状态（缓存分布、负载）每次不同，需要重复跑拿到分布：
-
-```bash
-# 5 次重复，输出 per-request median/P10/P90
-python bench/live_acceptance.py --only main --repeat 5 --no-pin `
-    --base-url "https://api.deepseek.com" --model "deepseek-chat"
-```
-
-然后在 `live_acceptance.json` 中会多出 `main_aggregate`，包含：
-
-```json
-{
-  "session_hit_rate": {"p10": 0.937, "median": 0.947, "p90": 0.953},
-  "session_prompt_cost_usd": {"p10": ..., "median": ..., "p90": ...},
-  "per_request": [
-    {"request": 1, "n": 22, "median": 1.0, "p10": 0.86, "p90": 1.0},
-    ...
-  ]
-}
-```
-
-### 5.5 不同轮数对比实验
+### 5.1 不同轮数对比实验
 
 验证缓存在不同对话长度下的表现：
 
@@ -492,7 +390,7 @@ python bench/article_charts.py      # 生成跨 run 的全部比较图（含本�
 
 结果在 [§6.4](#64-推理回放策略-ab2026-08-11deepinfra-pin) 汇总。
 
-### 5.6 规模建议
+### 5.2 规模
 
 | 场景 | 推荐 N | 时间 | 预算 |
 |:---|:---|:---|:---|
@@ -719,22 +617,25 @@ Claude Code 团队 2026 年 4 月的博客 [*Lessons from building Claude Code: 
 
 反面教材也存在：Cline 的系统提示内嵌 cwd、时间、模式等环境细节，随请求变化，曾有用户报告一个 "hello" 就触发近 10k token 的系统提示传输（[issue #4047](https://github.com/cline/cline/issues/4047)）；Cursor 则把缓存标记完全交给服务端透明处理，用户无法控制。这类"每请求动态组装"的设计正是 §3.5 划清界限的对象。
 
-### 8.2 真正的差异在三个层面
+### 8.2 差异
 
-| 维度 | 主流做法 | WhalePod 的不同 |
-|:---|:---|:---|
-| **上下文治理方向** | **驱逐导向**：Anthropic 的 [context editing](https://platform.claude.com/docs/en/build-with-claude/context-editing) 按阈值清除旧 tool result / thinking block，compaction 把历史换成摘要——都是"内容进来了再扔出去"，且每次清除都在前缀上开一刀 | **入口去重**：ContextLedger 让重复内容根本不进入窗口（一行指针替代上千 token 的文件内容）。两者互补，但"防患于未然"这条路几乎没人做——这是本项目最独特的部分 |
-| **稳定性保证机制** | 靠**纪律和约定**：官方文档告诉你"别中途换模型"、"别动系统提示"，违反了就缓存失效 | 靠**构造**：工具集在 session 构造时过滤锁定（§3.5）、prompt 一次组装后字节冻结、指南与 schema 同体定义防漂移——违规在结构上不可能发生 |
-| **验证文化** | 闭源团队内部有告警，但开源 Agent 几乎没人测量并公布命中率数据 | 离线字节级预测器 + 在线实测 MAE 对照 + 22 session P10/P90 分布 + 四种设计变体消融实验（§6.1），每一项决策的贡献都有数字 |
+本质上的差异在于：
 
-### 8.3 第二梯队的细节差异
+1. **上下文治理方向**：**Anthropic 是驱逐导向**：Anthropic 的 [context editing](https://platform.claude.com/docs/en/build-with-claude/context-editing) 按阈值清除旧 tool result / thinking block，compaction 把历史换成摘要，总之方案都是先读内容然后再清理，每次清除在前缀上做修改；
+whalepod在**入口去重**：ContextLedger 让重复内容根本不进入窗口（一行指针替代上千 token 的文件内容）。两者互补，这种提前防范的尝试还鲜有人涉及。
+2. **稳定性保证机制**：靠**约定**：官方文档说明"别中途换模型"、"别动系统提示"等，违反了就缓存失效；
+whalepod靠稳定**构造**：工具集在 session 构造时过滤锁定（§3.5）、prompt 一次组装后字节冻结、指南与 schema 同体定义防漂移——违规在结构上不可能发生。
+3. **验证文化**：开源 Agent 几乎没人测量并公布命中率数据。作为实验项目，whalepod的离线字节级预测器 + 在线实测 MAE 对照 + 22 session P10/P90 分布 + 四种设计变体消融实验（§6.1），每一项决策的贡献都有实测结果。未来演进也会按照严格说明效果的方向推进。
+
+第二梯队的细节差异：
 
 - **Reasoning 回放策略**：DeepSeek 系模型的特有问题（CoT 是否回放）。西方 Agent 主要面向 Anthropic/OpenAI，不面对这个选择；WhalePod 用三策略 × 10 session 的 A/B 实验量化了旋钮代价（§6.4），而不是拍脑袋定默认值。
 - **Provider pinning**：OpenRouter 场景下 0.4% → 98.4% 的实测对比（§3.3），大家知道该做，但很少给出数字。
 - **BPE 级细节**：CRLF 归一化保证 tokenizer 输出稳定（§3.7）——这种粒度的坑只有自己踩过才知道。
 - **反例也要认**：Claude Code 的 `defer_loading` + tool search 处理大规模 MCP 工具集，比 WhalePod 的"启动时锁死"更灵活——工具多到几百个时，静态全量 schema 本身就是负担。这是值得借鉴的方向。
 
-一句话总结：**原则层面大家已经趋同——Claude Code 的官方博客基本是在给这套设计背书。真正的区别在于：主流把前缀稳定性当作编码规范来遵守、把旧内容当作待清理的负担来治理；WhalePod 把它当作类型系统的约束来构造、把重复内容当作不该发生的输入来拦截，并且用一套离线预测 + 在线对照的评测体系证明每一项决策的贡献。**
+原则层面大家已经趋同。真正的区别在于：主流把前缀稳定性当作编码规范来遵守、把旧内容当作待清理的负担来治理；WhalePod 把它当作类型系统的约束来构造、把重复内容当作不该发生的输入来拦截，并且用一套离线预测 + 在线对照的评测体系证明每一项决策的贡献。
+当然强限制可能造成一些使用上的无法处理的问题，未来会在自举迭代中优化。
 
 ---
 
@@ -744,6 +645,5 @@ WhalePod 的 two-zone + append-only + context-ledger 设计在 DeepSeek V4 官�
 
 1. **12 轮对话命中率中位数 94.7%**（22 次独立 session，P10=93.7%，P90=95.3%），P10–P90 跨度仅 1.6 点，性能一致可复现。
 2. **不同长度对话均稳健**：6 轮 91.7%，12 轮 94.7%，18 轮 95.0%——对话越长缓存效果越好，且新鲜计费 token 不随长度增长（始终 ~60–90k），12 轮是性价比甜点。
-3. **离线预测精度的提升证明改进有效**：用官方 V4 BPE tokenizer 替代 cl100k_base/heuristic，用官方 `encode_messages` 替代手搓 `json.dumps`，MAE 从 7.0 降到 5.5 点。
-4. **推理回放策略验证了生产默认值**：never/tool/always 三种策略的命中率分别为 94.3%/96.4%/97.1%，prompt 总量 1.42M/1.60M/2.20M——回放是个"命中率 vs 总字节"的旋钮，生产默认的 tool（仅工具轮回放）用 13% 的额外字节换 2.1 点命中率，always 则把 prompt 放大 1.55 倍只多换 0.7 点，已无性价比。
-5. **架构设计经得起检验**：两区存储 + ledger + reasoning 控制回放 + compaction 七项决策的叠加效果在真实场景中持续兑现 90%+ 缓存命中率，不靠运气，不靠调参，靠的是字节级前缀稳定性的系统性保证。
+3. **推理回放策略验证了生产默认值**：never/tool/always 三种策略的命中率分别为 94.3%/96.4%/97.1%，prompt 总量 1.42M/1.60M/2.20M。回放是命中率与总字节的权衡旋钮，生产默认的 tool（仅工具轮回放）用 13% 的额外字节换 2.1 点命中率，always 则把 prompt 放大 1.55 倍只多换 0.7 点，已无性价比。
+4. **架构设计经过检验**：两区存储 + ledger + reasoning 控制回放 + compaction 七项决策的叠加效果在真实场景中持续兑现 90%+ 缓存命中率，一种是字节级前缀稳定性的系统性保证。
