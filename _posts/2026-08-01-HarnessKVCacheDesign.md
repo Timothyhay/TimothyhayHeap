@@ -217,7 +217,8 @@ DeepSeek 明确要求没有工具调用时中介 assistant 的 reasoning_content
 - **tool**（默认）：仅当该 assistant 回合调用了工具（`m.tool_calls`）时回传思考，纯回答回合照旧剥离；
 - **always**：每个回合都回传，适用于 Kimi K3 等模型。
 
-**为什么重要：** 一次思考动辄几百上千 token。如果不加约束地回放，每个 assistant 回复都带着一大段思考回到前缀里——第一第二次能缓存，但几个 turn 之后整个区域都是几十 K 的推理文本，prompt 总量被成倍放大。默认策略只在"必须解释工具决策"的回合保留思考，其余剥离。§6.4 用三种策略各 10 次 session 量化了这个旋钮的成本与收益。
+**为什么重要：** 一次思考动辄几百上千 token。如果不加约束地回放，每个 assistant 回复都带着一大段思考回到前缀里——第一第二次能缓存，但几个 turn 之后整个区域都是几十 K 的推理文本，prompt 总量被成倍放大。
+默认策略只在"必须解释工具决策"的回合保留思考，其余剥离。§6.4 用三种策略各 10 次 session 量化了这个旋钮的成本与收益。
 
 同时，我注意到一个上古时期 Agent 和推理框架可能存在的问题。就是如果不通过 reasoning_content，wire-level 的 CoT 带上 `<think>` 等 special token 时，
 服务端对新请求做 tokenize 会把这些文本按普通 BPE token 重新切分，导致服务端生成的控制 token 与客户端回发时切好的普通文本 token 在 BPE 结果上不一致。
@@ -282,8 +283,31 @@ Compaction 用同一切线和同样的前缀失效成本，只是用一个小模
 
 ### 3.7 行结束符归一化：保证 BPE 稳定
 
-`whalepod/tools/textfile.py` — 读取时文件内容归一化为 LF，写入时恢复为文件的原始行结束符。没有这个处理，在 CRLF checkout 上做编辑，`old` 文本不匹配实际文件，编辑失败；重新读取不帮忙，因为 read_file 的输出也是 LF。
+`whalepod/tools/textfile.py` — 读取时文件内容归一化为 LF，写入时恢复为文件的原始行结束符。
+没有这个处理，在 CRLF checkout 上做编辑，`old` 文本不匹配实际文件，编辑失败；重新读取也没用，因为 read_file 的输出也是 LF。
 
+这是因为在 Windows 上，磁盘文件换行符通常为 `\r\n`。
+当 LLM 尝试使用 `edit_file(old="line1\nline2", new=...)` 进行替换时，底层执行 `disk_text.count(old)` 会匹配失败 -
+因为原文的 \n 匹配不上 \r\n。LLM 感到很疑惑，觉得写的就是对的，再请求，依然会报错。
+因为对无论是 Python 默认的文本读取（开启了 universal newline 处理），还是工具把行拼成字符串返回，输出给 LLM 看到的文本换行符都是 \n（LF）。
+这样模型只会无力地浪费 token （除非它马上猜对）。
+
+还有很多坑点场合，比如：
+- 首行包含 UTF-8 BOM（Byte Order Mark）的文件
+
+部分 Windows 工具（如老版本 Visual Studio、记事本）保存的 UTF-8 文件会带有 \ufeff 字节。
+BOM 字符在终端或 LLM 提示词中是不可见的，LLM 绝不会在 old_str 的开头带上 \ufeff。如果不剥离 BOM，针对文件第一行的所有编辑都会因为前缀不匹配而失败。
+
+- 避免 Git Diff 污染
+
+如果 Agent 读取了 CRLF 文件，并在修改 1 行后直接以 LF 格式写回磁盘。
+用户在 git diff 中会看到整份文件的每一行都被修改了（行尾全变了，即所谓全重写现象）。restore() 方法能够保留原始的 CRLF，保证只有真正修改的那 1 行出现在 diff 中。
+
+- 混合换行符文件的平滑修复
+
+由于多人协作或跨平台合并，某些文件内部同时存在 \r\n 和 \n 的情况也能处理。
+
+<br>
 **为什么重要：** BPE tokenizer 对 `\r\n` vs `\n` 产生不同的 token 序列。如果行结束符在编辑过程中改变，文件内容的编码就变了——对于包含该文件的请求，前缀中的对应部分不再复用。
 
 ---
