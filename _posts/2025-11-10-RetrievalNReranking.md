@@ -218,7 +218,7 @@ By Length -> By Structure. 对代码做固定长度滑窗切分会把函数拦�
 
 用户经常在查询里直接提到 API 名、错误信息、变量名，这些精确匹配是稠密检索的弱项。看起来需要稀疏检索，但是这种情况其实grep就完事了。理论上可以改造分词器 + BM25，但是没必要。
 
-### Reranker
+### Reranker：use cross-encoder/LLM for Code
 
 重排用**代码感知的 cross-encoder**（在 NL-code 相关性数据上微调），或直接用 LLM 判断会比较好。现代 LLM 本身读代码能力很强，LLM rerank 在代码场景收益明显。
 
