@@ -23,6 +23,7 @@ I need a plan for effective code retrieval to extract the most relevant part of 
 ### 1 Data Ingestion & Parsing
 
 把各种异构数据转成干净的结构化文本。
+
 * PDF 解析：版面分析（Layout Analysis，如 LayoutLM、PP-Structure）、OCR、表格抽取。
 * HTML：DOM 树清洗、正文抽取（Readability 算法、boilerplate removal）。
 * 保留元数据（标题、章节层级、时间、作者、URL），作为后续过滤和引用的基础。
@@ -33,9 +34,9 @@ I need a plan for effective code retrieval to extract the most relevant part of 
 
 一般来说兜底方案是按 定长token 数切，overlap 缓解边界截断，通用文档可以按结构切，比如章节 → 段落 → 句子 层级递归下探。
 另外还有两种经典做法：
+
 - 语义切分 (Semantic Chunking) 计算相邻句子 embedding 的余弦相似度，在相似度骤降处断开，适用主题跳跃明显的长文
 - 父子切分 (Parent-Child)	用小 chunk 检索，命中后返回其所属的大 chunk 或父文档
-
 
 ### 3 Embedding
 
@@ -44,22 +45,25 @@ I need a plan for effective code retrieval to extract the most relevant part of 
 **核心模型：双塔/Bi-encoder。** 查询 $q$ 和文档 $d$ 分别独立编码为向量，相关性用余弦相似度或内积衡量
 (p.s. 当向量被做过 L2 归一化（即模长为 1 的单位向量）时，二者完全等价)：
 
-$$\text{sim}(q, d) = \frac{E_q(q) \cdot E_d(d)}{\|E_q(q)\| \, \|E_d(d)\|}$$
+$$
+\text{sim}(q, d) = \frac{E_q(q) \cdot E_d(d)}{\|E_q(q)\| \, \|E_d(d)\|}
+$$
 
 **训练原理：对比学习（Contrastive Learning）。** 主流用 InfoNCE 损失，拉近正样本对、推远负样本对：
 
-$$\mathcal{L} = -\log \frac{e^{\text{sim}(q, d^+)/\tau}}{e^{\text{sim}(q, d^+)/\tau} + \sum_{i} e^{\text{sim}(q, d_i^-)/\tau}}$$
+$$
+\mathcal{L} = -\log \frac{e^{\text{sim}(q, d^+)/\tau}}{e^{\text{sim}(q, d^+)/\tau} + \sum_{i} e^{\text{sim}(q, d_i^-)/\tau}}
+$$
 
 其中 $\tau$ 是温度系数。训练效果高度依赖**难负例挖掘**（hard negative mining，用 BM25 或上一轮模型召回的"看似相关但不相关"样本）和**批内负例**（in-batch negatives）。
 
 这里可以展示一下我的专利。等有空我画个图 ;)
 
-
 **相关 terms 速查**
+
 - **非对称编码**：查询短、文档长，语义分布不同。很多模型（如 E5、BGE）在查询侧加前缀 `"query: "`、文档侧加 `"passage: "`，或干脆用两套编码器。
 - **Matryoshka Representation Learning (MRL)**：训练时让向量前 $k$ 维就携带主要信息，推理时可截断降维，用精度换存储/速度。
 - **Learned Sparse Retrieval（如 SPLADE）**：神经模型输出词表维度的稀疏权重向量，兼具倒排索引的效率和语义扩展能力（会自动激活同义词的权重）。
-
 
 ### 4. Indexing
 
@@ -92,20 +96,22 @@ $$\mathcal{L} = -\log \frac{e^{\text{sim}(q, d^+)/\tau}}{e^{\text{sim}(q, d^+)/\
 
 **稀疏检索：BM25**，基于词频统计的经典算法：
 
-$$\text{score}(q, d) = \sum_{t \in q} \text{IDF}(t) \cdot \frac{f(t,d)\,(k_1+1)}{f(t,d) + k_1 \left(1 - b + b \cdot \frac{|d|}{\text{avgdl}}\right)}$$
+$$
+\text{score}(q, d) = \sum_{t \in q} \text{IDF}(t) \cdot \frac{f(t,d)\,(k_1+1)}{f(t,d) + k_1 \left(1 - b + b \cdot \frac{|d|}{\text{avgdl}}\right)}
+$$
 
 其中 $f(t,d)$ 是词频，$k_1$ 控制词频饱和，$b$ 控制文档长度归一化。优点：精确匹配专有名词、编号、罕见词非常可靠；无需训练。缺点：无法处理同义改写。
 
 **稠密检索**：用（第 3 步的）bi-encoder 向量 + ANN 索引。优点：语义泛化；缺点：对未见过的专名、长尾词弱。
 可以用比如 Sentence-BERT 或者 bge-large-zh-v1.5 / bge-m3 (Bi-Encoder)。注意这里是双塔架构的 BGE 模型，和 bge-reranker Cross-Encoder（交叉编码单塔架构）不一样的。
 
-
 **混合检索（Hybrid Search）**：两路并行召回后融合。最常用 **RRF（Reciprocal Rank Fusion）**，只看排名不看分数，天然规避了两路分数量纲不可比的问题：
 
-$$\text{RRF}(d) = \sum_{r \in \text{rankers}} \frac{1}{k + \text{rank}_r(d)}, \quad k \approx 60$$
+$$
+\text{RRF}(d) = \sum_{r \in \text{rankers}} \frac{1}{k + \text{rank}_r(d)}, \quad k \approx 60
+$$
 
 此外还可加**元数据过滤**（时间、来源、权限）做预过滤或后过滤。
-
 
 > Quick Question: 什么不只用 Embedding 模型从头搜到底？
 > 既然 bge-embedding 速度那么快，为什么最后还要加一个 bge-reranker 呢？
@@ -123,17 +129,19 @@ $$\text{RRF}(d) = \sum_{r \in \text{rankers}} \frac{1}{k + \text{rank}_r(d)}, \q
 重排用更贵的模型对 top-K（如 100 条）精排出 top-N（如 5 条）：
 
 - **Cross-Encoder**：把 `[query, document]` 拼接成一个序列输入 Transformer，让 query 与 document 的 token 之间做**全量交叉注意力**，输出单一相关性分数。精度远高于 bi-encoder，但每对都要一次前向计算，只能用于小候选集。
-典型模型就是 bge-reranker-v2-m3 或者 jina-reranker-v2-multilingual。
+  典型模型就是 bge-reranker-v2-m3 或者 jina-reranker-v2-multilingual。
 - **ColBERT（Late Interaction）**：折中方案。文档 token 向量可离线预计算，在线只算 MaxSim 交互：
-ColBERTv2  / RAGatouille（一个开源实现库）可以用上。
-$$\text{score}(q,d) = \sum_{i \in q} \max_{j \in d} \; E_{q_i} \cdot E_{d_j}$$
+  ColBERTv2  / RAGatouille（一个开源实现库）可以用上。
+
+$$
+\text{score}(q,d) = \sum_{i \in q} \max_{j \in d} \; E_{q_i} \cdot E_{d_j}
+$$
 
 - **LLM Rerank / Listwise Rerank**：直接让 LLM 对候选列表排序或打分，效果最好但最贵。
-除了 LLM 以外，也有基于开源 LLM 微调的 Reranker，比如 bge-reranker-v2-gemma、Qwen2-7B-Reranker 等。
-
+  除了 LLM 以外，也有基于开源 LLM 微调的 Reranker，比如 bge-reranker-v2-gemma、Qwen2-7B-Reranker 等。
 
 > Quick Question: 为什么不能用 Reranker 去做 Dense Retrieval？
-> A: 
+> A:
 > Reranker 无法离线建立向量索引（他是返回一个一个标量相似度分数的，embedding model返回一个高维稠密向量）：
 > 因为bge-reranker 的输出是一个相关性分数，它根本不产生固定长度的单条文档向量。
 > 它必须同时吃进 `(Query, Document)`才能算分。
@@ -153,64 +161,74 @@ Context augmentation & generation 阶段。
 
 ### 9. Evaluation
 
-- 检索质量: Recall@K、MRR（$\frac{1}{\text{rank of first hit}}$）、nDCG |
-- 生成质量: Faithfulness（答案是否忠于上下文）、Answer Relevance、Context Precision/Recall（RAGAS 框架） |
-- 端到端: 人工评测、LLM-as-a-Judge 
+目前业内最主流的评估体系是围绕 RAG 三元组（RAG Triad） 和 Ragas / TruLens 等开源评估框架展开的。
+
+所谓 RAG 三元组：QC relevance, QA relevance, CA faithfulness -
+
+```
+[ 用户 Query ]
+        /          \
+  (Context Relevance) (Answer Relevance)
+      /              \
+[ 检索 Context ] ─── [ 生成 Answer ]
+        (Faithfulness/忠实度)
+```
+
+- 检索质量（Retrieval）: Recall@K（Hit Rate@K，Top-K 结果中是否至少包含一个标准答案切片）、MRR（平均倒数排名，one over the rank of the first hit，$\frac{1}{\text{rank of first hit}}$）、nDCG(归一化折损累计增益，Normalized Discounted Cumulative Gain) - 这个指标不强求 0/1 二分类，能体现“非常相关”与“略微相关”的区别。不过依赖标注：需要人工或大模型打出多级相关度评分
+- 生成质量（Generation）: Faithfulness（答案是否忠于上下文）、Answer Relevance、Context Precision/Recall（RAGAS 框架，基本是LLM-as-a-Judge算的）
+- 端到端（业务指标，E2E performance）: 人工评测、LLM-as-a-Judge
 
 ---
 
-## 三、重点讨论：自然语言召回代码片段时的调整
+## 自然语言召回代码片段时的调整
 
-用自然语言（NL）查询召回代码（Code Search）与普通文本 RAG 的**根本区别**在于：
+用自然语言查询召回代码与普通文本 RAG 的区别在于：
 
-1. **模态鸿沟更大**：查询是自然语言（"如何给这个列表去重并保持顺序"），目标是形式语言（`dict.fromkeys(...)`），两者词面几乎零重叠，语法结构完全不同。
-2. **代码有严格的结构**：AST、作用域、调用关系、类型系统——这些是纯文本没有的强信号。
+1. **模态鸿沟更大**：查询是自然语言，目标是形式语言代码片段，两者词面几乎零重叠，语法结构完全不同。
+2. **代码有严格的结构**：AST、作用域、调用关系、类型系统，这些是纯文本没有的强信号。
 3. **代码片段不自包含**：一个函数的语义依赖 import、类定义、被调用的辅助函数，孤立的 chunk 语义残缺。
 4. **标识符携带浓缩语义**：`parseHttpRequestHeader` 一个词等于一句话。
 
 针对每个阶段的调整如下：
 
-### 1️⃣ 切分：从"按长度切"变为"按语法结构切"
+### Chunking: By Structure
 
-这是**必须改**的一环。对代码做固定长度滑窗切分会把函数拦腰截断，产生语法不完整、语义残缺的 chunk。
+By Length -> By Structure. 对代码做固定长度滑窗切分会把函数拦腰截断，产生语法不完整、语义残缺的 chunk。很容易想到几个要点：
 
 - **基于 AST 切分**：用 `tree-sitter` 等解析器构建语法树，以**函数 / 方法 / 类**为天然切分单元。超长函数再沿 AST 子树递归下切（保证每个 chunk 仍是完整语法节点）。
-- **上下文注入**：每个 chunk 附带其"血统信息"——文件路径、所属类名、函数签名、docstring、相关 import。例如把 `repo/utils/auth.py > class TokenManager > def refresh()` 作为前缀拼进 chunk 再嵌入。
+- **上下文注入**：每个 chunk 附带其关键信息（和父类信息）——文件路径、所属类名、函数签名、docstring、相关 import。
 - **Parent-Child 结构特别适合代码**：用函数级小 chunk 检索，命中后返回整个类或整个文件给 LLM。
 
-### 2️⃣ 嵌入：换用代码专用双塔模型
+实际动手时，我设计了5个分治切分的原则：
+
+1. 自顶向下：优先把一个完整的代码块（比如一个类）作为切片，即从树顶top-down搜索。能装下就是最好的上下文单元。
+2. 长度检测优先：把一个代码块作为切片前先确定大小，大了我们再切
+3. 动态分治切分：- 如果整个chunk的token数小于threshold，整个chunk（包括其中所有方法/字段)成为一个单独切片  - 如果~大于threshold呢，我们就把内部的子块（比如方法）作为切片单元
+4. 智能聚合：在处理子块的时候，我们可能会切得很细，我们会先尝试聚合连续的多个子块，保持token数 < threshold
+5. 保留结构：切片时尽量保留高级结构。如子切片保留所在类名，docstring。同时把父节点的结构也放入切片，内容用 … 代替。确保单独拿出LLM能懂。这里我们优先保证语义完整性，添加的一点冗余信息也是必要的，有助于模型定位的。
+
+### Embedding：use bi-encoder for Code
 
 通用文本 embedding 模型对代码效果差，需要在 **(NL 描述, 代码)** 平行语料上做过对比学习的模型：
 
 - 代表模型：CodeBERT / UniXcoder / CodeT5+，以及商用的 voyage-code、jina-embeddings-code 等。
 - 训练数据天然存在：**docstring/注释 ↔ 函数体**、**commit message ↔ diff**、**Stack Overflow 问题 ↔ 采纳答案中的代码**。对比学习的正样本对就是"NL 描述与其实现"，这正是在直接优化"NL 查询 → 代码"这个非对称任务。
-- 若无法换模型，退而求其次的技巧见下面第 3 点。
+
+<br>
+
+用户经常在查询里直接提到 API 名、错误信息、变量名，这些精确匹配是稠密检索的弱项。看起来需要稀疏检索，但是这种情况其实grep就完事了。理论上可以改造分词器 + BM25，但是没必要。
+
+### Reranker
+
+重排用**代码感知的 cross-encoder**（在 NL-code 相关性数据上微调），或直接用 LLM 判断会比较好。现代 LLM 本身读代码能力很强，LLM rerank 在代码场景收益明显。
+
+e.g.
+CodeRankLLM is a 7B LLM fine-tuned for listwise code-reranking. When combined with performant code retrievers like CodeRankEmbed, it significantly enhances the quality of retrieved results for various code retrieval tasks.
 
 
+实际上我们没有使用 LLM 架构的 reranker，还是出于了性能考虑。
 
-### 4️⃣ 稀疏检索：改造分词器，BM25 依然重要
-
-代码场景下 BM25 不能丢——用户经常在查询里直接提到 API 名、错误信息、变量名，这些精确匹配是稠密检索的弱项。但需改造：
-
-- **标识符拆分**：`parseHttpRequest` → `parse` + `http` + `request`（camelCase / snake_case 切分），同时保留原始 token 双索引。
-- 保留标点符号敏感的 token（`->`、`::`、`.map(` 在某些语言里有检索价值），而通用文本分词器会把它们扔掉。
-- 对**错误信息、日志字符串字面量**建索引价值极高——"报了 XXX 错在哪抛出的"是高频查询。
-
-### 5️⃣ 引入结构化信号：图检索与符号索引
-
-纯文本 RAG 没有的、代码独有的强大武器：
-
-- **符号索引（Symbol Index）**：类似 LSP / ctags，维护"符号名 → 定义位置"精确映射。查询中出现确切符号名时，直接精确跳转，胜过任何向量检索。
-- **调用图 / 依赖图扩展**：命中一个函数后，沿调用图把它的 callee/caller、所属类、引用的类型定义一并拉入上下文（Graph-augmented RAG）。这解决了"代码 chunk 不自包含"的问题。
-- **Agentic 检索**：实践中效果很好的模式是让 LLM 像人类工程师一样迭代使用 `grep` / 符号跳转 / 读文件，多轮缩小范围，而非一次性 top-K 召回。可与向量检索互补。
-
-### 6️⃣ 重排与生成侧的调整
-
-- 重排用**代码感知的 cross-encoder**（在 NL-code 相关性数据上微调），或直接用 LLM 判断"这段代码是否实现了查询描述的功能"——现代 LLM 本身读代码能力很强，LLM rerank 在代码场景收益明显。
-- 元数据过滤更关键：**语言、仓库、路径、版本/分支**都应作为硬过滤条件（检索 Python 项目时不该混入 Java 结果）。
-- 生成时提供**足够的外围上下文**（imports、类型定义），否则 LLM 会幻想不存在的 API。
-
-### 7️⃣ 评估基准的调整
+### Evaluation
 
 - 检索指标不变（MRR、Recall@K），但数据集换用 **CodeSearchNet、CoSQA、SWE-bench**（检索子任务）等 NL→Code 基准。
 - 增加**功能正确性**维度：检回的代码能否真正解决问题，可用执行测试验证，而非仅看语义相似。
@@ -230,22 +248,10 @@ Context augmentation & generation 阶段。
 
 **一句话总结**：通用 RAG 的骨架（切分→嵌入→混合召回→重排→生成）在代码场景完全保留，但每个组件都要"代码化"——切分尊重语法结构，嵌入弥合 NL-代码模态鸿沟（专用模型 + 双向翻译），稀疏检索理解标识符，并额外引入文本世界不存在的杀手锏：**AST、符号表和调用图**这些精确的结构化信号。实践中最强的方案往往是"向量检索 + BM25 + 符号索引 + agentic 探索"的多路混合体系。
 
-
-
-# 2. Code retrival
-
-For most of the reranking task, a 2-step retrieval is a usual combo:
-1. Embedding model roughly sort 
-
-第一阶段 Bi-Encoder（快速粗排）：unixcoder-base、grapecodebert-base、bge-m3、nv-embed-v2 等代码专用 embedding。
-2. Reranker model finely sort  
-
-第二阶段 reranker（精排 Top 50→Top 10）： cross-encoder
-对海量文档的处理往往需要先使用Bi-Encoder快速召回Top-K（like Top 100），然后再用一个Cross-Encoder（like BGE）对着K个文档精排。
-
+## Note
 
 - Bi-Encoder
-Query 和 Code/Doc 分别独立通过模型，被压缩成两个固定维度的向量（Embedding）。最后只通过简单的“向量点积”或“余弦相似度”来计算分数。这种方式强制将复杂的语义压缩到一个向量中。Query 中的每个 Token 无法直接“看见” Code 中的 Token。
+  Query 和 Code/Doc 分别独立通过模型，被压缩成两个固定维度的向量（Embedding）。最后只通过简单的“向量点积”或“余弦相似度”来计算分数。这种方式强制将复杂的语义压缩到一个向量中。Query 中的每个 Token 无法直接“看见” Code 中的 Token。
 
 由于缺乏深层的 Cross-Attention，它难以捕捉精细的语义匹配（例如：代码中的变量名是否对应 Query 中的某个特定约束）。
 
@@ -253,8 +259,7 @@ Query 和 Code/Doc 分别独立通过模型，被压缩成两个固定维度的�
 相对的 Cross-Encoder 必须实时计算每一对 (Query, Candidate)，无法预计算。
 
 - Cross-Encoder
-Query 和 Code 拼接在一起输入模型。模型中的每一层 Transformer 都在让 Query 和 Code 的 Token 进行互相注意（Attention）。这样模型可以逐字逐句地比对细节。
-
+  Query 和 Code 拼接在一起输入模型。模型中的每一层 Transformer 都在让 Query 和 Code 的 Token 进行互相注意（Attention）。这样模型可以逐字逐句地比对细节。
 
 jina-embeddings-v2-base-code is an multilingual embedding model speaks English and 30 widely used programming languages. Same as other jina-embeddings-v2 series, it supports 8192 sequence length.
 
@@ -265,6 +270,7 @@ CodeT5+: Open Code Large Language Models for Code Understanding and Generation b
 Compared to the original CodeT5 family (base: 220M, large: 770M), CodeT5+ is pretrained with a diverse set of pretraining tasks including span denoising, causal language modeling, contrastive learning, and text-code matching to learn rich representations from both unimodal code data and bimodal code-text data. Additionally, it employs a simple yet effective compute-efficient pretraining method to initialize the model components with frozen off-the-shelf LLMs such as CodeGen to efficiently scale up the model (i.e. 2B, 6B, 16B), and adopts a "shallow encoder and deep decoder" architecture. Furthermore, it is instruction-tuned to align with natural language instructions (see our InstructCodeT5+ 16B) following Code Alpaca.
 
 ### 使用没有微调过的模型作为Reranker
+
 以 CodeT5+ 为例：CodeT5+ 的重排序能力主要来自于其 Text-Code Matching预训练任务。在该模式下，模型不仅独立编码文本和代码，还通过 Decoder 的 Cross-Attention 机制深度融合两者的信息，判断它们是否匹配。
 
 **选择模型：**
@@ -279,7 +285,8 @@ Encoder 输入：自然语言查询（Query）。
 Decoder 输入：代码候选（Code Snippet）。
 
 **获取匹配分数：**
- CodeT5+ 的匹配分数的计算逻辑如下：
+CodeT5+ 的匹配分数的计算逻辑如下：
+
 - 将 Query 输入 Encoder。
 - 将 Code 输入 Decoder。
 - 取 Decoder 输出序列中 [EOS] Token 的 Hidden State。
@@ -289,13 +296,10 @@ Decoder 输入：代码候选（Code Snippet）。
 
 不过，如果在重排序阶段，我们只关心候选文档的相对顺序（谁比谁好），Logit 提供了最细粒度的区分度，避免了 Softmax 在高分段的挤压效应。这样也能用。
 
-### LLM-based Reranker
-
-CodeRankLLM is a 7B LLM fine-tuned for listwise code-reranking. When combined with performant code retrievers like CodeRankEmbed, it significantly enhances the quality of retrieved results for various code retrieval tasks.
-
 
 ## Reference
 
 https://huggingface.co/nomic-ai/CodeRankEmbed
 
 https://gangiswag.github.io/cornstack/
+
