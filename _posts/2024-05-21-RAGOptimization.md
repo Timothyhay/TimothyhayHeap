@@ -14,6 +14,8 @@ tags: RAG
 - 句子窗口检索（Sentence-Window Retrieval）：以单个句子建立索引，检索到后前后各扩展
 - Late Chunking[1]：Jina 24年提出的，先做全局编码，再做局部池化，从而在保留细粒度分块检索优势的同时，彻底解决传统切块导致的“上下文丢失”问题。
 
+传统做法是先将长文档切分成若干个短 Chunk，然后各自独立编码（每个 Chunk 单独输入 Embedding 模型，经过 Transformer 层后池化生成向量）。
+这样文本被生硬切断后，Chunk 失去了上下文，第 2 个 chunk 的代词可能匹配不上第 1 个 chunk 的内容。
 ```
 【传统 Early Chunking】
 长文档 -> [切分 Chunk 1, Chunk 2] -> 分别输入 Transformer -> 分别 Pooling -> [Vector 1, Vector 2]
