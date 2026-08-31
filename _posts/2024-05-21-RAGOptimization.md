@@ -12,6 +12,21 @@ tags: RAG
 - 语义切片（Semantic Chunking）：利用句子相似度断句，来保持语义完整。
 - 父子切片（Parent-Child / Hierarchical Chunking）：使用小切片（Child）进行精准相似度检索，但在喂给 LLM 时加载其所属的更大上下文切片（Parent）。
 - 句子窗口检索（Sentence-Window Retrieval）：以单个句子建立索引，检索到后前后各扩展
+- Late Chunking[1]：Jina 24年提出的，先做全局编码，再做局部池化，从而在保留细粒度分块检索优势的同时，彻底解决传统切块导致的“上下文丢失”问题。
+
+```
+【传统 Early Chunking】
+长文档 -> [切分 Chunk 1, Chunk 2] -> 分别输入 Transformer -> 分别 Pooling -> [Vector 1, Vector 2]
+                                 (Chunk 间完全无法互相关注)
+
+【Late Chunking】
+长文档 -> 整篇输入 Long-Context Transformer -> [获取全量 Token 的隐状态 (Hidden States)]
+                                                  ↓ (基于边界做分段 Pooling)
+                                          [Chunk 1 向量, Chunk 2 向量]
+```
+
+> Pooling（池化）是一种降维/聚合操作。在这里将一段连续的 Token 向量压缩为一个固定维度的句向量（Chunk 向量），是一个纯粹的数学聚合操作（像 mean() 一样）
+> 这里 Late Chunking 的边界是在模型前向传播之前或独立于 Pooling 过程确定的，我们根据 Token 索引切片并做 Pooling，所以还是得比如用规则切分先切好。
 
 # 2. 查询阶段
 
@@ -33,3 +48,9 @@ tags: RAG
 
 - prompt 优化
 - 针对性调模型：比如 RAFT（Retrieval Augmented Fine-Tuning），训练模型学会从混杂着干扰文档的上下文中选正确答案。
+
+
+
+# Reference
+
+[1] Late Chunking: https://jina.ai/news/late-chunking-in-long-context-embedding-models/
