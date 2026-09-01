@@ -36,7 +36,8 @@ comments: true
 
 系统采用 **Rollout 与 Training 物理解耦** 的分布式架构。通过 Ray 统一调度 8 卡 A100 的计算资源，规避传统单节点 RL 显存不足和推理吞吐低下的问题。
 
-> Idea: "生成轨迹的推理引擎"和"更新参数的训练引擎"分开，Ray 调度，避免推理慢、训练 OOM 互相拖累。
+> Idea: 生成轨迹的推理引擎 和 更新参数的训练引擎 分开，
+> Ray 负责集群资源调度和进程管理，避免推理慢、训练 OOM 互相拖累。
 
 ```
  [ Ray Cluster (8x A100) ]
@@ -60,6 +61,8 @@ comments: true
    └────────────────────┘
 ```
 
+>
+
 这里有两种部署形态可以选择：
 
 1. Colocated / Hybrid Engine（veRL 默认）：同一批 GPU 上，rollout（vLLM）与训练（FSDP）分时复用，rollout 时把训练权重 offload，训练时收回。显存利用率最高，对短文本而言很合适，如果训练状态。	7B 首选，8 卡全用于 hybrid engine。
@@ -67,6 +70,9 @@ comments: true
 
 > Anchor:2 卡 vLLM + 6 卡 FSDP 常驻是解耦式。为什么不用 colocated？单节点 8 卡训 7B，colocated 通常吞吐更高，因为解耦式在训练阶段那 2 张推理卡在空转。
 > 权衡点：解耦式省 reshard 开销但浪费卡；colocated 省卡但有权重 offload/reload 开销。而且我们的穿刺实验要上集群，到时候的模型 offload/reload 会成为严重瓶颈。
+
+veRL 官方在底层将训练后端抽象成了通用的 Engine/Worker 接口，以通过配置参数直接切换底层训练后端。
+深度集成 Megatron-LM（替换strategy就可以） 或 MindSpeed-LLM（适配中，不过老模型还挺顺利的），可以在集群替换掉 FSDP。
 
 ### 2.1 核心实验流程
 1.  **数据就绪**：使用 HotpotQA 的本地 Wikipedia 支撑段落，利用 BM25 算法在本地搭建轻量高并发检索服务（`search_server.py`），避免联网延迟。
