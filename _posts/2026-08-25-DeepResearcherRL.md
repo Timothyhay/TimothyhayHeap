@@ -31,7 +31,7 @@ comments: true
 > Anchor: 这跟单轮 RLHF 有何不同？
 > 状态在转移中被环境注入了非模型生成的 token（observation），因此必须做 loss masking；且奖励是轨迹级稀疏信号，credit assignment 更难。
 
-# 2. Enviroment 
+# 2. Enviroment
 
 Use veRL (Ray + vLLM + FSDP) to run Agentic RL training (GRPO/DAPO) on Qwen2.5-Coder-14B-Instruct to improve multi-hop QA performance on HotpotQA.
 
@@ -40,6 +40,7 @@ Use veRL (Ray + vLLM + FSDP) to run Agentic RL training (GRPO/DAPO) on Qwen2.5-C
 然后放缩到 64卡 910B集群。
 
 **Key Software Versions**
+
 - Python: 3.10.9 (Anaconda)
 - PyTorch: 2.6.0
 - vLLM: 0.8.5.post1
@@ -50,44 +51,44 @@ Use veRL (Ray + vLLM + FSDP) to run Agentic RL training (GRPO/DAPO) on Qwen2.5-C
 ## Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     veRL Training Loop                        │
-│                                                              │
+┌────────────────────────────────────────────────────────────┐
+│                     veRL Training Loop                     │
+│                                                            │
 │  ┌──────────┐   ┌──────────┐   ┌────────────┐              │
 │  │  Actor   │   │   vLLM   │   │  Reference │              │
 │  │ (FSDP)   │   │ Rollout  │   │   Model    │              │
 │  │  GPUs    │   │  GPUs    │   │  (FSDP)    │              │
 │  └────┬─────┘   └────┬─────┘   └─────┬──────┘              │
-│       │              │               │                      │
-│       │     ┌────────▼────────┐      │                      │
-│       │     │  Agent Loop     │      │                      │
-│       │     │  (verltool_     │      │                      │
-│       │     │   agent_loop)   │      │                      │
-│       │     └────────┬────────┘      │                      │
-│       │              │               │                      │
-│       │     ┌────────▼────────┐      │                      │
-│       │     │  Tool Server    │      │                      │
-│       │     │  wiki_search    │      │                      │
-│       │     │  (Ray Workers)  │      │                      │
-│       │     └────────┬────────┘      │                      │
-│       │              │               │                      │
-│       │     ┌────────▼────────┐      │                      │
-│       │     │  Wikipedia API  │      │                      │
-│       │     │  (Internet)     │      │                      │
-│       │     └─────────────────┘      │                      │
-│       │                              │                      │
+│       │              │               │                     │
+│       │     ┌────────▼────────┐      │                     │
+│       │     │  Agent Loop     │      │                     │
+│       │     │  (verltool_     │      │                     │
+│       │     │   agent_loop)   │      │                     │
+│       │     └────────┬────────┘      │                     │
+│       │              │               │                     │
+│       │     ┌────────▼────────┐      │                     │
+│       │     │  Tool Server    │      │                     │
+│       │     │  wiki_search    │      │                     │
+│       │     │  (Ray Workers)  │      │                     │
+│       │     └────────┬────────┘      │                     │
+│       │              │               │                     │
+│       │     ┌────────▼────────┐      │                     │
+│       │     │  Wikipedia API  │      │                     │
+│       │     │  (Internet)     │      │                     │
+│       │     └─────────────────┘      │                     │
+│       │                              │                     │
 │  ┌────▼──────────────────────────────▼──────┐              │
-│  │          Reward Manager                   │              │
-│  │       search_r1_qa_em (EM)                │              │
-│  │        extraction + normalize     │              │
+│  │          Reward Manager                  │              │
+│  │       search_r1_qa_em (EM)               │              │
+│  │       extraction + normalize             │              │
 │  └──────────────────────┬───────────────────┘              │
-│                         │                                   │
+│                         │                                  │
 │                    ┌────▼─────┐                            │
 │                    │  GRPO /  │                            │
 │                    │  DAPO    │                            │
 │                    │  Update  │                            │
 │                    └──────────┘                            │
-└─────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────┘
 ```
 
 ## 工具与环境交互
@@ -236,14 +237,11 @@ Step 3: 计算 reward
 
 1. **Action Stop Tokens**：`</search>` 和 `</answer>` 是 vLLM 的 stop tokens。
    模型生成到这些 token 时会**立即停止**，Agent Loop 接管控制权。
-
 2. **Observation 拼接**：工具返回的 `<information>...</information>` 会被拼接到
    对话历史中，作为下一轮 vLLM 生成的输入。模型看到搜索结果后可以继续推理。
-
 3. **Loss Masking**：`mask_observations=True` 确保 observation token（工具返回的内容）
    不参与 loss 计算。模型只需要学习"何时搜索"和"搜索后的答案"，不需要学习
    复述搜索结果的文本。
-
 4. **多轨迹并发**：Agent Loop 支持异步并发处理多条轨迹，
    每条轨迹有独立的 `trajectory_id` 和对话历史。
 
@@ -252,11 +250,12 @@ Step 3: 计算 reward
 Tool Server 是多进程 HTTP 服务，负责接收 Agent Loop 的工具调用请求：
 
 ```
-                    ┌─ Backend Worker 0 (wiki_search) ─┐
+┌─ Backend Worker 0 (wiki_search) ─┐
 Agent Loop ──POST──→│  Router (FastAPI + uvicorn)       │──→ Wikipedia API
   (veRL)    ←──resp─│  /get_observation                 │←── <information>
                     └─ Backend Worker 1 (wiki_search) ──┘
 ```
+
 - **Router**：负载均衡，基于 `trajectory_id` 的一致性哈希路由
 - **Backend Workers**：每个 Worker 是独立子进程，运行实际工具逻辑
 - **健康检查**：Router 在启动时等待所有 Worker 就绪
@@ -289,7 +288,6 @@ verl-tool 将这些复杂性封装为：
 
 ---
 
-
 ### Tool: `wiki_search`
 
 **File**: `verl-tool-main/verl_tool/servers/tools/wiki_search.py`
@@ -301,14 +299,15 @@ A custom Wikipedia search tool registered in verl-tool's tool system:
 - **Answer extraction**: Parses `<answer>` tags for final answer
 - **Caching**: In-memory cache with 10,000 entry limit
 
-
 **Action format**:
+
 ```
 <search> Albert Einstein </search>        # Search Wikipedia
 <answer> 1879 </answer>                   # Final answer
 ```
 
 **Observation format**:
+
 ```
 <information>**Doc 1 (Title: Albert Einstein)**
 URL: https://en.wikipedia.org/wiki/Albert_Einstein
@@ -326,14 +325,13 @@ Summary text...</information>
 
 ### RL Reward Shaping
 
-
 Simple exact match (EM) reward:
+
 - Extracts text from `<answer>` tags
 - Normalizes (lowercase, remove articles, punctuation, whitespace)
 - Compares with ground truth
 - Returns 1.0 for match, 0.0 otherwise
 - Penalty: `/4` if too many `<answer>` or `</answer>` tags (>10)
-
 
 ## 4. Dataset: 数据来源、格式与 Prompt 设计
 
@@ -394,7 +392,6 @@ RAG_ProGuide 数据集（13,289 条，已存在于 `dataset/`）未使用，因�
 这是一个嵌入在**单个 user message** 中的指令（无独立 system message），
 对 DMI 的 DAG 依赖回答，还需要在 user prompt 中增加 fact-list，对 final answer 要求输出 new topic / sources。
 
-
 Search-R1：
 
 ```
@@ -412,11 +409,10 @@ Question: {question}
 
 | 标签 | 用途 | Agent 行为 |
 |------|------|-----------|
-| `<think> ... </think>` | 推理过程 | 模型在每次获取新信息后进行思考 |
-| `<search> query </search>` | 搜索动作 | 触发 Wikipedia 搜索工具调用 |
-| `<information> ... </information>` | 搜索结果 | 工具服务器返回的观察（observation） |
-| `<answer> ... </answer>` | 最终答案 | 触发 episode 结束，提取答案进行 EM 打分 |
-
+| ` ... ` | 推理过程 | 模型在每次获取新信息后进行思考 |
+| ` query ` | 搜索动作 | 触发 Wikipedia 搜索工具调用 |
+| ` ... ` | 搜索结果 | 工具服务器返回的观察（observation） |
+| ` ... ` | 最终答案 | 触发 episode 结束，提取答案进行 EM 打分 |
 
 ### 4.4 HotpotQA vs NQ 问题对比
 
@@ -441,7 +437,6 @@ A: ['Delhi']
 ```
 
 这也是为什么 Agent 需要多轮搜索（`max_turns=3`）：多跳问题单次搜索往往不够。
-
 
 ### 4.7 多轮交互的数据流
 
@@ -520,7 +515,6 @@ Reference model:   ~14GB (shared with actor via FSDP)
 Total:             ~44GB / 80GB ✅
 ```
 
-
 ## Reward 设计与 GRPO 比较机制
 
 ### Reward
@@ -530,6 +524,7 @@ Total:             ~44GB / 80GB ✅
 #### 第二层：Exact Match 比对（`em_check`）
 
 **normalize 实例**：`"The 2003 University of Oxford election"` → `"2003 university of oxford election"`
+
 1. 小写化: "The University" → "the university"
 2. 去冠词: 移除 a, an, the
 3. 去标点: 移除所有 punctuation
@@ -787,7 +782,6 @@ RL 训练每步的 batch 不同，模型在探索中时而进步时而退步。
 - 我们训练中 `no_loss_on_traj/mean ≈ 0.88-1.0`：88-100% 的轨迹被跳过
 - 被 mask 的原因包括：轨迹超长、observation 被 mask（`mask_observations=True`）、轨迹格式无效等
 
-
 ## 训练运行记录
 
 ### Prompt 迭代过程（3 轮优化）
@@ -854,7 +848,6 @@ wiki_search 工具服务器在整个测试中运行正常：
 
 在 Search-R1 格式的示例数据上做 SFT 预热，再进行 RL 训练。
 
-
 ### 网络环境约束
 
 公司代理环境带来的挑战：
@@ -881,10 +874,9 @@ wiki_search 工具服务器在整个测试中运行正常：
 - `format_score` 应随时间衰减（前期引导格式，后期只奖励正确性）
 - 或者使用 **DAPO** 的 filtering 机制：过滤掉低分轨迹，只在高分轨迹上学习
 - 一开始想或者增加 `search_bonus`：使用 `<search>` 标签就给额外奖励。 但是HotpotQA 的多跳要求自然体现在 EM 难度上——不额外加 search_bonus。
-模型通过 GRPO 自己发现 "多搜索 → 高 reward" 的规律。
+  模型通过 GRPO 自己发现 "多搜索 → 高 reward" 的规律。
 
 ---
-
 
 ## 13. SFT 预热数据准备
 
@@ -914,7 +906,6 @@ SFT 预热的目的是在 RL 之前教会模型基本格式：
 - 100% 格式完整（`<think>` + `<search>` + `<information>` + `<answer>`）
 - 100% API 成功率，41 分钟生成
 
-
 ### 13.4 SFT 数据格式
 
 ```json
@@ -941,7 +932,6 @@ SFT 训练时，input = `messages`，output = `chosen`。模型学习在给定�
 3. **每个问题触发多个 API 调用**：wikipedia 库的 `search()` + `page()` + `summary()`
    每个都是一次独立 API 调用。v1 每个问题可能触发 4-6 次调用，在 0.3s 延迟下迅速耗尽配额。
 
-   
 ### 训练现象 (2026-07-29, 43 步验证)
 
 **Step 1 — 多轮搜索首次成功**：
@@ -1019,7 +1009,6 @@ Step 26-43: ████████████████  0.35-0.72  (稳定
 4. ➕ 长轨迹场景设置 `norm_adv_by_std_in_grpo=False`（Dr.GRPO）
 5. ➕ 长轨迹场景降低 `batch_size=1-2`，保持 `n=4`
 
-
 ## 实验 2：Shuffle 数据 + 正确 Epoch 设计 (2026-07-30 启动)
 
 ### 改进点
@@ -1043,7 +1032,6 @@ RL ≠ SFT。RL 不需要多 epoch 来"记住"数据，关键是每个问题给�
 选择 2 epochs：每个问题被看到 2 次，NQ 第一次学格式、第二次学搜索，
 HotpotQA 第一次发现需要多跳、第二次学会搜索链。
 
-
 ---
 
 # 技术问题
@@ -1051,7 +1039,6 @@ HotpotQA 第一次发现需要多跳、第二次学会搜索链。
 ## Q1: 为什么用 Dr.GRPO 思路修复 DAPO？
 
 初次我们尝试了 GRPO，这里说一下一开始的思路 以及和 PPO 的区别：
-
 
 **核心区别**：PPO 需要 Critic（Value Network）来估计 Advantage，而 GRPO 用**组内相对比较**。
 
@@ -1062,8 +1049,12 @@ HotpotQA 第一次发现需要多跳、第二次学会搜索链。
 > PPO 的 Critic 是一份与 Actor 同量级的模型，极易 OOM；GRPO 省下这份显存全给 Actor。其优势估计为组内相对：
 > 
 > $$
- A_i=\frac{r_i-\operatorname{mean}(\mathbf{r})}{\operatorname{std}(\mathbf{r})}
- $$
+> 
+> $$
+
+A_i=\frac{r_i-\operatorname{mean}(\mathbf{r})}{\operatorname{std}(\mathbf{r})}
+
+$$
 > 
 > 相比 PPO，组内相对归一化给训练提供比单一 reward + 不可靠 critic 更清晰的信号
 
@@ -1109,9 +1100,12 @@ vanilla GRPO 的两个已知偏置：
 
 DAPO 的全称是 **D**ecoupled Clip and **D**ynamic s**A**mpling **P**olicy **O**ptimization（ByteDance Seed × 清华 AIR，arXiv 2503.14476）。它的四大组件不是四个独立 trick，而是同时体现在**一个目标函数**里的四处修改，所以最清晰的补全方式是先看完整式子，再逐项对应：
 
-$$\mathcal{J}_{\text{DAPO}}(\theta)=\mathbb{E}_{(q,a)\sim\mathcal{D},\,\{o_i\}_{i=1}^{G}\sim\pi_{\theta_{\text{old}}}(\cdot\mid q)}\left[\underbrace{\frac{1}{\textstyle\sum_{i=1}^{G}|o_i|}\sum_{i=1}^{G}\sum_{t=1}^{|o_i|}}_{\text{③ token-level}}\min\Big(r_{i,t}(\theta)\hat{A}_{i,t},\ \operatorname{clip}\big(r_{i,t}(\theta),\,1-\underbrace{\epsilon_{\text{low}}}_{\text{① }0.2},\,1+\underbrace{\epsilon_{\text{high}}}_{\text{① }0.28}\big)\hat{A}_{i,t}\Big)\right]$$
+$$\mathcal{J}_{\text{DAPO}}(\theta)=\mathbb{E}_{(q,a)\sim\mathcal{D},\,\{o_i\}_{i=1}^{G}\sim\pi_{\theta_{\text{old}}}(\cdot\mid q)}\left[\underbrace{\frac{1}{\textstyle\sum_{i=1}^{G}|o_i|}\sum_{i=1}^{G}\sum_{t=1}^{|o_i|}}_{\text{③ token-level}}\min\Big(r_{i,t}(\theta)\hat{A}_{i,t},\ \operatorname{clip}\big(r_{i,t}(\theta),\,1-\underbrace{\epsilon_{\text{low}}}_{\text{① }0.2},\,1+\underbrace{\epsilon_{\text{high}}}_{\text{① }0.28}\big)\hat{A}_{i,t}\Big)\right]
+$$
 
-$$\text{s.t.}\quad \underbrace{0<\big|\{o_i\mid \texttt{is\_equivalent}(a,o_i)\}\big|<G}_{\text{② dynamic sampling 约束 / constraint}},\qquad \hat{A}_{i,t}=\frac{R_i-\operatorname{mean}(\{R_j\}_{j=1}^{G})}{\operatorname{std}(\{R_j\}_{j=1}^{G})}$$
+$$
+\text{s.t.}\quad \underbrace{0<\big|\{o_i\mid \texttt{is\_equivalent}(a,o_i)\}\big|<G}_{\text{② dynamic sampling 约束 / constraint}},\qquad \hat{A}_{i,t}=\frac{R_i-\operatorname{mean}(\{R_j\}_{j=1}^{G})}{\operatorname{std}(\{R_j\}_{j=1}^{G})}
+$$
 
 其中 $r_{i,t}(\theta)=\dfrac{\pi_\theta(o_{i,t}\mid q,o_{i,<t})}{\pi_{\theta_{\text{old}}}(o_{i,t}\mid q,o_{i,<t})}$，而 $R_i$ 中包含了组件 ④ 的长度整形项。**注意：式子里没有 KL 项**——这是 DAPO 相对 GRPO 的另一个关键删除。
 
@@ -1124,15 +1118,15 @@ Here $r_{i,t}(\theta)=\dfrac{\pi_\theta(o_{i,t}\mid q,o_{i,<t})}{\pi_{\theta_{\t
 | 技巧 / Technique | 做法 / Method | 关键机制细节 / Key Mechanism | 解决的问题 / Problem Solved |
 |---|---|---|---|
 | **① Clip-Higher**（解耦裁剪 / decoupled clipping） | 把 PPO 单一 $\epsilon$ 拆成非对称区间 $[1-\epsilon_{\text{low}},\,1+\epsilon_{\text{high}}]$，论文取 $\epsilon_{\text{low}}=0.2,\ \epsilon_{\text{high}}=0.28$ / Split PPO's single $\epsilon$ into an asymmetric range $[1-\epsilon_{\text{low}},\,1+\epsilon_{\text{high}}]$; the paper uses $\epsilon_{\text{low}}=0.2,\ \epsilon_{\text{high}}=0.28$ | 上界 $\epsilon_{\text{high}}$ 放宽以给低概率 token "上升空间"；下界 $\epsilon_{\text{low}}$ **故意不放宽**，否则会把低概率 token 直接压到 0、缩小采样空间 / Raise $\epsilon_{\text{high}}$ to give low-probability tokens headroom to grow; **deliberately keep $\epsilon_{\text{low}}$ small**, since relaxing it would crush low-probability tokens to 0 and shrink the sampling space | 对称裁剪对低概率 token 的提升上限极苛刻 → 策略熵单调下降、rollout 高度同质化 → **熵坍缩**、探索死亡 / Symmetric clipping imposes a brutally tight growth ceiling on low-probability tokens → monotonically decreasing entropy, near-identical rollouts → **entropy collapse** and dead exploration |
-| **② Dynamic Sampling**（动态采样 / dynamic sampling） | 过采样后**过滤掉准确率为 0 或 1 的组**（组内 $\hat{A}\equiv 0$，梯度为零），持续重采样直到凑满一个全是"有效样本"的 batch，以约束 $0<|\{\text{correct}\}|<G$ 写进目标 / Over-sample, then **filter out groups with accuracy 0 or 1** (where $\hat{A}\equiv 0$ and the gradient vanishes), and keep resampling until the batch is full of "effective" samples; encoded as the constraint $0<|\{\text{correct}\}|<G$ | 保持**有效** batch size 恒定，从而稳定梯度方差；论文实测：虽然采样量增加，但因所需训练步数减少，端到端收敛时间反而**略有下降** / Keeps the **effective** batch size constant, stabilizing gradient variance; empirically, despite more sampling, fewer training steps are needed, so end-to-end convergence time actually **drops slightly** | 训练中后期"全对"的提示比例持续攀升，batch 中大量样本贡献零梯度 → 有效信号被稀释、梯度方差变大、训练曲线抖动 / As training proceeds, the fraction of "all-correct" prompts keeps rising, so many samples contribute zero gradient → diluted signal, higher gradient variance, jittery training curves |
-| **③ Token 级损失 / Token-level Loss** | 从 GRPO 的 sample-level $\frac{1}{G}\sum_i \frac{1}{\lvert o_i\rvert}\sum_t$ 改为 token-level $\frac{1}{\sum_i \lvert o_i\rvert}\sum_i\sum_t$ / Replace GRPO's sample-level $\frac{1}{G}\sum_i \frac{1}{\lvert o_i\rvert}\sum_t$ with token-level $\frac{1}{\sum_i \lvert o_i\rvert}\sum_i\sum_t$ | 每个 token 权重相等，长回复对梯度的**总贡献按其长度线性增加**，不再被 $1/\lvert o_i\rvert$ 摊薄 / Every token gets equal weight, so a long response's **total gradient contribution scales linearly with its length** instead of being diluted by $1/\lvert o_i\rvert$ | 双向失衡：(a) 高质量长 CoT 中的推理模式被系统性降权，学不动；(b) 长回复中的**乱码与重复也惩罚不足** → 熵与回复长度出现"不健康"暴涨 / A two-sided failure: (a) reasoning patterns inside high-quality long CoT are systematically down-weighted and under-learned; (b) **gibberish and repetition in long responses are also under-penalized** → unhealthy blow-up of entropy and response length |
-| **④ Overlong Reward Shaping**（超长奖励整形 / overlong reward shaping） | 两级方案：先用 **Overlong Filtering**（把截断样本的 loss 直接 mask 掉），再用 **Soft Overlong Punishment**（分段软惩罚，见下方公式）叠加到规则奖励上 / A two-tier scheme: first **Overlong Filtering** (mask out the loss of truncated samples), then **Soft Overlong Punishment** (a piecewise soft penalty, formula below) added on top of the rule-based reward | 设 $L_{\max}=20480$、缓冲 $L_{\text{cache}}=4096$，即 16384 token 以内不罚、16384–20480 线性递增罚至 $-1$ / With $L_{\max}=20480$ and cache $L_{\text{cache}}=4096$: no penalty below 16384 tokens, then a linearly increasing penalty up to $-1$ over 16384–20480 | 默认把截断回复判为错误，会**惩罚推理本身正确、只是没写完**的样本 → 奖励噪声污染梯度、训练不稳 / Scoring truncated responses as wrong by default **punishes samples whose reasoning is actually sound but merely unfinished** → reward noise pollutes the gradient and destabilizes training |
+| **② Dynamic Sampling**（动态采样 / dynamic sampling） | 过采样后**过滤掉准确率为 0 或 1 的组**（组内 $\hat{A}\equiv 0$，梯度为零），持续重采样直到凑满一个全是"有效样本"的 batch，以约束 $0<|\{\text{correct}\}|
 
 组件 ④ 的软惩罚公式（论文 Eq. 13）为：
 
 The soft penalty of component ④ (paper Eq. 13) is:
 
-$$R_{\text{length}}(y)=\begin{cases}0, & |y|\le L_{\max}-L_{\text{cache}}\\[4pt] \dfrac{(L_{\max}-L_{\text{cache}})-|y|}{L_{\text{cache}}}, & L_{\max}-L_{\text{cache}}<|y|\le L_{\max}\\[6pt] -1, & |y|>L_{\max}\end{cases}$$
+$$
+R_{\text{length}}(y)=\begin{cases}0, & |y|\le L_{\max}-L_{\text{cache}}\\[4pt] \dfrac{(L_{\max}-L_{\text{cache}})-|y|}{L_{\text{cache}}}, & L_{\max}-L_{\text{cache}}<|y|\le L_{\max}\\[6pt] -1, & |y|>L_{\max}\end{cases}
+$$
 
 最终奖励 $R_i = R_{\text{correct}}(o_i, a) + R_{\text{length}}(o_i)$，其中 $R_{\text{correct}}\in\{+1,-1\}$ 由规则验证器（答案等价性判定）给出。这个设计的精神是：**长度约束应表达为"渐进变贵"而不是"悬崖式判死"**，避免在 $L_{\max}$ 处出现奖励函数的阶跃不连续。
 
@@ -1247,8 +1241,6 @@ DAPO 保留它，说明在实际大规模训练中，std 归一化带来的方�
 > DAPO 在其方法中移除了 KL 散度。
 > 路线 B（保守）——"保留小 KL 防止在稀疏奖励早期策略崩溃/复读，代价是探索受限"。
 
-
-
 ---
 
 ## Q2: Reward 怎么设计的？
@@ -1322,8 +1314,6 @@ Loss 只计算生成 token（不包括 prompt 和 observation token），由 `ma
 
 - PG loss = 0.0 持续 99 步 → 空转训练
 - score = 0.1 不变 → 所有回复格式分相同，无区分度 → 说明模型没有真正学习，需要检查 reward 设计或模型能力
-
-
 
 ## Q10: pg_loss 是什么？为什么有时是负的、有时是正的、有时是零？
 
@@ -1480,7 +1470,6 @@ Loss 只计算生成 token（不包括 prompt 和 observation token），由 `ma
 - NQ 单跳：1 次学会格式，1 次学会搜索
 - HotpotQA 多跳：1 次发现需要多轮搜索，1 次学会搜索链
 
-
 ### 当前数据集（短轨迹 ~700 tok、n=4、reward∈ {0.1,1.0}）
 
 | 问题（记录中已出现） | DAPO 怎么治 | Dr.GRPO 为什么治不了 |
@@ -1566,6 +1555,7 @@ DAPO×Dr.GRPO 组合是设计论证、尚未跑通出数字。
 4. Dr.GRPO 的唯一适用窗：组内有差异、但 std 估计不可靠（小 batch / 长轨迹）。
 
 ---
+
 *Rollout 与 Training 物理解耦** 的分布式架构。通过 Ray 统一调度 8 卡 A100 的计算资源，规避传统单节点 RL 显存不足和推理吞吐低下的问题。
 
 > Idea: 生成轨迹的推理引擎 和 更新参数的训练引擎 分开，
@@ -2010,6 +2000,10 @@ Search-R1 证明：outcome-based reward + retrieved token masking 就能实现�
 
 ---
 
+# 番外：Search R1
+
+---
+
 # References
 
 - [veRL](https://github.com/volcengine/verl) — RL training framework
@@ -2017,3 +2011,4 @@ Search-R1 证明：outcome-based reward + retrieved token masking 就能实现�
 - [Search-R1](https://github.com/PeterGriffinJin/Search-R1) — Original search-augmented RL
 - [DAPO](https://arxiv.org/abs/2503.14476) — Dynamic sampling for RL
 - [HotpotQA](https://hotpotqa.github.io/) — Multi-hop QA benchmark
+
