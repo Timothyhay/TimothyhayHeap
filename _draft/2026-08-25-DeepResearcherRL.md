@@ -526,60 +526,22 @@ Total:             ~44GB / 80GB ✅
 
 ## 6. Reward 设计与 GRPO 比较机制
 
-### 6.1 Reward 的三层结构
-
-Reward 由 `search_r1_qa_em` (SearchR1QAEMRewardManager) 计算，注册在
-`verl_tool/workers/reward_manager/search_r1_qa_em.py`。
+### 6.1 Reward
 
 #### 第一层：提取答案（`extract_solution`）
 
-```python
-answer_pattern = r"(.*?)"
-matches = re.findall(answer_pattern, solution_str, re.DOTALL)
-if len(matches) < 1:
-    return None          # 没找到  → 交给下一层判 0 分
-return matches[-1].strip()  # 有多个标签时取最后一个
-```
-
 #### 第二层：Exact Match 比对（`em_check`）
 
-```python
-def normalize_answer(s):
-    # 1. 小写化: "The University" → "the university"
-    # 2. 去冠词: 移除 a, an, the
-    # 3. 去标点: 移除所有 punctuation
-    # 4. 合并空格: "hello   world" → "hello world"
-    return white_space_fix(remove_articles(remove_punc(lower(s))))
-
-def em_check(prediction, golden_answers):
-    normalized_prediction = normalize_answer(prediction)
-    for golden_answer in golden_answers:
-        if normalize_answer(golden_answer) == normalized_prediction:
-            return 1    # 匹配!
-    return 0            # 不匹配
-```
-
 **normalize 实例**：`"The 2003 University of Oxford election"` → `"2003 university of oxford election"`
+1. 小写化: "The University" → "the university"
+2. 去冠词: 移除 a, an, the
+3. 去标点: 移除所有 punctuation
+4. 合并空格: "hello   world" → "hello world"
+
 
 #### 第三层：最终打分（`compute_score`）
 
-```python
-def compute_score(solution_str, ground_truth, format_score=0.1, score=1.0):
-    answer = extract_solution(solution_str)
-    open_count, close_count = count_answer_tags(solution_str)  # 数  和  数量
-
-    if answer is None:
-        return 0                    # 无  标签 → 0.0
-
-    if em_check(answer, ground_truth['target']):
-        if open_count > 10 or close_count > 10:
-            return score / 4         # 答案对但标签重复过多 → 0.25 (惩罚)
-        return score                 # 答案完全匹配 → 1.0
-
-    return format_score              # 有标签但答案错 → 0.1 (格式分)
-```
-
-**奖赏的三个等级**：
+**reward的三个等级**：
 
 | 模型输出 | 得分 | 含义 |
 |----------|------|------|
