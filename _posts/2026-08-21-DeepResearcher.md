@@ -174,8 +174,6 @@ Congition （很有可能他们接的外部模型效果也一般）的场景主�
 
 ## 3.2 Researcher
 
-**决策去重**
-
 **爬虫与搜索**
 
 首先需要在ResearcherAgent的Action中调用search[query]工具时触发，这个工具自带一个重复动作去重/读取缓存的功能。
@@ -208,6 +206,13 @@ RAG核心流程是多路召回 + rerank top5；
 - 语义相关性：上文检索时完成，但 LLM 会在选择中再次考虑
 - 语料质量：LLM 整体评价时也考虑语料质量
 
+
+语料评估的指标，结合 Query 相关度可以用于抽取式摘要 - 评分公式通常应结合：
+
+$Score(S)=α⋅Sim(S,Query)+β⋅Importance(S)+γ⋅PositionWeight(S)$
+
+$Sim(S, Query)$：可用 Dense Embedding 余弦相似度或 BM25 词级匹配（或两者混合）。
+$PositionWeight(S)$：新闻和博客通常具有“首段/前几句偏置（Lead Bias）”，靠前位置的句子应赋予更高先验权重。
 
 ### 搜索去重
 
