@@ -21,12 +21,6 @@ Science because doing this right involves task descriptions and explanations, fe
 
 说它是艺术，是因为它需要运用围绕 LLM 心理学和用户心理的直觉。
 
-
-
-- 上下文隔离：主题检测、子Agent机制、Agent Skills（比如渐进式压缩的方法）、沙箱
-- 上下文整理：压缩（多轮对话摘要、异构文件检索、场景摘要等）；分层动作空间（基于文件指针的可逆压缩）
-- 上下文丰富：待办事项管理（planning，to-do list 工具及跨session存储）；IDE 集成上下文（Linter工具、terminal 环境信息 etc.）动态上下文拼接（AGENT.md，引用片段注入)
-
 原则上，一般从预算控制（预留合理输入输出长度，防止lost in the middle）、信噪比控制（防止上下文污染，剔除幻觉）、
 记忆分层与压缩（长短期记忆、滑窗、配合黑盒压缩）、安全问题（防止 prompt注入）考虑。
 
@@ -35,7 +29,13 @@ Btw，有关 Memory：
 - 长期记忆：通过向量数据库（RAG）或知识图谱，按需检索并动态注入。
 
 
-软件工程领域也有上下文管理，通常是并发追踪、资源生命周期相关的管理。
+在 Coding Agent 中，我设计的 Context Engineering 特性包括下面三类：
+- 上下文隔离：主题检测、子Agent机制、Agent Skills（比如渐进式压缩的方法）、沙箱
+- 上下文整理：压缩（多轮对话摘要、异构文件检索、场景摘要等）；分层动作空间（基于文件指针的可逆压缩）
+- 上下文丰富：待办事项管理（planning，to-do list 工具及跨session存储）；IDE 集成上下文（Linter工具、terminal 环境信息 etc.）动态上下文拼接（AGENT.md，引用片段注入)
+
+
+另外，软件工程领域也有上下文管理，通常是并发追踪、资源生命周期相关的管理。
 从这里我们也可以获得一些启发，在 LLM 上下文窗口和 软工资源 之间有一些通用原则：
 
 - 最小必要原则（Principle of Least Privilege）：只给当前执行单元提供它必须知道的上下文，过多信息即是噪声与隐患。
