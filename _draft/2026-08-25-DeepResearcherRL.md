@@ -8,7 +8,7 @@ comments: true
 本文记录了在 8 卡 A100 节点上，基于 **veRL (Ray + vLLM + FSDP)** 框架，对大语言模型进行 Multi-turn Agent 强化学习训练的实践，
 以及后续放缩到 910B 集群的迁移方案。
 
-## 1. 我们为何出发
+# 1. 我们为何出发
 
 [书接上回](/2026/08/21/DeepResearcher.html)，我们从第一性原理出发，手搓了一个架构和工具都保持简单的 ReAct DeepResearch Agent。
 
@@ -17,23 +17,1271 @@ comments: true
 
 接下来我们谈从问题建模、训练环境搭建开始，如何从单节点到多卡集群构建自定义 Agent 的训练。
 
+## 1.1 MDP 形式化建模
 
-### 1.1 MDP 形式化建模
 在 Agentic RL 中，我们将多轮 ReAct 交互建模为一个步长有限的 MDP：
-*   **状态空间 $S$**：当前轮次之前的完整对话历史，包括初始 $Prompt$、历史思考过程 $Thought_t$、历史动作 $Action_t$（搜索） 和环境反馈 $Observation_t$。
-*   **动作空间 $A$**：模型在当前步骤生成的 Token 序列，think + tool_call(search)：
-    1.  **内部动作（思考）**：`<think>...</think>` 内的推理文本。
-    2.  **外部动作（工具调用）**：触发环境反馈的标签，如 `<call:search>query</call:search>`。
-*   **状态转移 $P(S_{t+1}|S_t, a_t)$**：当模型生成外部动作时，生成被暂停、检索服务执行(Action)，将返回的 $Observation_t$ `<observation>...</observation>`拼接到 $S_t$ 后，形成下一轮的状态 $S_{t+1}$。
-*   **奖励 $R(S, A)$**：环境在模型输出最终答案 `<answer>...</answer>` 或达到最大步数时，对整条轨迹进行综合打分。
+
+* **状态空间 $S$**：当前轮次之前的完整对话历史，包括初始 $Prompt$、历史思考过程 $Thought_t$、历史动作 $Action_t$（搜索） 和环境反馈 $Observation_t$。
+* **动作空间 $A$**：模型在当前步骤生成的 Token 序列，think + tool_call(search)：
+  1. **内部动作（思考）**：`<think>...</think>` 内的推理文本。
+  2. **外部动作（工具调用）**：触发环境反馈的标签，如 `<call:search>query</call:search>`。
+* **状态转移 $P(S_{t+1}|S_t, a_t)$**：当模型生成外部动作时，生成被暂停、检索服务执行(Action)，将返回的 $Observation_t$ `<observation>...</observation>`拼接到 $S_t$ 后，形成下一轮的状态 $S_{t+1}$。
+* **奖励 $R(S, A)$**：环境在模型输出最终答案 `<answer>...</answer>` 或达到最大步数时，对整条轨迹进行综合打分。
 
 > Anchor: 这跟单轮 RLHF 有何不同？
-> 状态在转移中被环境注入了非模型生成的 token（observation），因此必须做 loss masking（§3.3）；且奖励是轨迹级稀疏信号，credit assignment 更难（§3.4）。
+> 状态在转移中被环境注入了非模型生成的 token（observation），因此必须做 loss masking；且奖励是轨迹级稀疏信号，credit assignment 更难。
 
+# 2. Enviroment 
+
+Use veRL (Ray + vLLM + FSDP) to run Agentic RL training (GRPO/DAPO) on Qwen2.5-Coder-14B-Instruct to improve multi-hop QA performance on HotpotQA.
+
+**Testing Hardware**: 8× NVIDIA A100 80GB PCIe, 503GB RAM, 44TB disk
+
+然后放缩到 64卡 910B集群。
+
+**Key Software Versions**
+- Python: 3.10.9 (Anaconda)
+- PyTorch: 2.6.0
+- vLLM: 0.8.5.post1
+- Ray: 2.49.1
+- Transformers: 4.51.3
+- FAISS: 1.7.4 (CPU)
+
+## Architecture Diagram
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     veRL Training Loop                        │
+│                                                              │
+│  ┌──────────┐   ┌──────────┐   ┌────────────┐              │
+│  │  Actor   │   │   vLLM   │   │  Reference │              │
+│  │ (FSDP)   │   │ Rollout  │   │   Model    │              │
+│  │  GPUs    │   │  GPUs    │   │  (FSDP)    │              │
+│  └────┬─────┘   └────┬─────┘   └─────┬──────┘              │
+│       │              │               │                      │
+│       │     ┌────────▼────────┐      │                      │
+│       │     │  Agent Loop     │      │                      │
+│       │     │  (verltool_     │      │                      │
+│       │     │   agent_loop)   │      │                      │
+│       │     └────────┬────────┘      │                      │
+│       │              │               │                      │
+│       │     ┌────────▼────────┐      │                      │
+│       │     │  Tool Server    │      │                      │
+│       │     │  wiki_search    │      │                      │
+│       │     │  (Ray Workers)  │      │                      │
+│       │     └────────┬────────┘      │                      │
+│       │              │               │                      │
+│       │     ┌────────▼────────┐      │                      │
+│       │     │  Wikipedia API  │      │                      │
+│       │     │  (Internet)     │      │                      │
+│       │     └─────────────────┘      │                      │
+│       │                              │                      │
+│  ┌────▼──────────────────────────────▼──────┐              │
+│  │          Reward Manager                   │              │
+│  │       search_r1_qa_em (EM)                │              │
+│  │        extraction + normalize     │              │
+│  └──────────────────────┬───────────────────┘              │
+│                         │                                   │
+│                    ┌────▼─────┐                            │
+│                    │  GRPO /  │                            │
+│                    │  DAPO    │                            │
+│                    │  Update  │                            │
+│                    └──────────┘                            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## 工具与环境交互
+
+我们使用 `verl-tool` (TIGER-AI-Lab/verl-tool with veRL submodule 来实现自定义 Agent 和工具与 veRL 的无缝接入。
+
+**Tool architecture**:
+
+```
+┌─────────────────┐     no proxy     ┌──────────────┐     proxy + verify=False     ┌─────────────┐
+│  veRL Training  │ ───────────────→ │  Tool Server │ ──────────────────────────→ │  Wikipedia  │
+│  Process        │  (127.0.0.1:xxx) │  (localhost) │   (hkgpqwg00206:8080)        │  API        │
+└─────────────────┘                  └──────────────┘                              └─────────────┘
+```
+
+### 为什么需要 verl-tool？
+
+veRL 本身是通用 RL 训练框架（PPO/GRPO/DAPO + FSDP + vLLM），
+但它**不支持 Agent 的多轮工具调用**。原生 veRL 的 rollout 是一次性生成文本，
+不会中途暂停去调用外部工具再继续生成。
+
+verl-tool 在 veRL 基础上增加了三层关键能力：
+
+| 能力 | veRL 原生 | verl-tool |
+|------|----------|-----------|
+| 多轮 Agent Loop | ❌ 一次性生成 | ✅ 检测 action token → 调用工具 → 拼接 observation → 继续生成 |
+| 工具注册与管理 | ❌ 无 | ✅ 插件式工具系统，注册即用 |
+| 工具服务器 | ❌ 无 | ✅ HTTP 服务器，解耦推理与工具调用 |
+
+**核心架构**：
+
+```
+veRL Training Loop
+    └── vLLM Rollout (生成)
+         ├── 检测到  → 暂停生成
+         ├── POST /get_observation → Tool Server → Wikipedia API
+         ├── 收到 ...
+         └── 继续生成 → 检测到  → Episode 结束
+```
+
+### 我们如何实现自己的 Agent 和工具
+
+verl-tool 的工具系统通过 `BaseTool` 基类和 `@register_tool` 装饰器实现插件式注册。
+
+#### 注册一个新工具只需 3 步：
+
+**第 1 步**：在 `verl_tool/servers/tools/` 下创建 Python 文件
+
+```python
+from .base import BaseTool, register_tool
+
+@register_tool
+class WikiSearchTool(BaseTool):
+    tool_type = "wiki_search"  # 工具的唯一标识符
+```
+
+**第 2 步**：实现 3 个核心方法：
+
+```python
+def get_usage_inst(self) -> str:
+    """告诉模型如何使用这个工具。会被注入到 system prompt 附近。"""
+    return "Search Wikipedia with your query"
+
+def parse_action(self, action: str) -> Tuple[str, bool]:
+    """从模型输出中解析动作。
+    输入: 模型的原始输出文本
+    输出: (解析后的查询, 是否有效)"""
+    if "" in action:
+        query = extract_between_tags(action, "", "")
+        return query, True
+    if "" in action:
+        answer = extract_between_tags(action, "", "")
+        return answer, True
+    return "", False
+
+def conduct_action(self, trajectory_id, action, extra_field):
+    """执行工具调用，返回 observation。
+    这是外部 API 调用的地方。"""
+    query, is_valid = self.parse_action(action)
+    if "" in action:
+        return "", done=True, valid=True   # 结束 episode
+    result = search_wikipedia(query)       # 调用 Wikipedia API
+    return f"{result}", done=False, valid=True
+```
+
+**第 3 步**：启动工具服务器时指定工具类型
+
+```bash
+python -m verl_tool.servers.serve --tool_type "wiki_search"
+```
+
+框架自动扫描 `tools/` 目录下的所有 `.py` 文件，
+发现 `@register_tool` 装饰的类，实例化并注册到路由表中。
+
+#### 现有工具一览
+
+verl-tool 预置了 15+ 工具，涵盖搜索、代码执行、SQL、文件浏览等：
+
+| 工具 | 用途 |
+|------|------|
+| `google_search` | Google 搜索（需 API key） |
+| `bing_search` | Bing 搜索（需 API key） |
+| `search_retrieval` | 本地向量库检索（需 FAISS） |
+| **`wiki_search`** | **Wikipedia 搜索（免费，我们实现的）** |
+| `python_code` | Python 代码执行 |
+| `ipython_code` | IPython 交互式执行 |
+| `bash_terminal` | Bash 终端 |
+| `sql` | SQL 查询 |
+| `finish` | 标记任务完成 |
+
+### Agent Loop 的多轮交互机制
+
+verltool_agent_loop.py`：
+
+```
+Step 1: 初始化
+  prompt = chat_template(system_prompt + question)
+  conversation = [prompt]
+
+Step 2: 生成循环 (最多 max_turns 轮)
+  while turn < max_turns:
+      response = vllm.generate(conversation)
+      # 检测 action_stop_tokens: "</search>" 或 "</answer>"
+
+      if "</search>" in response:
+          # 模型想搜索
+          tool_result = POST tool_server(get_observation, action=response)
+          conversation += response + tool_result  # 拼接 observation
+          turn += 1
+          continue
+
+      elif "</answer>" in response:
+          # 模型给出最终答案 → episode 结束
+          conversation += response
+          break
+
+      else:
+          # 模型没有使用任何 action token → 直接结束
+          break
+
+Step 3: 计算 reward
+  reward = reward_manager(conversation, ground_truth)
+```
+
+**关键设计细节**：
+
+1. **Action Stop Tokens**：`</search>` 和 `</answer>` 是 vLLM 的 stop tokens。
+   模型生成到这些 token 时会**立即停止**，Agent Loop 接管控制权。
+
+2. **Observation 拼接**：工具返回的 `<information>...</information>` 会被拼接到
+   对话历史中，作为下一轮 vLLM 生成的输入。模型看到搜索结果后可以继续推理。
+
+3. **Loss Masking**：`mask_observations=True` 确保 observation token（工具返回的内容）
+   不参与 loss 计算。模型只需要学习"何时搜索"和"搜索后的答案"，不需要学习
+   复述搜索结果的文本。
+
+4. **多轨迹并发**：Agent Loop 支持异步并发处理多条轨迹，
+   每条轨迹有独立的 `trajectory_id` 和对话历史。
+
+### Tool Server 架构
+
+Tool Server 是多进程 HTTP 服务，负责接收 Agent Loop 的工具调用请求：
+
+```
+                    ┌─ Backend Worker 0 (wiki_search) ─┐
+Agent Loop ──POST──→│  Router (FastAPI + uvicorn)       │──→ Wikipedia API
+  (veRL)    ←──resp─│  /get_observation                 │←── <information>
+                    └─ Backend Worker 1 (wiki_search) ──┘
+```
+- **Router**：负载均衡，基于 `trajectory_id` 的一致性哈希路由
+- **Backend Workers**：每个 Worker 是独立子进程，运行实际工具逻辑
+- **健康检查**：Router 在启动时等待所有 Worker 就绪
+- **Ray 模式**：可选使用 Ray actors 替代线程池（但我们的环境用线程池）
+
+### 我们的 wiki_search 工具的特殊处理
+
+因为公司网络环境的特殊性，我们的工具做了以下适配：
+
+1. **HTTPS 强制**：Wikipedia 库默认用 HTTP，但代理只转发 HTTPS → 强制改写 URL
+2. **SSL 绕过**：代理有自签名证书 → `verify=False`
+3. **代理保留**：需要代理才能访问外网 → `trust_env=True`
+4. **限流防护**：Wikipedia 每 ~3 请求返回 429 `Retry-After: 13s` → 尊重该头并等待
+5. **API 调用优化**：每个问题最多 2 次 API 调用（之前 4-6 次）
+
+### 与 veRL 原生训练的关键区别
+
+如果不用 verl-tool，直接用 veRL 做 Agent RL：
+
+1. **无法实现多轮交互**：veRL 的 rollout 是一次性的，不能中途插入 tool observation
+2. **需要自己管理对话状态**：每条轨迹的 history 需要手动拼接
+3. **需要自己实现 tool serving**：工具调用逻辑直接写在 reward 函数中（不灵活）
+4. **无法并发处理工具调用**：每个工具调用会阻塞 rollout
+
+verl-tool 将这些复杂性封装为：
+
+- `AgentLoopManager`：管理多轨迹并发生成 + 工具调用
+- `ToolServer`：HTTP 微服务，工具逻辑独立部署
+- `BaseTool`：统一的工具接口，注册即用
+
+---
+
+
+### Tool: `wiki_search`
+
+**File**: `verl-tool-main/verl_tool/servers/tools/wiki_search.py`
+
+A custom Wikipedia search tool registered in verl-tool's tool system:
+
+- **Free**: No API keys required, uses public Wikipedia API
+- **Search-R1 compatible**: Parses `<search>` tags, returns results in `<information>` tags
+- **Answer extraction**: Parses `<answer>` tags for final answer
+- **Caching**: In-memory cache with 10,000 entry limit
+
+
+**Action format**:
+```
+<search> Albert Einstein </search>        # Search Wikipedia
+<answer> 1879 </answer>                   # Final answer
+```
+
+**Observation format**:
+```
+<information>**Doc 1 (Title: Albert Einstein)**
+URL: https://en.wikipedia.org/wiki/Albert_Einstein
+Summary text...</information>
+```
+
+### Why Wikipedia API over other options
+
+| Option | Pros | Cons |
+|--------|------|------|
+| `search_retrieval` (FAISS) | Realistic, matches Search-R1 | Requires 20GB+ Wikipedia corpus + FAISS index |
+| `google_search` | Best results | Requires SERPER_API_KEY |
+| `bing_search` | Good results | Requires BRIGHTDATA_API_KEY |
+| **`wiki_search`** ✅ | Free, no API key, works for HotpotQA | Rate-limited, fewer results |
+
+### RL Reward Shaping
+
+
+Simple exact match (EM) reward:
+- Extracts text from `<answer>` tags
+- Normalizes (lowercase, remove articles, punctuation, whitespace)
+- Compares with ground truth
+- Returns 1.0 for match, 0.0 otherwise
+- Penalty: `/4` if too many `<answer>` or `</answer>` tags (>10)
+
+
+## 4. Dataset: 数据来源、格式与 Prompt 设计
+
+### 4.1 数据来源
+
+我们使用 **Search-R1 标准数据集** `PeterJinGo/nq_hotpotqa_train`，来自 Search-R1 论文
+(https://github.com/PeterGriffinJin/Search-R1)。
+同时包含基于内部构造的少量多跳问答语料。
+
+**Search-R1** 的数据集将两个 QA 基准混合在一起：
+
+| 数据源 | 数量 | 特点 |
+|--------|------|------|
+| **NQ** (Natural Questions) | 79,168 | 单跳事实型问答，答案通常是实体/数字 |
+| **HotpotQA** | 90,447 | **多跳问答**，需要结合多个 Wikipedia 页面才能回答 |
+
+**总计**：169,615 条原始数据 → 按 90/10 分割为 152,653 train / 16,962 val。
+
+RAG_ProGuide 数据集（13,289 条，已存在于 `dataset/`）未使用，因为它缺少多跳推理需求。
+
+### 4.2 数据格式
+
+每条数据包含以下字段：
+
+```python
+{
+    'id': 'train_0',
+    'question': 'total number of death row inmates in the us?',
+    'golden_answers': ['2,718'],           # 可接受的答案列表
+    'data_source': 'nq',                    # 'nq' 或 'hotpotqa'
+    'ability': 'fact-reasoning',
+    'prompt': [                             # messages 格式
+        {
+            'role': 'user',
+            'content': '<完整指令文本>...Question: <问题>'
+        }
+    ],
+    'reward_model': {
+        'ground_truth': {
+            'target': ['2,718']             # 用于 EM 比对的正确答案
+        },
+        'style': 'rule'
+    },
+    'extra_info': {
+        'index': 0,
+        'split': 'train'
+    }
+}
+```
+
+**关键点**：此数据集**已经预格式化为 Search-R1 标准格式**，由 verl-tool 的
+`examples/data_preprocess/search_r1.py` 脚本从原始 NQ/HotpotQA 转换而来。
+我们的 `prepare_data.py` 仅做了 train/val 分割。
+
+### 4.3 Prompt 设计（使用 Search-R1 标准）
+
+我们参考了 Search-R1 论文的标准指令格式。
+这是一个嵌入在**单个 user message** 中的指令（无独立 system message），
+对 DMI 的 DAG 依赖回答，还需要在 user prompt 中增加 fact-list，对 final answer 要求输出 new topic / sources。
+
+
+Search-R1：
+
+```
+Answer the given question. You must conduct reasoning inside <think> and </think>
+first every time you get new information. After reasoning, if you find you lack
+some knowledge, you can call a search engine by <search> query </search> and it
+will return the top searched results between <information> and </information>.
+You can search as many times as your want. If you find no further external
+knowledge needed, you can directly provide the answer inside <answer> and </answer>,
+without detailed illustrations. For example, <answer> Beijing </answer>.
+Question: {question}
+```
+
+**指令拆解**：
+
+| 标签 | 用途 | Agent 行为 |
+|------|------|-----------|
+| `<think> ... </think>` | 推理过程 | 模型在每次获取新信息后进行思考 |
+| `<search> query </search>` | 搜索动作 | 触发 Wikipedia 搜索工具调用 |
+| `<information> ... </information>` | 搜索结果 | 工具服务器返回的观察（observation） |
+| `<answer> ... </answer>` | 最终答案 | 触发 episode 结束，提取答案进行 EM 打分 |
+
+
+### 4.4 HotpotQA vs NQ 问题对比
+
+**NQ（单跳）**：答案可直接从 Wikipedia 找到，无需组合多篇文档。
+
+```
+Q: total number of death row inmates in the us?
+A: ['2,718']
+```
+
+**HotpotQA（多跳）**：必须组合多个 Wikipedia 页面的信息才能回答。
+
+```
+Q: Musician and satirist Allie Goertz wrote a song about the "The Simpsons"
+   character Milhouse, who Matt Groening named after who?
+A: ['President Richard Nixon']
+   → 需要先查 "Allie Goertz" → "Milhouse" → "Matt Groening" → Nixon
+
+Q: The Oberoi family is part of a hotel company that has a head office in what city?
+A: ['Delhi']
+   → 需要查 "Oberoi family" → 关联的酒店公司 → 总部城市
+```
+
+这也是为什么 Agent 需要多轮搜索（`max_turns=3`）：多跳问题单次搜索往往不够。
+
+
+### 4.7 多轮交互的数据流
+
+在一次训练 rollout 中，数据在 Agent 和 Tool Server 之间的流转：
+
+```
+初始 prompt (Search-R1 指令 + 问题)
+    │
+    ▼
+┌─ vLLM 生成 ─────────────────────────────────────────┐
+│   我需要搜索这个问题...                │
+│   death row inmates United States   │
+└──────────────────────────────────────────────────────┘
+    │ 检测到  → 调用 tool_server
+    ▼
+┌─ Tool Server (wiki_search) ─────────────────────────┐
+│  返回:                                   │
+│  Doc 1 (Title: Capital punishment...)                │
+│  As of 2020, there were 2,718 death row inmates...   │
+│                                        │
+└──────────────────────────────────────────────────────┘
+    │ 将 observation 拼接到对话中
+    ▼
+┌─ vLLM 继续生成 ─────────────────────────────────────┐
+│   根据搜索结果，答案是 2,718           │
+│   2,718                             │
+└──────────────────────────────────────────────────────┘
+    │ 检测到  → episode 结束
+    ▼
+┌─ Reward Manager ────────────────────────────────────┐
+│  提取 "2,718" → 标准化 → 比对 ground_truth           │
+│  匹配! → reward = 1.0                                │
+└──────────────────────────────────────────────────────┘
+```
+
+# Training Configuration
+
+### Algorithm: DAPO/GRPO
+
+DAPO = GRPO + Dynamic Sampling Filter
+
+Key DAPO additions (from `train_7b_dapo.sh`):
+
+```
++algorithm.filter_groups.enable=True
++algorithm.filter_groups.metric='seq_final_reward'
++algorithm.filter_groups.max_num_gen_batches=0
+actor_rollout_ref.actor.clip_ratio_high=0.3
+actor_rollout_ref.actor.clip_ratio_low=0.2
+actor_rollout_ref.actor.loss_agg_mode='token-mean'
+```
+
+### Hyperparameters for 14B Model
+
+| Parameter | Value | Rationale |
+|-----------|-------|-----------|
+| n (samples/prompt) | 8 | Group size for GRPO advantage normalization |
+| batch_size | 64 | Conservative for 14B memory |
+| ppo_mini_batch_size | 32 | Inner update batch |
+| max_prompt_length | 4096 | Covers most HotpotQA questions |
+| max_response_length | 6144 | Room for think + search + answer |
+| max_turns | 3 | Multi-hop needs multiple searches |
+| lr | 1e-6 | Conservative LR for 14B |
+| gpu_memory_utilization | 0.55 | Conservative for 14B + vLLM |
+| do_offload | True | Offload optimizer states to CPU |
+| tensor_model_parallel_size | 1 | vLLM TP size; no tensor parallelism |
+
+### GPU Memory Budget (per GPU)
+
+```
+vLLM (rollout):    ~16GB (55% of 80GB, with TP=1)
+Actor FSDP shard:  ~14GB (28GB model / 8 GPUs × 4 for activations)
+Optimizer states:  ~0GB (offloaded to CPU)
+Reference model:   ~14GB (shared with actor via FSDP)
+-----------------------------------
+Total:             ~44GB / 80GB ✅
+```
 
 
 
 ---
+
+## 6. Reward 设计与 GRPO 比较机制
+
+### 6.1 Reward 的三层结构
+
+Reward 由 `search_r1_qa_em` (SearchR1QAEMRewardManager) 计算，注册在
+`verl_tool/workers/reward_manager/search_r1_qa_em.py`。
+
+#### 第一层：提取答案（`extract_solution`）
+
+```python
+answer_pattern = r"(.*?)"
+matches = re.findall(answer_pattern, solution_str, re.DOTALL)
+if len(matches) < 1:
+    return None          # 没找到  → 交给下一层判 0 分
+return matches[-1].strip()  # 有多个标签时取最后一个
+```
+
+#### 第二层：Exact Match 比对（`em_check`）
+
+```python
+def normalize_answer(s):
+    # 1. 小写化: "The University" → "the university"
+    # 2. 去冠词: 移除 a, an, the
+    # 3. 去标点: 移除所有 punctuation
+    # 4. 合并空格: "hello   world" → "hello world"
+    return white_space_fix(remove_articles(remove_punc(lower(s))))
+
+def em_check(prediction, golden_answers):
+    normalized_prediction = normalize_answer(prediction)
+    for golden_answer in golden_answers:
+        if normalize_answer(golden_answer) == normalized_prediction:
+            return 1    # 匹配!
+    return 0            # 不匹配
+```
+
+**normalize 实例**：`"The 2003 University of Oxford election"` → `"2003 university of oxford election"`
+
+#### 第三层：最终打分（`compute_score`）
+
+```python
+def compute_score(solution_str, ground_truth, format_score=0.1, score=1.0):
+    answer = extract_solution(solution_str)
+    open_count, close_count = count_answer_tags(solution_str)  # 数  和  数量
+
+    if answer is None:
+        return 0                    # 无  标签 → 0.0
+
+    if em_check(answer, ground_truth['target']):
+        if open_count > 10 or close_count > 10:
+            return score / 4         # 答案对但标签重复过多 → 0.25 (惩罚)
+        return score                 # 答案完全匹配 → 1.0
+
+    return format_score              # 有标签但答案错 → 0.1 (格式分)
+```
+
+**奖赏的三个等级**：
+
+| 模型输出 | 得分 | 含义 |
+|----------|------|------|
+| 无 `` 标签 | **0.0** | 完全不符合格式 |
+| `错误答案` | **0.1** | 格式正确，内容错误（引导奖励） |
+| `正确答案` | **1.0** | 完全正确 |
+| 正确但标签 >10 次 | **0.25** | 正确但输出冗余（惩罚） |
+
+**为什么设置 `format_score=0.1`？**
+
+搜索式 RL 的经典"先有鸡还是先有蛋"问题：模型不知道用 ``格式 → 得不到奖励 → 学不会格式。 `format_score=0.1` 的意图是给一个**软引导**：只要用了`` 标签（即使答案错），也给 0.1 分。
+期望模型先学会输出格式，再学会输出正确内容。
+
+**实际效果**：模型确实学会了用 `...` 包装，但内容始终是 "..." 或乱码，
+从不使用 `` 进行工具调用。这导致所有回复分数相同（都是 0.1），
+GRPO 无法区分好坏。
+
+### 6.2 GRPO 如何比较 n 个回复
+
+GRPO（Group Relative Policy Optimization）的核心思想是：
+**同一 prompt 的多个回复在组内互相比较，好的加强，差的抑制。**
+
+#### 第一步：每个回复得到一个标量 reward
+
+```python
+# token_level_rewards: shape (batch, response_length)
+# 只在最后一个有效 token 位置有非零值（= reward score）
+scores = token_level_rewards.sum(dim=-1)
+# 结果: [0.1, 0.1, 1.0, 0.1,  0.1, 0.1, 0.1, 0.1, ...]
+#       |--- prompt_1 ---|    |--- prompt_2 ---|
+```
+
+#### 第二步：按 prompt 分组（`index` = uid）
+
+```python
+id2score = defaultdict(list)
+for i in range(bsz):
+    id2score[index[i]].append(scores[i])
+
+# 例:
+# id2score = {
+#     "q1": [0.1, 0.1, 1.0, 0.1],    # n=4 条回复
+#     "q2": [0.1, 0.1, 0.1, 0.1],    # n=4 条回复
+#     ...
+# }
+```
+
+#### 第三步：组内标准化（GRPO 的核心）
+
+```python
+# 计算每组均值和标准差
+for prompt_id, score_list in id2score.items():
+    if len(score_list) == 1:
+        id2mean[prompt_id] = 0.0     # 只有 1 条时硬编码兜底
+        id2std[prompt_id] = 1.0
+    else:
+        scores_tensor = torch.stack(score_list)
+        id2mean[prompt_id] = torch.mean(scores_tensor)
+        id2std[prompt_id] = torch.std(scores_tensor)
+
+# 逐条计算 advantage = (reward - 组内均值) / 组内标准差
+for i in range(bsz):
+    scores[i] = (scores[i] - id2mean[index[i]]) / (id2std[index[i]] + 1e-6)
+```
+
+#### 第四步：Advantage 赋值到 Token 级别
+
+```python
+advantages = torch.zeros_like(token_level_rewards)
+for i in range(bsz):
+    # 只在最后一个有效 token 上放进归一化后的 score
+    advantages[i, valid_response_length[i] - 1] = scores[i]
+```
+
+### 6.3 具体例子
+
+#### 场景 A：有区分度（理想情况，有学习信号）
+
+```
+Prompt: "total number of death row inmates in the us?"
+Ground truth: ["2,718"]
+4 个回复:
+  ┌────────────────────────────────┬────────┬───────────┐
+  │ 回复                          │ Reward │ Advantage │
+  ├────────────────────────────────┼────────┼───────────┤
+  │ A:  Paris    │  0.1   │  -0.48    │ ← 抑制
+  │ B:  2,718    │  1.0   │  +1.67    │ ← 强化!
+  │ C: (无标签乱码)               │  0.0   │  -0.71    │ ← 抑制
+  │ D:  Beijing  │  0.1   │  -0.48    │ ← 抑制
+  └────────────────────────────────┴────────┴───────────┘
+
+组内: mean = (0.1+1.0+0.0+0.1)/4 = 0.30
+      std  = 0.42
+      A_adv = (0.1-0.30)/0.42 = -0.48
+      B_adv = (1.0-0.30)/0.42 = +1.67  ← 回复B的行为被强化!
+      C_adv = (0.0-0.30)/0.42 = -0.71
+      D_adv = (0.1-0.30)/0.42 = -0.48
+
+PG loss = -Σ(advantage × log_prob)
+  → 回复B的行为（搜索→正确回答）概率上升
+  → 回复A/C/D 的行为概率下降
+  ✅ 模型学到了"搜索后给出正确答案"更好
+```
+
+#### 场景 B：全部相同（我们的现状，无学习信号）
+
+```
+Prompt: "total number of death row inmates in the us?"
+Ground truth: ["2,718"]
+4 个回复:
+  ┌──────────────────────────────┬────────┬───────────┐
+  │ 回复                        │ Reward │ Advantage │
+  ├──────────────────────────────┼────────┼───────────┤
+  │ A:  ...    │  0.1   │    0.0    │
+  │ B:  ...    │  0.1   │    0.0    │
+  │ C:  ...    │  0.1   │    0.0    │
+  │ D:  ...    │  0.1   │    0.0    │
+  └──────────────────────────────┴────────┴───────────┘
+
+组内: mean = 0.10
+      std  = 0.00               ← 标准差为零!
+      A_adv = (0.1-0.1)/(0.0+1e-6) = 0.0
+      B_adv = C_adv = D_adv = 0.0
+
+PG loss = 0 × log_prob = 0    ← 梯度为零
+  ❌ 模型权重完全不更新，训练在"空转"
+```
+
+#### 场景 C：恰好有一条偶然正确（突破僵局）
+
+```
+3 个回复得 0.1（格式分），1 个回复碰巧得 1.0（正确答案）
+  mean = 0.325, std = 0.45
+  正确回复 advantage = +1.5，其他 ≈ -0.5
+  → 正确行为被放大 1.5 倍
+  → 下一轮该行为概率增加
+  → 可能产生更多正确回复 → std 增大 → 更强的学习信号
+  ✅ 一旦某条回复"运气好"答对了，GRPO 就能开始正循环
+```
+
+### 6.4 `norm_adv_by_std_in_grpo` 的作用
+
+GRPO 有一个开关 `norm_adv_by_std_in_grpo`（默认为 True）：
+
+```python
+if norm_adv_by_std_in_grpo:
+    scores[i] = (scores[i] - id2mean[index[i]]) / (id2std[index[i]] + epsilon)
+else:
+    scores[i] = scores[i] - id2mean[index[i]]  # 只减均值，不除标准差
+```
+
+| 设置 | 效果 |
+|------|------|
+| `True`（默认） | 除以标准差 → 组内方差大时缩小 advantage，方差小时放大 |
+| `False`（Dr.GRPO） | 不除标准差 → 方差大时 advantage 也大，更新更激进 |
+
+### 6.5 Policy Gradient 最终计算
+
+有了 advantage 之后，PG loss 的计算：
+
+```python
+# 在 dp_actor.py 中
+pg_loss = - advantages * log_probs  # 对每个 token
+pg_loss = pg_loss * response_mask   # 只看生成 token，忽略 prompt 和 observation
+pg_loss = pg_loss.sum() / response_mask.sum()  # 平均
+```
+
+### 6.6 pg_loss 的三种情况详解
+
+#### pg_loss = 0：无学习（冷启动困境）
+
+```
+所有 n=4 回复 reward 相同 → advantage 全为 0 → pg_loss = 0
+→ grad_norm = 0 → 模型权重不更新
+```
+
+这就是我们 15 步测试和宿主机 99 步训练中 `actor/pg_loss:0.0` 的原因。
+
+#### pg_loss < 0：正向学习 ✅
+
+```
+假设某 prompt 的 4 个回复:
+  A: reward=1.0 (正确答案) → advantage=+1.5 → 模型生成了 A，log_prob > 0
+  B: reward=0.1 (格式对)   → advantage=-0.5 → 模型没生成 B，log_prob < 0
+  ...                      
+→ advantage × log_prob > 0（同号的乘积为正）
+→ pg_loss = -正数 = 负数
+→ 梯度方向：增加 A 的概率，降低 B 的概率 → 模型变好！
+```
+
+**负得越多，学习越强。** Step 9 的 `pg_loss=-0.028` 是好的。
+
+#### pg_loss > 0：反向学习 ❌
+
+```
+假设模型碰巧生成了一个高 reward 回复，但 log_prob 是负的（模型不倾向生成它）
+→ advantage > 0, log_prob < 0 → 乘积 < 0
+→ pg_loss = -负数 = 正数
+→ 梯度方向错误，模型学到"坏行为"
+```
+
+**pg_loss > 0 意味着模型在惩罚好行为——这是信号反了，需要检查 reward 设计。**
+
+#### 波动是正常的
+
+```
+Step 9:  score=0.184, pg_loss=-0.028  ← 学到了一批好回复
+Step 10: score=0.100, pg_loss=0.0      ← 这 batch 恰好没答对
+Step 11: score=0.100, pg_loss=0.0      ← 同上
+```
+
+RL 训练像**拔河比赛**：每步的 batch 不同，模型在探索中时而进步时而退步。
+关键在于**长期趋势**：score 从 0.100 → 0.184 已经证明了学习在发生。
+更多步数后，正确的搜索-回答行为会越来越频繁。
+
+#### 为什么 pg_loss 的绝对值这么小（0.01-0.03）？
+
+1. **小 batch**：8 prompts × 4 回复 = 32 rollout，方差大
+2. **response_length 平均 500+ tokens**：loss 在 token 维度平均后变小
+3. **只有 ~40% 轨迹有 ``**：大部分轨迹的 advantage 为 0
+4. **GRPO 的保守性**：除以组内 std 会缩小 advantage
+
+随着训练进行，更多轨迹学会正确答案，pg_loss 的绝对值通常会增大。
+
+### 6.6 `no_loss_on_traj` 的含义
+
+在 verl_tool 的指标中有一个 `no_loss_on_traj`：
+
+- **值为 1.0**：该轨迹被 mask 掉，不参与 loss 计算
+- **值为 0.0**：该轨迹正常参与 loss
+- 我们训练中 `no_loss_on_traj/mean ≈ 0.88-1.0`：88-100% 的轨迹被跳过
+- 被 mask 的原因包括：轨迹超长、observation 被 mask（`mask_observations=True`）、轨迹格式无效等
+
+
+## 10. 训练运行记录
+
+### 10.1 时间线
+
+| 时间 | 事件 | 结果 |
+|------|------|------|
+| 04:00 | 首次冒烟测试 (5步) | ✅ 成功：Agent Loop, vLLM rollout, reward 全部正常 |
+| 05:40 | 发现模型输出垃圾 token | ⚠️ 模型复制 prompt 中的 "Beijing" 示例 |
+| 06:00 | 修复 prompt → system+user 格式 | ⚠️ 模型复制 "Paris" 示例 |
+| 06:15 | 移除 prompt 中所有示例答案 | ✅ 模型不再盲目复制 |
+| 06:50 | 15步验证测试 | ✅ 全部完成，rewards=0.1 (格式分) |
+| 07:35 | 15步测试结束 | PG loss=0，无学习信号 |
+| 07:40 | 200步正式训练启动 | ▶️ 运行中 |
+
+### 10.2 15步验证测试详细数据 (2026-07-28 06:50-07:35)
+
+训练管道验证成功，15 步全部完成，无报错：
+
+| 指标 | 值 | 说明 |
+|------|-----|------|
+| 单步时间 | 94-96s | 极稳定（gen ~49s, update ~37s, reward ~0.14s） |
+| 吞吐量 | 37-41 tok/s | 端到端（含 rollout + reward + update） |
+| GPU 内存 (allocated) | 74.1 GB | 在所有 8 GPU 上完全一致 |
+| GPU 内存 (reserved) | 89.1 GB | 略超 80GB 但因为 offload 正常工作 |
+| CPU 内存 | 86.5 GB | 优化器状态卸载到 CPU |
+| actor/entropy | 6.2-6.5 (偶有 0.0) | 有输出多样性，但某些 step 完全确定性 |
+| actor/pg_loss | **0.0** (全部) | 无学习信号 |
+| actor/grad_norm | **0.0** (全部) | 梯度为 0，模型权重不更新 |
+| score/mean | **0.1** (全部) | 仅格式奖励，无正确答案 |
+| num_turns | **1** (全部) | 模型从不进行多轮搜索 |
+| tool_calls 耗时 | **0.0s** (全部) | 模型从不调用 Wikipedia 搜索 |
+| response_length | 700-990 tokens | 模型会生成文本但最终只输出 "..." 或乱码 |
+| valid_traj | 3-9% | 只有 3-9% 轨迹有可解析的 `` 标签 |
+| no_loss_on_traj | 88-100% | 大部分轨迹被 mask，不参与 loss 计算 |
+
+### 10.3 Prompt 迭代过程（3 轮优化）
+
+**第 1 轮 — Search-R1 原始格式（失败）**：
+
+```
+Role: user (单一消息)
+Content: "Answer the given question. You must conduct reasoning inside ...
+          For example,  Beijing . Question: ..."
+```
+
+问题：模型直接输出 "Beijing"，其余全是 `.0000...` 乱码。
+
+**第 2 轮 — System+User 格式（失败）**：
+
+```
+Role: system
+Content: "...Follow this format...e.g. Paris"
+Role: user
+Content: "Question: ..."
+```
+
+问题：模型复制 "Paris"，15 步中所有回答都是 Paris。
+
+**第 3 轮 — 无示例 System+User 格式（当前使用）**：
+
+```
+Role: system
+Content: "You are a helpful research assistant...To answer:
+  1. Think inside ...
+  2. Search Wikipedia with query
+  3. Results in ...
+  4. Search again if needed
+  5. Final answer inside ..."
+Role: user
+Content: "Question: ..."
+```
+
+效果：模型不再复制示例，自己生成内容（但只是 "..." 或无关文本）。
+
+**核心发现**：Qwen2.5-Coder-14B-Instruct 无法理解 Search-R1 的 XML 标签格式。
+模型能生成 `...` 结构（获得 0.1 格式分），但从不在 ``中填入有意义的内容， 也从不使用`` 标签进行工具调用。
+
+### 10.4 为什么 PG Loss 始终为 0
+
+GRPO 算法的核心机制：
+
+1. 对每个 prompt 生成 n=4 个回复
+2. 计算每个回复的 reward
+3. 在组内标准化 reward（减去均值，除以标准差）→ 得到 advantage
+4. 用 advantage 加权 policy gradient
+
+当所有 4 个回复的 reward **相同**时（都是 0.1 格式分）：
+
+- 组内均值 = 0.1
+- 组内标准差 = 0
+- advantage = (0.1 - 0.1) / 0 = **0**（除以零时设为 0）
+- PG loss = 0 × log_prob = **0**
+
+模型无法区分好坏回复，因此无法学习。这形成了"先有鸡还是先有蛋"的困境：
+
+- 模型不知道如何搜索 → 无法获得正确答案 → reward 无方差 → 无法学习如何搜索
+
+### 10.5 工具服务器表现
+
+wiki_search 工具服务器在整个测试中运行正常：
+
+- 健康检查始终通过（HTTP 200）
+- `tool_call_success=1.0` 表示工具服务器可达
+- 但 `tool_calls` 耗时 = 0.0s，说明模型从未发送 `` 请求
+- 代理配置正确：Wikipedia API 可通过公司代理访问
+- SSL 证书问题已通过 `verify=False` + `trust_env=True` 解决
+
+---
+
+## 11. 关键发现与经验教训
+
+### 11.1 模型选择的决定性影响
+
+这是本次实验最重要的发现：**RL 训练的成功与否，80% 取决于基座模型是否理解任务格式**。
+
+Qwen2.5-Coder-14B-Instruct 是为代码生成训练的模型。
+Search-R1 的 ``/`` / `` XML 标签格式对它来说完全是陌生的。
+即使经过 15 步 RL 训练，模型仍然无法学会使用这些标签。
+
+**强烈建议**：使用 Qwen2.5-14B-Instruct（非 Coder 版本），或先在 Search-R1 格式的
+示例数据上做 SFT 预热，再进行 RL 训练。
+
+### 11.2 兼容性问题
+
+在 vLLM 0.8.5 + torch 2.6.0 的环境下运行 veRL 0.7.0.dev 需要 **8 个兼容性补丁**。
+详见 `PATCHES.md`。主要问题：
+
+- vLLM V1 引擎 API 差异（`CoreEngineProcManager`, `get_tcp_uri`, `reset_mm_cache`）
+- PyTorch attention 工具函数（`flash_attn.bert_padding` → 纯 PyTorch 回退）
+- 空 tensor 安全处理（`debug_metrics`, `compute_data_metrics`）
+
+这些补丁让训练可以跑通，但长期来看应使用官方支持的版本组合（torch 2.8 + vLLM 0.11）。
+
+### 11.3 网络环境约束
+
+公司代理环境带来的挑战：
+
+1. PyPI 镜像限制（最高 torch 2.6.0）→ 无法升级 vLLM
+2. SSL 证书检查（代理做 SSL inspection）→ 需要 `verify=False`
+3. 代理是双刃剑：需要它访问外网（Wikipedia），但必须绕过它访问本地服务（127.0.0.1）
+
+### 11.4 训练效率
+
+- 14B 模型在 8×A100 上：~95 秒/步（32 rollouts）
+- 扩展到 200 步需要 ~5.3 小时
+- 更大的 batch（如 batch=64, n=8）预计每步 ~6-8 分钟，200 步 ~20 小时
+- GPU 内存使用 74-89GB，刚好在 80GB 边界内（感谢 FSDP offload）
+
+### 11.5 奖励设计的重要性
+
+原始 Search-R1 使用 `format_score=0.0`（无格式奖励）。
+我们改成了 `format_score=0.1`，希望给模型一个"软引导"。
+但结果是模型学会了输出 `` 标签（拿 0.1 分），却没有动力去搜索正确答案。
+
+**更好的奖励设计**：
+
+- `format_score` 应随时间衰减（前期引导格式，后期只奖励正确性）
+- 或者使用 **DAPO** 的 filtering 机制：过滤掉低分轨迹，只在高分轨迹上学习
+- 或者增加 `search_bonus`：使用 `` 标签就给额外奖励
+
+---
+
+## 12. TODO & 下一步
+
+### 立即
+
+- [x] 完成模型下载
+- [x] 冒烟测试通过（15 步）
+- [ ] 200 步训练运行中，等待完成
+
+### 短期
+
+- [ ] **切换模型**到 Qwen2.5-14B-Instruct（非 Coder）→ 预期工具使用能力显著提升
+- [ ] 或对 Qwen2.5-Coder 做 SFT 预热（在 Search-R1 数据上微调 1 epoch）
+- [ ] 启用 DAPO（filter_groups + dynamic sampling）
+- [ ] 增加 exploration：temperature=1.2, entropy_coeff=0.01
+
+### 长期
+
+- [ ] 在 HotpotQA 测试集上评估最终模型
+- [ ] 尝试多节点扩展（单节点 8 GPU 限制 batch size）
+- [ ] 考虑升级到 torch 2.8 + vLLM 0.11（需要 Docker/venv + 离线下载）
+- [ ] 添加第二个工具（如 calculator 用于数值问题）
+
+---
+
+## 13. SFT 预热数据准备
+
+### 13.1 动机
+
+15步测试表明 Qwen2.5-Coder-14B-Instruct 完全不理解 ``/`` XML 标签格式，
+GRPO 的 advantage 始终为 0。SFT 预热的目的是在 RL 之前教会模型基本格式：
+``→`` → ``→``。
+
+### 13.2 方法
+
+使用 Wikipedia API 直接搜索，构造 Search-R1 格式的示范轨迹。
+
+对每个 HotpotQA 问题：
+
+1. 用 golden answer 本身作为搜索词（最优策略）
+2. 用清理后的问题关键词作为补充搜索
+3. 对每个搜索词调用 Wikipedia API 获取真实内容
+4. 如果搜索结果包含 golden answer 文本 → 标记为 "有答案上下文"
+5. 构造标准的多轮轨迹
+
+### 13.3 两轮迭代
+
+**v1 (prepare_sft_data.py)**: 使用 wikipedia Python 库
+
+- 结果：500 条中仅 2% 有有效搜索上下文
+- 原因：wikipedia 库默认用 HTTP（不是 HTTPS），代理不转发；
+  每个 `summary()` 调用产生额外 API 请求，触发限流
+
+**v2 (prepare_sft_data_v2.py)**: 直接用 requests + Wikipedia API
+
+- 结果：50 条测试中 60% 有有效搜索上下文
+- 改进：HTTPS 直连、用 golden answer 作为搜索词、限流重试
+- 最终：生成 1000 条 SFT 数据（含 60% 高质量轨迹）
+
+### 13.4 SFT 数据格式
+
+```json
+{
+  "messages": [
+    {"role": "system", "content": "<系统提示>"},
+    {"role": "user", "content": "Question: <问题>"}
+  ],
+  "chosen": "...\nquery\n...\n...\n答案",
+  "question": "原始问题",
+  "golden_answers": ["答案"],
+  "found_answer_context": true/false
+}
+```
+
+SFT 训练时，input = `messages`，output = `chosen`。模型学习在给定系统提示和问题后，
+生成正确的多轮搜索→回答轨迹。
+
+### 13.5 失败原因诊断与修复
+
+用户提出问题：为什么 98% 的数据条目搜索失败？能否通过重试和超时修复？
+
+**诊断结果**：
+
+1. **超时不是问题**：成功的 Wikipedia API 调用在 0.4-1.0s 内完成。10s 超时已足够。
+2. **延迟不足是根本原因**：Wikipedia 每 ~3 个请求后返回 HTTP 429（Too Many Requests），
+   `Retry-After` 头指示等待 13 秒。v1 使用 0.3s 延迟，第 4 个请求就开始被限流。
+3. **每个问题触发多个 API 调用**：wikipedia 库的 `search()` + `page()` + `summary()`
+   每个都是一次独立 API 调用。v1 每个问题可能触发 4-6 次调用，在 0.3s 延迟下迅速耗尽配额。
+
+**修复方案 (v3)**：
+
+- 最小延迟 → 3-5 秒（避开限流窗口）
+- 尊重 `Retry-After` 头（自动等待指定秒数）
+- 每个问题只调用 1 次 API（`wiki_page_summary` by golden answer）
+- 4 次重试 + 指数回退
+- 即使 API 失败也生成模板化轨迹（保证格式正确）
+
+**修复效果**：
+
+| 版本 | 延迟 | API 成功率 | 答案在上下文中 |
+|------|------|-----------|---------------|
+| v1 | 0.3s | 8% | 2% |
+| v2 | 1.5s | ~40% | 60% |
+| **v3** | **3-5s** | **100%** | **70%** |
+
+### 13.6 最终 SFT 数据集
+
+合并去重后（优先 v3 高质量数据）：
+
+- **500 条唯一 SFT 示例**（`data/sft_warmup/sft_final.jsonl`, 869 KB）
+- 100% 格式完整（``+`` + ``+``）
+- **65% (325条) 答案出现在 Wikipedia 搜索结果中**
+- v3 贡献：500 条全量，100% API 成功率，41 分钟生成
+
+### 13.7 数据局限性
+
+- 500 条足够格式学习；答案正确性依赖 RL 阶段
+- 需 3-5 秒 API 间隔以避免 Wikipedia 限流
+- 如需更大规模或更高质量，建议在无代理限制的网络环境中重新生成
+
+---
+
+## 14. 当前训练监控
+
+**状态**: 200 步 GRPO 训练运行中（启动于 2026-07-28 ~07:40）
+
+```bash
+# 查看训练步骤
+grep 'step:' /home/workspace/ruizhe/rl_env/full_training_log.txt | tail -5
+
+# 实时监控
+tail -f /home/workspace/ruizhe/rl_env/full_training_log.txt | grep 'step:'
+
+# 查看完整日志
+less /home/workspace/ruizhe/rl_env/full_training_log.txt
+```
+
+---
+
+## 15. Docker 环境迁移 (2026-07-29) — vLLM 0.11 消除 5 个补丁
+
+### 动机
+
+宿主机 PyPI 镜像限制（最高 torch 2.6）导致无法升级 vLLM，只能用 0.8.5 V1 引擎。
+HuggingFace 直接推理正常但 vLLM 输出乱码 → 确认是 vLLM 版本兼容性问题。
+
+### Docker 环境
+
+`vllm/vllm-openai:v0.11.0`: Python 3.12, torch 2.8+cu128, vLLM 0.11, Ray 2.49.2
+
+### 补丁迁移
+
+| # | 宿主机 | Docker | 说明 |
+|---|--------|--------|------|
+| 1 get_tcp_uri | 需要 | **不需要** | vLLM 0.11 内置 |
+| 2 CoreEngineProcManager | 需要 | **不需要** | vLLM 0.11 内置 |
+| 3 reset_mm_cache | 需要 | **不需要** | vLLM 0.11 内置 |
+| 4 wait_for_requests_to_drain | 需要 | **不需要** | vLLM 0.11 内置 |
+| 5 VllmConfig.model_config | ~~REVERTED~~ | **不需要** | 源码已还原 |
+| 6 flash_attn fallback | 需要 | **仍需要** | Docker 无 flash_attn |
+| 7 debug_metrics | 需要 | **仍需要** | 非 vLLM 相关 |
+| 8 attn_impl=sdpa | 配置 | **仍需要** | 非 vLLM 相关 |
+
+### 关键发现
+
+vLLM 0.11 + Qwen2.5-14B-Instruct 中模型正确输出 `...query`，
+确认乱码是 vLLM 0.8.5 V1 引擎的 bug，不是模型问题。
+
+### Docker 训练突破 (2026-07-29, 43 步验证)
+
+**Step 1 — 多轮搜索首次成功**：
+
+- `num_turns/mean: 2.28` → 模型主动多轮搜索
+- `tool_call_success: 68.75%` → Wikipedia 搜索成功执行
+- `valid_traj: 100%` → 首次全部轨迹格式正确
+- `no_loss_on_traj: 0%` → 全部轨迹参与 loss
+
+**Step 6-7 — 学习信号出现**：
+
+- `score: 0.100 → 0.128 → 0.156` → Reward 首次上升
+- `pg_loss: 0.0 → -0.017 → -0.010` → 首次非零
+
+**Step 14-43 — 持续学习** ��：
+
+- **前 10 步 Score 均值: 0.148**
+- **后 10 步 Score 均值: 0.435** (↑ 3 倍!)
+- **峰值: 0.719 (Step 17)** → 3/4 回复给出了正确答案
+- **Step 43: 0.606** → 学习稳定在高位
+- `num_turns` 从 2.28 降至 1.0 → 模型学会直接回答，不再盲目多轮搜索
+
+Score 趋势可视化：
+
+```
+Step  1-11: ████░░░░░░  0.10-0.27  (探索阶段)
+Step 12-25: ██████████  0.18-0.52  (开始学习)
+Step 26-43: ████████████████  0.35-0.72  (稳定上升!)
+```
+
+**宿主机 vs Docker 最终对比**：
+
+| 指标 | 宿主机 99步 | Docker 43步 |
+|------|-----------|------------|
+| valid_traj | 3-9% | **100%** |
+| num_turns | 1.0 | **1.0-3.0** |
+| tool_call_success | 0% | **69%** |
+| score 趋势 | 0.1 不变 | **0.15 → 0.44** |
+| pg_loss | 0.0 | **非零波动** |
+| 模型输出 | 乱码 | 正确格式 |
+
+**核心结论**：Qwen2.5-14B-Instruct + vLLM 0.11 + GRPO = 模型学会了通过 Wikipedia 搜索来回答问题。Score 从 0.10 提升到 0.44（均值），峰值 0.72。
+
+### 关键发现：数据分布不均（破案！排查全部训练现象）
+
+**数据排列**：训练集 152,653 条**完全未混合**——
+前 79,168 条 100% NQ（单跳），后 73,485 条 100% HotpotQA（多跳）。
+只有 2 个连续块，中间没有任何穿插。
+
+**对训练的影响**：
+
+- 200 步 × batch_size=8 = 1,600 条，全部落在 NQ 单跳区域
+- 模型**从未见过 HotpotQA 多跳问题**
+- Score 提升全部来自 NQ 事实型问题，多跳能力完全未训练
+
+**这解释了全部观察现象**：
+
+| 现象 | 根因 |
+|------|------|
+| num_turns 从 2.28 降到 1.0 | NQ 不需要多轮搜索 |
+| Score 先升后稳（0.42→0.33） | NQ 太简单，天花板低 |
+| Score 峰值 0.719 无法复现 | 只有少数步骤运气好 |
+| 早期 steps 1-10 Score 最低 | model 还在探索搜索策略 |
+
+### Dr.GRPO 适用性分析
+
+**GRPO vs Dr.GRPO**：
+
+| 维度 | GRPO | Dr.GRPO |
+|------|------|---------|
+| 公式 | `adv = (R-mean)/std` | `adv = R-mean` |
+| 开销 | 相同 | 相同（只跳过除法） |
+| 稀有正确回复 | **放大**（std 小时 advantage 大）| 等比例 |
+| 小 batch | 不稳定（std 估计不可靠）| **更稳定** |
+| 长轨迹（>10K tokens） | 容易梯度爆炸 | **更适合** |
+
+**选择建议**：
+
+- 当前 HotpotQA 短轨迹 + batch=8 → GRPO 足够
+- 引入 80K token 长轨迹 + batch=1-2 → **必须用 Dr.GRPO**
+- 原因：长轨迹 reward 方差大 + 小 batch 的 std 估计噪声 → GRPO 会将噪声放大
+
+**训练改进清单**（基于全部发现）：
+
+1. ➕ 对数据做 `shuffle`，确保单跳/多跳混合
+2. ➕ 设置 `save_freq=50` 保存 checkpoint
+3. ➕ 增加步数至 1000+ 或按需
+4. ➕ 长轨迹场景设置 `norm_adv_by_std_in_grpo=False`（Dr.GRPO）
+5. ➕ 长轨迹场景降低 `batch_size=1-2`，保持 `n=4`
+
+### 训练配置遗漏
+
+`save_freq=-1` → 123 步训练全程未保存 checkpoint。
+`trainer.save_freq=50` 可每 50 步保存一次。
+
+## 实验 2：Shuffle 数据 + 正确 Epoch 设计 (2026-07-30 启动)
+
+### 改进点
+
+| 改进 | 实验 1 | 实验 2 |
+|------|--------|--------|
+| 数据 | 152K 未 shuffle（全在 NQ 区域） | **1,526 条随机混合**（50% NQ + 50% HotpotQA） |
+| Epoch | 200 步 ≈ 0.01 epoch | **382 步 ≈ 2 epochs** |
+| Checkpoint | save_freq=-1（丢失） | **save_freq=50** |
+| 算法 | GRPO | GRPO |
+| 日志 | 单文件 | 时间戳独立保存 |
+
+### Epoch 设计逻辑
+
+RL ≠ SFT。RL 不需要多 epoch 来"记住"数据，关键是每个问题给几次尝试：
+
+- 1 epoch (191步): NQ 够了，HotpotQA 刚热身
+- **2 epochs (382步)**: 两类都正好，~18 小时
+- 3+ epochs: NQ 有背诵风险
+
+选择 2 epochs：每个问题被看到 2 次，NQ 第一次学格式、第二次学搜索，
+HotpotQA 第一次发现需要多跳、第二次学会搜索链。
+
+### Reward 设计
+
+保持与实验 1 相同：`format_score=0.1`, `score=1.0`。
+HotpotQA 的多跳要求自然体现在 EM 难度上——不额外加 search_bonus。
+模型通过 GRPO 自己发现 "多搜索 → 高 reward" 的规律。
+
+### 监控要点
+
+1. Score 是否在两类问题上分别提升（日志不区分，但 num_turns 可反映搜索策略）
+2. num_turns 是否根据问题复杂度自适应（NQ=1, HotpotQA=2-3）
+3. 检查 save_freq=50 的 checkpoint 是否正常保存
+
+---
+
+## 16. References
+
+- [veRL](https://github.com/volcengine/verl) — RL training framework
+- [verl-tool](https://github.com/TIGER-AI-Lab/verl-tool) — Tool-augmented RL on veRL
+- [Search-R1](https://github.com/PeterGriffinJin/Search-R1) — Original search-augmented RL
+- [DAPO](https://arxiv.org/abs/2503.14476) — Dynamic sampling for RL
+- [HotpotQA](https://hotpotqa.github.io/) — Multi-hop QA benchmark
 
 ## Q1: 为什么用 Dr.GRPO 思路修复 DAPO？
 
@@ -46,10 +1294,12 @@ comments: true
 - GRPO 省掉 Critic → 节省 ~50% GPU 内存和训练时间，更适合 14B 大模型
 
 > PPO 的 Critic 是一份与 Actor 同量级的模型，极易 OOM；GRPO 省下这份显存全给 Actor。其优势估计为组内相对：
->
-> $$A_i=\frac{r_i-\operatorname{mean}(\mathbf{r})}{\operatorname{std}(\mathbf{r})}$$
+> 
+> $$
+> A_i=\frac{r_i-\operatorname{mean}(\mathbf{r})}{\operatorname{std}(\mathbf{r})}
+> $$
+> 
 > 相比 PPO，组内相对归一化给训练提供比单一 reward + 不可靠 critic 更清晰的信号
-
 
 **为什么选择 GRPO**：
 
@@ -64,14 +1314,17 @@ vanilla GRPO 的两个已知偏置：
 2. **长度偏置**：按序列长度平均会让"更长的错误答案"被低估惩罚。GRPO 按序列长度归一化会导致更长的错误回答被惩罚不足。Dr.GRPO 改用全局常数归一化以消除长度偏置。
 
 **DAPO 的四件套**（ByteDance，基于 verl 实现，长 CoT / 多轮场景强烈推荐）：Clip-Higher（非对称裁剪、上界更高）、Dynamic Sampling（重采样至组内有对有错）、Token-Level Policy Gradient Loss、Overlong Reward Shaping（惩罚过长回答）。其中：
+
 - **Clip-Higher** 治**熵坍缩**：初期观察到熵坍缩现象，通过增大重要性采样比的上裁剪范围来缓解。
 - **Dynamic Sampling** 就是 §索引③ 里 σ=0 空梯度的正解。
 - **Overlong Reward Shaping** 是软惩罚：设一个最大长度，对超过阈值（如 4096）的多余 token 温和降分，这种"软惩罚"避免模型啰嗦又不过于严厉。
 
 ### 关键工程：Observation Token Masking（多轮 RL 的命门）
+
 在计算 log-prob 和 policy loss 时，**必须对 `<information>` 内的检索 token 置零 mask**，只对模型自己生成的 think/search/answer 计 loss。这是 Search-R1 最关键的创新之一：RL 期间检索内容被排除在优化之外，只有模型自己的推理参与更新，迫使模型"对检索结果做推理"而非"照抄"，从而提升稳定性与泛化。不做 mask 会让模型去拟合外部网页内容，导致学偏/坍缩。实验显示做 masking 训练更稳、提升更大。
 
 ### 可以改进的多轮 credit assignment
+
 轨迹级单标量 reward 广播到所有 turn 是最简做法，但 GRPO 在多轮设定下被广泛报告不稳定。
 更细的做法是 **turn-level 优化**：整条轨迹含多个"模型生成 + 环境反馈"回合，在环境反馈上做优化会引入不稳定，因此解耦模型生成 $o_t$ 与环境反馈 $f_t$，只在 $o_t$ 上做定向优化。
 
@@ -90,8 +1343,8 @@ vanilla GRPO 的两个已知偏置：
 | Loss 聚合 | 未提 | token-level（DAPO） | 长序列更精确 |
 
 > **KL 二选一话术**
-路线 A（DAPO/Dr.GRPO）——"结果奖励可验证 + 参考模型已是好起点，去 KL 让策略充分移动、避免拖后腿"；
-DAPO 在其方法中移除了 KL 散度。
+> 路线 A（DAPO/Dr.GRPO）——"结果奖励可验证 + 参考模型已是好起点，去 KL 让策略充分移动、避免拖后腿"；
+> DAPO 在其方法中移除了 KL 散度。
 > 路线 B（保守）——"保留小 KL 防止在稀疏奖励早期策略崩溃/复读，代价是探索受限"。
 
 **关键是你选哪条要给理由，别报数字。**
@@ -111,7 +1364,6 @@ DAPO 在其方法中移除了 KL 散度。
 - RL 有"冷启动"问题：如果模型从不会输出 `<answer>`，所有 reward = 0
 - GRPO 组内标准化后所有 advantage = 0 → PG loss = 0 → 模型不更新
 - `format_score=0.1` 给了一个"梯子"，模型先学会格式，再学内容
-
 
 ## Q3: Tool Server 怎么工作？Agent 怎么调用工具的？
 
@@ -347,7 +1599,7 @@ Loss 只计算生成 token（不包括 prompt 和 observation token），由 `ma
 
 ## Q16: GRPO vs Dr.GRPO 有什么区别？什么场景该用哪个？
 
-**GRPO**: `advantage = (reward - group_mean) / group_std`  
+**GRPO**: `advantage = (reward - group_mean) / group_std`
 **Dr.GRPO**: `advantage = reward - group_mean`
 
 **关键区别**：GRPO 除以 std → 当 std 很小时放大 advantage（稀有正确回复被大力强化），当 std 很大时缩小 advantage（分散的 reward 被压平）。Dr.GRPO 跳过了除法，保持原始 reward 差距。
@@ -416,7 +1668,7 @@ Dr.GRPO 只改"组内已有差异的缩放"（`adv=(R-mean)/std` → `adv=R-mean
 | reward 尺度异常 | 无   | Sparse Reward Normalization |
 | 超长轨迹 | 无   | overlong_buffer 惩罚 |
 
-### 当前数据集（短轨迹 ~700 tok、n=4、reward∈{0.1,1.0}）
+### 当前数据集（短轨迹 ~700 tok、n=4、reward∈ {0.1,1.0}）
 
 | 问题（记录中已出现） | DAPO 怎么治 | Dr.GRPO 为什么治不了 |
 | --- | --- | --- |
@@ -486,21 +1738,23 @@ Work output：
 **用法注意**：用"设计并论证"，别写"实验验证提升 X%"——目前实际跑的是 GRPO，
 DAPO×Dr.GRPO 组合是设计论证、尚未跑通出数字。
 
-### 简历写法：版本 B（跑通并消融对比后升级，现在别写）
-
 把"设计并论证"换成"**实验验证可行，消融对比显示收敛更快/更稳，score 提升 X%**"，
 并补上组合 vs 单独 DAPO vs 单独 Dr.GRPO 的具体数字。
 
 ### 面试核对点（套用本结构必被问）
 
 1. `norm_adv_by_std_in_grpo`：
-  - `True`=GRPO：`(R-mean)/std`
-  - `False`=Dr.GRPO：`R-mean`
+
+- `True`=GRPO：`(R-mean)/std`
+- `False`=Dr.GRPO：`R-mean`
+
 2. 叠加语义：DAPO 管数据选择，Dr.GRPO 管组内 advantage 缩放，不同层不冲突。
 3. 冷启动时两者都救不了"组内全同分"——只有 DAPO 的 filter_groups 能救。
 4. Dr.GRPO 的唯一适用窗：组内有差异、但 std 估计不可靠（小 batch / 长轨迹）。
 
 ---
+
+Gemini Ori
 
 ---
 
@@ -512,7 +1766,7 @@ DAPO×Dr.GRPO 组合是设计论证、尚未跑通出数字。
 > Ray 负责集群资源调度和进程管理，避免推理慢、训练 OOM 互相拖累。
 
 ```
- [ Ray Cluster (8x A100) ]
+[ Ray Cluster (8x A100) ]
  ┌────────────────────────────────────────────────────────┐
  │ ┌──────────────────────┐      ┌──────────────────────┐ │
  │ │   Actor / Rollout    │      │    Learner Engine    │ │
@@ -533,7 +1787,7 @@ DAPO×Dr.GRPO 组合是设计论证、尚未跑通出数字。
    └────────────────────┘
 ```
 
->
+> 
 
 这里有两种部署形态可以选择：
 
@@ -547,14 +1801,15 @@ veRL 官方在底层将训练后端抽象成了通用的 Engine/Worker 接口，
 深度集成 Megatron-LM（替换strategy就可以） 或 MindSpeed-LLM（适配中，不过老模型还挺顺利的），可以在集群替换掉 FSDP。
 
 ### 2.1 核心实验流程
-1.  **数据就绪**：使用 HotpotQA 的本地 Wikipedia 支撑段落，利用 BM25 算法在本地搭建轻量高并发检索服务（`search_server.py`），避免联网延迟。
-2.  **轨迹生成（Decoupled Rollout）**：
-    *   Actor（在 vLLM 引擎中运行）生成文本。
-    *   当遇到 `</call:search>` 停止符时，vLLM 暂停生成。
-    *   通过 veRL 的 `AgentLoop` 机制拦截输出，解析检索词并请求本地检索服务。
-    *   将检索结果包裹在 `<observation>...</observation>` 中拼回 Prompt，唤醒 vLLM 继续生成，直到输出 `<answer>` 标签。
-3.  **异步打分**：轨迹生成完毕后，异步发送至打分服务（`agent_reward.py`），进行**奖励塑造（Reward Shaping）**计算。
-4.  **模型更新**：Learner 收集一个 Batch 的轨迹和奖励值，利用 FSDP 引擎对 Policy（Actor）模型进行梯度更新。
+
+1. **数据就绪**：使用 HotpotQA 的本地 Wikipedia 支撑段落，利用 BM25 算法在本地搭建轻量高并发检索服务（`search_server.py`），避免联网延迟。
+2. **轨迹生成（Decoupled Rollout）**：
+   * Actor（在 vLLM 引擎中运行）生成文本。
+   * 当遇到 `</call:search>` 停止符时，vLLM 暂停生成。
+   * 通过 veRL 的 `AgentLoop` 机制拦截输出，解析检索词并请求本地检索服务。
+   * 将检索结果包裹在 `<observation>...</observation>` 中拼回 Prompt，唤醒 vLLM 继续生成，直到输出 `<answer>` 标签。
+3. **异步打分**：轨迹生成完毕后，异步发送至打分服务（`agent_reward.py`），进行**奖励塑造（Reward Shaping）**计算。
+4. **模型更新**：Learner 收集一个 Batch 的轨迹和奖励值，利用 FSDP 引擎对 Policy（Actor）模型进行梯度更新。
 
 ---
 
@@ -563,11 +1818,15 @@ veRL 官方在底层将训练后端抽象成了通用的 Engine/Worker 接口，
 本方案没有使用 PPO，而是尝试了 GRPO 后选择了改良的 Dr. GRPO。
 
 ### 3.1 Why GRPO?
-1.  **极大地节省显存**：PPO 需要维护一个与 Actor 相同规模的 **Critic（评论员）模型** 来预测状态价值（State Value），这在 8 卡节点上微调 7B+ 模型时极易造成 OOM。GRPO 取消了 Critic 模型，将显存和计算资源全部释放给 Actor。
-2.  **相对优势估算**：对每一个输入 $Prompt$，让模型并行 Rollout 产生一组成员（采样数 $G = 5$）。通过这组轨迹的奖励均值和标准差，计算组内的相对优势（Advantage）：
-    $$A_i = \frac{r_i - \text{mean}(R)}{\text{std}(R)}$$
-    这自然地建立了一个基线（Baseline），极大地稳定了强化学习的梯度更新。
 
+1. **极大地节省显存**：PPO 需要维护一个与 Actor 相同规模的 **Critic（评论员）模型** 来预测状态价值（State Value），这在 8 卡节点上微调 7B+ 模型时极易造成 OOM。GRPO 取消了 Critic 模型，将显存和计算资源全部释放给 Actor。
+2. **相对优势估算**：对每一个输入 $Prompt$，让模型并行 Rollout 产生一组成员（采样数 $G = 5$）。通过这组轨迹的奖励均值和标准差，计算组内的相对优势（Advantage）：
+   
+   $$
+   A_i = \frac{r_i - \text{mean}(R)}{\text{std}(R)}
+   $$
+   
+   这自然地建立了一个基线（Baseline），极大地稳定了强化学习的梯度更新。
 
 ### 3.2 现代改良：从 vanilla GRPO → Dr.GRPO / DAPO
 
@@ -577,14 +1836,17 @@ vanilla GRPO 的两个已知偏置，务必知道：
 2. **长度偏置**：按序列长度平均会让"更长的错误答案"被低估惩罚。GRPO 按序列长度归一化会导致更长的错误回答被惩罚不足。Dr.GRPO 改用全局常数归一化以消除长度偏置。
 
 **DAPO 的四件套**（ByteDance，基于 verl 实现，长 CoT / 多轮场景强烈推荐）：Clip-Higher（非对称裁剪、上界更高）、Dynamic Sampling（重采样至组内有对有错）、Token-Level Policy Gradient Loss、Overlong Reward Shaping（惩罚过长回答）。其中：
+
 - **Clip-Higher** 治**熵坍缩**：初期观察到熵坍缩现象，通过增大重要性采样比的上裁剪范围来缓解。
 - **Dynamic Sampling** 就是 §索引③ 里 σ=0 空梯度的正解。
 - **Overlong Reward Shaping** 是软惩罚：设一个最大长度，对超过阈值（如 4096）的多余 token 温和降分，这种"软惩罚"避免模型啰嗦又不过于严厉。
 
 ### 3.3 关键工程：Observation Token Masking（多轮 RL 的命门）
+
 在计算 log-prob 和 policy loss 时，**必须对 `<information>` 内的检索 token 置零 mask**，只对模型自己生成的 think/search/answer 计 loss。这是 Search-R1 最关键的创新之一：RL 期间检索内容被排除在优化之外，只有模型自己的推理参与更新，迫使模型"对检索结果做推理"而非"照抄"，从而提升稳定性与泛化。不做 mask 会让模型去拟合外部网页内容，导致学偏/坍缩。实验显示做 masking 训练更稳、提升更大。
 
 ### 3.4 多轮 credit assignment
+
 轨迹级单标量 reward 广播到所有 turn 是最简做法，但 GRPO 在多轮设定下被广泛报告不稳定。更细的做法是 **turn-level 优化**：整条轨迹含多个"模型生成 + 环境反馈"回合，在环境反馈上做优化会引入不稳定，因此解耦模型生成 $o_t$ 与环境反馈 $f_t$，只在 $o_t$ 上做定向优化。代表工作：RAGEN 的 StarPO-s 用比例化轨迹过滤，GiGPO 结合状态级与轨迹级优势，MT-GRPO 展示 turn-level credit assignment 的收益。
 
 ### 3.5 推荐超参（8×A100 / 14B / HotpotQA）
@@ -630,16 +1892,19 @@ vanilla GRPO 的两个已知偏置，务必知道：
 ### 二、 DeepResearch Agent 专属的算法与数据修改（至关重要）
 
 #### 1. 必须对环境返回内容做 Loss 掩码（Observation Masking）
+
 * **做法**：在多跳 Agent 交互轨迹中，Prompt 结构包含模型生成的 `Thought`、`Tool Call` 以及环境返回的 `Tool Response (Search Snippets)`。**反向传播计算 Loss 时，必须对 `Tool Response` 进行 Mask（即 Token 权重置 0）**。
 * **理由**：14B 时代可能因为数据量小被忽视；但在 72B 上，若不对检索回来的网页/维基片段做掩码，72B 的强拟合能力会尝试去**预测/背诵搜索结果**，导致策略梯度被严重污染，模型丧失推理和搜索能力。
 
 #### 2. 多步搜索的步数惩罚与死循环截断（Step Penalty & Loop Break）
+
 * **做法**：
   1. 引入单轮负奖励：每执行一次 `<search>` 赋予微小的步数惩罚（如 $-0.02$）；
   2. 强制最大搜索轮数（Max Turns 如 $4 \sim 6$ 轮），超过上限直接强行进入 Answer 阶段。
 * **理由**：72B 模型在 RL 探索初期，容易为了追求“信息完整度”而陷入**无休止的搜索死循环**，极度拖慢 Rollout 速度并占满上下文长度。
 
 #### 3. 截断过滤（Overlong Filtering）与掩码
+
 * **做法**：因为环境返回的搜索内容长度不可控，一旦达到 `max_seq_len`（如 16k/32k）被硬截断的轨迹，**直接在本次更新中 Mask 丢弃，不计算梯度**。
 * **理由**：多跳问答如果在推理中途被强行掐断，其最后的 Advantage 信号是极其嘈杂的负样本，72B 会因此学到“放弃思考”或“草率输出”的次优策略。
 
@@ -648,18 +1913,21 @@ vanilla GRPO 的两个已知偏置，务必知道：
 ### 三、 系统与工程基础设施修改
 
 #### 1. 外部检索服务（Retriever）的并发吞吐能力
+
 * **修改项**：单机 8 卡时，瞬时搜索并发（QPS）只有几百；**64 卡 72B 触发多跳并发时，瞬时 QPS 会达到数千至上万**。
 * **做法**：
   * 切勿直接调用公网搜索 API（会瞬间触发 Rate Limit 或被封禁）；
   * 离线搭建基于 Elasticsearch / Qdrant 的 **本地 Wikipedia 检索集群**，并配置独立的多节点负载均衡。
 
 #### 2. Rollout 阶段的机间通信优化（Weight Sync）
+
 * **修改项**：开启 Actor 训练引擎向 Rollout 推理引擎的**跨机模型权重广播加速**。
 * **理由**：14B 单机内同步权重几乎瞬时完成；72B 跨 8 台机器同步权重（约 144GB）若走普通的 TCP 会导致每次 Rollout 前等待数分钟。必须确认配置：
   * `NCCL_IB_DISABLE=0`（强制启用 InfiniBand/RoCE）；
   * 设置训练框架（如 `verl`）的权重同步方式为基于 Ray/NCCL 的分布式广播通道。
 
 #### 3. 应对长尾效应（Tail Latency / Straggler Problem）
+
 * **修改项**：在 vLLM/SGLang 侧开启 **动态批处理（Continuous Batching）** 和 **组内异步超时截断**。
 * **理由**：Agent 执行 HotpotQA 等多跳任务时，各样本的搜索步数和思考长度差异巨大（有的 2 步搜完，有的 6 步搜满）。在 64 卡集群上，最慢的样本会卡住整个集群的同一步伐。必须设置超时直接终止该样本的 Rollout 并赋予兜底奖励。
 
@@ -678,11 +1946,13 @@ vanilla GRPO 的两个已知偏置，务必知道：
 
 ## 4. 核心：奖励设计与塑造（Reward Shaping）
 
-
-
 ### 4.1 密集奖励公式设计 (Shaped Reward)
+
 最终奖励由多个惩罚项与一个终局奖励累加而成，以解决信号稀疏问题：
-$$R_{total} = R_{format} + R_{validity} + R_{diversity} + R_{step} + R_{accuracy}$$
+
+$$
+R_{total} = R_{format} + R_{validity} + R_{diversity} + R_{step} + R_{accuracy}
+$$
 
 | 奖励维度 | 设计逻辑 (Formulation) | 提点效果 (Hints) |
 | :--- | :--- | :--- |
@@ -690,55 +1960,58 @@ $$R_{total} = R_{format} + R_{validity} + R_{diversity} + R_{step} + R_{accuracy
 | **工具合规奖励 ($R_{validity}$)** | 调用不存在的工具，或检索词为空时给 **$-0.2$**。 | 约束模型不产生“幻觉工具”调用。 |
 | **探索去重惩罚 ($R_{diversity}$)** | 若当前步骤的 Search Query 在历史中已出现过（或语义相似度 $> 0.8$），给 **$-0.4$**。 | **对抗“死循环作弊”**。强制模型在检索受阻时改变思路（试用其他关键词）。 |
 | **步数效率惩罚 ($R_{step}$)** | 每发生一步交互，惩罚 **$-0.05 \times Steps$**。 | **对抗“赖着不走作弊”**。逼迫模型在“获取更多信息”和“尽快结束”之间权衡。 |
-| **终局准确率 ($R_{accuracy}$)** | 解析最后一个 `<answer>`。若与 Ground Truth 匹配（EM/F1）给 **$+1.5$**；若错误给 **$-0.5$**；若未生成最终答案给 **$-1.0$**。 | 强化学习的终极目标信号。 |
+| **终局准确率 ($R_{accuracy}$)** | 解析最后一个 ``。若与 Ground Truth 匹配（EM/F1）给 **$+1.5$**；若错误给 **$-0.5$**；若未生成最终答案给 **$-1.0$**。 | 强化学习的终极目标信号。 |
 
 > 但当前主流的检索类 Agentic RL 恰恰相反——Search-R1[1] 明确采用"简单的、基于结果（outcome-based）的奖励函数"，并证明这比复杂奖励更稳、更能泛化。Search-R1 optimizes LLM reasoning trajectories with multi-turn search interactions, leveraging retrieved token masking for stable RL training and a simple outcome-based reward function.
 > 
 > 其核心论点是：复杂的神经奖励模型容易被钻空子（gamed）或需要过度工程；只需定义答案正确性即可扩展到新领域。你手动加的每一个 shaping 项（尤其 diversity、step penalty）都是一个可被 hack 的攻击面。面试正确答案不是"我设计了 5 个奖励"，而是"我优先用 outcome reward，只保留最小格式约束，把复杂偏好交给相对优势去自然涌现"。 我在修订版把 shaping 降级为"可选辅助项 + 明确风险标注"。
 
 ### 4.2 如何防御 Reward Hacking（奖励作弊）？
-*   **作弊表现 A**：模型学会了疯狂检索，故意拉长交互步数，在检索历史中反复塞入极微小差异的词来刷前期的 $R_{format}$ 和探索奖励。
-    *   *防御方案*：引入**二次惩罚（Quadratic Step Penalty）**，且步数惩罚与步数呈二次非线性关系；同时对 Query 进行强语义去重约束（Rouge-L 阈值）。
-*   **作弊表现 B**：模型在回答中疯狂堆砌所有可能相关的实体，试图在 $R_{accuracy}$ 匹配中“蒙混过关”。
-    *   *防御方案*：强制提取 `<answer>...</answer>` 内部的单一实体，抛弃外部的所有冗余废话，使其无法进行模糊匹配。
+
+* **作弊表现 A**：模型学会了疯狂检索，故意拉长交互步数，在检索历史中反复塞入极微小差异的词来刷前期的 $R_{format}$ 和探索奖励。
+  * *防御方案*：引入**二次惩罚（Quadratic Step Penalty）**，且步数惩罚与步数呈二次非线性关系；同时对 Query 进行强语义去重约束（Rouge-L 阈值）。
+* **作弊表现 B**：模型在回答中疯狂堆砌所有可能相关的实体，试图在 $R_{accuracy}$ 匹配中“蒙混过关”。
+  * *防御方案*：强制提取 `<answer>...</answer>` 内部的单一实体，抛弃外部的所有冗余废话，使其无法进行模糊匹配。
 
 ---
 
 ## 5. 典型面试挑战题与技术对线
 
 ### 挑战 1：你们如何解决 RL 训练的“冷启动（Cold Start）”问题？如果模型一上来随机探索，拿不到任何正反馈怎么办？
-*   **答**：这是 Agentic RL 最经典的痛点。我们的解决方案是 **SFT Bootstrapping（冷启动微调）**。我们没有直接让基础模型去跑 RL，而是先利用少量的精选高质量 ReAct 多步数据（约 1000~2000 条），对模型进行了一个 epoch 的 SFT。这让模型先具备“只要看到问题，就一定会尝试用 `<call:search>` 交互”的温和先验概率。在这个基础上再进行 GRPO 训练，可以保证首个 Batch 的采样中，至少有 20% 以上的轨迹能顺利拿分，从而让 Policy 梯度的更新方向能够立足。
+
+* **答**：这是 Agentic RL 最经典的痛点。我们的解决方案是 **SFT Bootstrapping（冷启动微调）**。我们没有直接让基础模型去跑 RL，而是先利用少量的精选高质量 ReAct 多步数据（约 1000~2000 条），对模型进行了一个 epoch 的 SFT。这让模型先具备“只要看到问题，就一定会尝试用 `<call:search>` 交互”的温和先验概率。在这个基础上再进行 GRPO 训练，可以保证首个 Batch 的采样中，至少有 20% 以上的轨迹能顺利拿分，从而让 Policy 梯度的更新方向能够立足。
 
 ### 挑战 2：外部环境（如 Search Tool 报错、超时或服务崩溃）是不可导的，强化学习怎么把梯度回传给模型？
-*   **答**：强化学习（如 PPO/GRPO）属于 **无模型（Model-Free）强化学习**。它本身就不需要对外部环境进行显式求导。梯度回传的本质是：
-    1. 策略模型做出动作（产生 Token）；
-    2. 环境给出一个标量 Reward；
-    3. 算法根据策略梯度定理，利用优势函数对产生高 Reward 对应的 Token 的 **对数概率（Log Probabilities）** 进行放大，对低 Reward 的进行抑制。
-    因此，即使环境完全是一个不透明的黑盒（甚至可以是人类反馈），只要能输出一个标量 Reward，就完全不影响梯度的正常更新。
+
+* **答**：强化学习（如 PPO/GRPO）属于 **无模型（Model-Free）强化学习**。它本身就不需要对外部环境进行显式求导。梯度回传的本质是：
+  1. 策略模型做出动作（产生 Token）；
+  2. 环境给出一个标量 Reward；
+  3. 算法根据策略梯度定理，利用优势函数对产生高 Reward 对应的 Token 的 **对数概率（Log Probabilities）** 进行放大，对低 Reward 的进行抑制。
+     因此，即使环境完全是一个不透明的黑盒（甚至可以是人类反馈），只要能输出一个标量 Reward，就完全不影响梯度的正常更新。
 
 ### 挑战 3：在多步交互中，环境返回的 Observation 是外部产生的（非模型生成），计算梯度时如何处理这部分 Token？
-*   **答**：这是一个关键的工程细节。对于多步 Agent 来说，轨迹中会混入大量的 `Observation`（外部网页内容）。在计算 Actor 模型的 `log_prob` 和计算 Policy 梯度（Loss）时，**必须对 Observation 部分的 Token 进行 Mask（置零）**，只对模型自己生成的 `Thought`、`Action` 和 `Final Answer` 的 Token 计算 Loss 并回传梯度。如果不对这部分进行 Mask，模型会尝试去拟合和预测外部环境返回的数据，从而导致严重的学偏或策略崩溃。
+
+* **答**：这是一个关键的工程细节。对于多步 Agent 来说，轨迹中会混入大量的 `Observation`（外部网页内容）。在计算 Actor 模型的 `log_prob` 和计算 Policy 梯度（Loss）时，**必须对 Observation 部分的 Token 进行 Mask（置零）**，只对模型自己生成的 `Thought`、`Action` 和 `Final Answer` 的 Token 计算 Loss 并回传梯度。如果不对这部分进行 Mask，模型会尝试去拟合和预测外部环境返回的数据，从而导致严重的学偏或策略崩溃。
 
 ---
 
 ## 6. 实践避坑指南与解决方案
 
 ### 6.1 显存泄漏与 vLLM 内存碎片问题
-*   **现象**：由于多步 Agent 的序列长度（Context Length）随着交互轮数不断拉长（最高可能逼近几十k），在进行几万步采样后，Ray 集群中负责 vLLM Rollout 的节点会频繁出现无预警的 OOM 崩溃。
-*   **原因**：vLLM 的 KV Cache 分配在多步动态增长时，由于并发请求的不同步，可能产生严重的内存碎片。
-*   **方案**：在 veRL 的配置文件中，合理调低 `vllm_gpu_memory_utilization`（例如从 0.9 降到 0.6），并在 `ray_config` 中设置 `max_concurrency` 限制，同时启用 vLLM 的 `enforce_eager=True` 强制执行即时显存回收，虽然会牺牲极少部分的吞吐量，但极大提升了大规模训练的稳定性。
+
+* **现象**：由于多步 Agent 的序列长度（Context Length）随着交互轮数不断拉长（最高可能逼近几十k），在进行几万步采样后，Ray 集群中负责 vLLM Rollout 的节点会频繁出现无预警的 OOM 崩溃。
+* **原因**：vLLM 的 KV Cache 分配在多步动态增长时，由于并发请求的不同步，可能产生严重的内存碎片。
+* **方案**：在 veRL 的配置文件中，合理调低 `vllm_gpu_memory_utilization`（例如从 0.9 降到 0.6），并在 `ray_config` 中设置 `max_concurrency` 限制，同时启用 vLLM 的 `enforce_eager=True` 强制执行即时显存回收，虽然会牺牲极少部分的吞吐量，但极大提升了大规模训练的稳定性。
 
 ### 6.2 训练发散与“NaN Loss”
-*   **现象**：训练到第 2 个 Epoch 时，WandB 看板上的 Loss 突然变成 NaN，Actor 模型的输出全部变成重复的空格或标点符号（模型崩溃）。
-*   **原因**：优势函数 $A_i = \frac{r_i - \mu}{\sigma}$ 中，当组内所有成员的奖励完全一样时，分母标准差 $\sigma = 0$。如果没有对其进行极小值保护（$\epsilon$ epsilon），就会导致梯度变成无穷大，破坏参数。
-*   **方案**：在代码中计算相对优势时，务必对标准差加上一个微小的保护项：`std = np.std(R) + 1e-8`。此外，将 `kl_ctrl.kl_coef` 从 `0.0005` 适当提高到 `0.001` 或 `0.002`，加强对模型背离参考模型（Reference Model）的惩罚约束。
+
+* **现象**：训练到第 2 个 Epoch 时，WandB 看板上的 Loss 突然变成 NaN，Actor 模型的输出全部变成重复的空格或标点符号（模型崩溃）。
+* **原因**：优势函数 $A_i = \frac{r_i - \mu}{\sigma}$ 中，当组内所有成员的奖励完全一样时，分母标准差 $\sigma = 0$。如果没有对其进行极小值保护（$\epsilon$ epsilon），就会导致梯度变成无穷大，破坏参数。
+* **方案**：在代码中计算相对优势时，务必对标准差加上一个微小的保护项：`std = np.std(R) + 1e-8`。此外，将 `kl_ctrl.kl_coef` 从 `0.0005` 适当提高到 `0.001` 或 `0.002`，加强对模型背离参考模型（Reference Model）的惩罚约束。
 
 # Reference
 
 [1] Search-R1: https://arxiv.org/abs/2503.09516
-
-
-
 
 ---
 
@@ -797,17 +2070,19 @@ G=5 统计意义偏弱，检索类任务常用 8~16。更重要：**DAPO 和 Dr.
 **一句话直觉**：让模型在"想—查—看结果—再想"的循环里，靠"答对了给糖、答错了打手"来学会高效检索并给出有据可查的答案。
 
 ### 1.1 核心目标
+
 训练具备 **Deep Research（多步检索推理）** 能力的 Agent：面对多跳、模糊问题（如 HotpotQA）时，自主决定何时检索、检索什么、如何过滤与纠偏，并产出高准确、带真实引用的终局答案。这是一个"由任务成功而非僵化预定义流程驱动、学会智能推理与检索"的系统，从而能泛化到新问题与新领域。
 
 ### 1.2 MDP 形式化
+
 把多轮 ReAct 建模为有限步 MDP：
 
 | 元素 | 定义 |
 | :--- | :--- |
-| 状态 $s_t$ | 到当前轮为止的完整上下文：初始 prompt + 历史 `<think>` + `<search>` + `<observation>` |
-| 动作 $a_t$ | 模型本轮生成的 token 序列：内部动作 `<think>…</think>`（推理）+ 外部动作 `<search>query</search>`（触发环境） |
-| 转移 $P(s_{t+1}\mid s_t,a_t)$ | 生成外部动作时暂停，检索服务执行并把结果包进 `<information>…</information>` 拼回，形成 $s_{t+1}$ |
-| 奖励 $r$ | 通常在输出 `<answer>…</answer>` 或达到 max-turns 时对整条轨迹给一个标量（见 §4） |
+| 状态 $s_t$ | 到当前轮为止的完整上下文：初始 prompt + 历史 `` + `` + `` |
+| 动作 $a_t$ | 模型本轮生成的 token 序列：内部动作 `…`（推理）+ 外部动作 `query`（触发环境） |
+| 转移 $P(s_{t+1}\mid s_t,a_t)$ | 生成外部动作时暂停，检索服务执行并把结果包进 `…` 拼回，形成 $s_{t+1}$ |
+| 奖励 $r$ | 通常在输出 `…` 或达到 max-turns 时对整条轨迹给一个标量（见 §4） |
 
 > ▶ **面试锚点**：面试官常问"这跟单轮 RLHF 有何不同？"。答：状态在**转移中被环境注入了非模型生成的 token（observation）**，因此必须做 **loss masking**（§3.3）；且奖励是**轨迹级稀疏信号**，credit assignment 更难（§3.4）。
 
@@ -827,6 +2102,7 @@ G=5 统计意义偏弱，检索类任务常用 8~16。更重要：**DAPO 和 Dr.
 > ▶ **面试锚点**：Gemini 图里的"2 卡 vLLM + 6 卡 FSDP 常驻"是**解耦式**。面试官会问"为什么不用 colocated？单节点 8 卡训 7B，colocated 通常吞吐更高，因为解耦式在训练阶段那 2 张推理卡在空转"。你要能说出权衡点：**解耦式省 reshard 开销但浪费卡；colocated 省卡但有权重 offload/reload 开销**。
 
 ### 2.2 轨迹生成（Agent Loop）
+
 veRL 已用 **Agent Loop** 统一多轮 rollout 接口。Agent Loop 是多轮 rollout 与 agentic RL 的通用接口：给定 prompt，运行用户自定义循环（调 LLM 生成、调工具……）并返回最终输出，随后计算 reward 作为 RL 训练轨迹。关键工程点：为避免等待工具返回时 GPU 空转，采用基于 asyncio 的协程机制异步执行各 rollout 请求，从而提升训练吞吐。并且 Server 提供基于 token 的 API，让 Client 维护"工具调用文本"与"LLM 返回 token"的对应关系，以便训练时输出正确的 token（及其 mask）。
 
 你自研 ReAct 系统接入时，只需把它包装成一个 Agent Loop / `BaseTool`：对于自定义环境交互工具，可基于 `verl.tools.base_tool.BaseTool` 实现自己的工具。
@@ -847,19 +2123,20 @@ veRL 已用 **Agent Loop** 统一多轮 rollout 接口。Agent Loop 是多轮 ro
 
 ---
 
-
 ## 4. 奖励设计（重写：Outcome-first，Shaping 谨慎）
 
 **一句话直觉**：奖励越简单越难被钻空子。先只奖励"格式对 + 答案对"，其余偏好交给相对优势自然涌现，除非确有必要再加 shaping。
 
 ### 4.1 主推方案：最小化 Outcome-based Reward
 
-$$R_{total}=R_{format}+R_{accuracy}$$
+$$
+R_{total}=R_{format}+R_{accuracy}
+$$
 
 | 维度 | 设计 | 说明 |
 | :--- | :--- | :--- |
 | **格式 $R_{format}$** | ReAct 标签闭合且顺序合法：**0**（合法，不额外给分）；非法：小负分或直接判负 | 只做**门槛**，不做诱饵。避免模型刷格式分 |
-| **准确率 $R_{accuracy}$** | 抽取最后一个 `<answer>` 内实体，与 GT 做 **EM / F1**：正确 +1，错误 0（或 -0.x） | 唯一主信号 |
+| **准确率 $R_{accuracy}$** | 抽取最后一个 `` 内实体，与 GT 做 **EM / F1**：正确 +1，错误 0（或 -0.x） | 唯一主信号 |
 
 Search-R1 证明：outcome-based reward + retrieved token masking 就能实现稳定、可扩展的学习，无需昂贵的数据/奖励工程。多项研究推荐 exact match 这类更简单的奖励，已被证明能有效激发推理能力。
 
@@ -885,21 +2162,27 @@ Search-R1 证明：outcome-based reward + retrieved token masking 就能实现�
 ## 5. 面试挑战题（修订 + 扩充）
 
 ### Q1｜冷启动：随机探索拿不到正反馈怎么办？
+
 **答**：三层解法。(1) **SFT Bootstrapping**：先用 1k~2k 条高质量 ReAct 轨迹 SFT 1 个 epoch，注入"看到问题就会 `<search>`"的先验，保证首个 batch 有非零命中率。(2) 但要知道 R1-zero 路线证明**可不用 SFT 直接 RL**：该范式直接对 base LLM 做 RL 而不依赖 SFT 作为前置步骤，因其简洁性与 RL scaling 现象而有吸引力。(3) **Dynamic Sampling** 保证每个 batch 都有"有对有错"的有效梯度组，等价于自动过滤掉"全错拿不到信号"的题。
 
 ### Q2｜环境不可导（工具超时/崩溃），梯度怎么回传？
+
 **答**：GRPO/PPO 是 **model-free** 策略梯度，**不对环境求导**。链路是：策略产生 token → 环境吐一个标量 reward → 策略梯度定理按优势放大高 reward token 的 log-prob、抑制低 reward 的。环境是黑盒（甚至可以是人）都无所谓，只要能给标量 reward。工具报错时，把该轨迹按"失败"给对应 reward 即可（相当于负样本），照常更新。
 
 ### Q3｜Observation 是外部注入的 token，怎么处理？
+
 **答**：**Retrieved token loss masking**（§3.3）。只有模型生成的 token 参与 loss，检索复制来的 token 梯度被 mask，防止 RL 更新经由被动观测传播，聚焦于决策与推理步。不 mask 会导致模型拟合外部内容、坍缩。
 
 ### Q4｜为什么不直接多加几个 shaped reward 把行为教到位？（新增，高频陷阱）
+
 **答**：因为每个 shaping 项都是一个 hack 攻击面。SOTA（Search-R1）刻意用**最简 outcome reward** 就拿到 Qwen2.5-7B 相对 RAG 基线约 41% 的平均提升。我的原则是"能被 GT 验证的就用规则奖励，偏好交给组内相对优势涌现"，只在监控发现具体病态（如复读）时，用**针对性、可解释**的 shaping（如 overlong）打补丁。
 
 ### Q5｜训练发散 / NaN，你怎么定位？（修订：纠正 Gemini 的错误因果）
+
 **答**：分清两种情况。(1) **零方差组**：一组全对/全错时优势全 0，是**空梯度**不是 NaN——正解是 **Dynamic Sampling** 重采样至有对有错，而非加 ε 或调 KL。(2) **真 NaN/坍缩**：多因熵坍缩或 lr 过大。查熵曲线——熵骤降上 **Clip-Higher**；它用分离的上下裁剪阈值，允许更好的探索。并降 lr、开 grad clip。**把"调高 KL"当 NaN 解药是错误因果**，KL 只管防漂移。
 
 ### Q6｜on-policy 还是 off-policy？rollout 和训练的策略不一致怎么办？（新增）
+
 **答**：GRPO 近 on-policy，但一次采样跑多个 mini-batch 会造成 $\pi_\theta$ 与采样用的 $\pi_{\theta_{old}}$ 偏移，靠**重要性采样比 + clip**（PPO surrogate）约束。多轮 + 异步 rollout 下偏移更大，这也是 GSPO / turn-level 方法出现的动因（verl-agent 已支持 GSPO/DAPO/GiGPO 等，verl-agent 支持 GiGPO、GRPO、PPO、DAPO、GSPO、RLOO、REINFORCE++、dynamic sampling 与 clip-higher。）。
 
 ---
@@ -907,11 +2190,13 @@ Search-R1 证明：outcome-based reward + retrieved token masking 就能实现�
 ## 6. 避坑指南（修订）
 
 ### 6.1 vLLM 显存碎片 / 多轮长上下文 OOM
+
 - **区分两个长度**：单轮生成上限（如 1024）与整条轨迹总长（prompt+所有 turn，可达 8k~16k）。KV Cache 按**总长**预算。
 - **方案**：调低 `gpu_memory_utilization`（0.9→0.6~0.7）；限制并发；`max_num_seqs` 设合理值。
 - **`enforce_eager=True` 的正确表述**：它**关闭 CUDA Graph 捕获**，省掉 CUDA Graph 固定占用的显存、减少其带来的碎片，代价是牺牲部分吞吐——**不是"即时显存回收"**。稳定性优先时可开，追吞吐时关掉并改用分页 KV 优化。
 
 ### 6.2 训练发散 / NaN（见 Q5，此处给 checklist）
+
 1. 开 Dynamic Sampling（治零方差空梯度）
 2. `norm_adv_by_std_in_grpo: False`（治难度偏置）+ token-level loss（治长度偏置）
 3. 熵坍缩 → Clip-Higher（`clip_ratio_high` 抬到 ~0.28）
@@ -919,6 +2204,7 @@ Search-R1 证明：outcome-based reward + retrieved token masking 就能实现�
 5. 盯 WandB：reward、response_length、entropy、KL 四条曲线联动看
 
 ### 6.3 评测（Gemini 缺失，务必补，面试常问）
+
 - 用 **held-out** 集（HotpotQA dev）报 EM/F1，别只看训练 reward（reward 涨≠泛化涨）。
 - vLLM 批量推理对 batch size 敏感：用 vLLM 做贪心解码（temperature=0）保证可复现；由于 vLLM 批量推理在不同 batch size 下对同一输入产生不同输出，需固定验证 batch size 并独立评测每个数据集以保证一致。
 - 额外报 **平均 turn 数 / 检索次数**，证明"效率"而非只看准确率。
@@ -937,3 +2223,4 @@ Search-R1 证明：outcome-based reward + retrieved token masking 就能实现�
 ---
 
 需要的话，我可以进一步：**(a)** 把这份 v2 导出成 Markdown/PDF 文件；**(b)** 写一份对应的 veRL 配置样例（GRPO+DAPO 开关、masking、dynamic sampling 的 yaml）；**(c)** 针对你自研 ReAct 系统，给出接入 `BaseTool` / Agent Loop 的代码骨架。要哪个？
+
