@@ -521,12 +521,9 @@ Total:             ~44GB / 80GB ✅
 ```
 
 
+## Reward 设计与 GRPO 比较机制
 
----
-
-## 6. Reward 设计与 GRPO 比较机制
-
-### 6.1 Reward
+### Reward
 
 #### 第一层：提取答案（`extract_solution`）
 
@@ -537,7 +534,6 @@ Total:             ~44GB / 80GB ✅
 2. 去冠词: 移除 a, an, the
 3. 去标点: 移除所有 punctuation
 4. 合并空格: "hello   world" → "hello world"
-
 
 #### 第三层：最终打分（`compute_score`）
 
@@ -555,11 +551,11 @@ Total:             ~44GB / 80GB ✅
 搜索式 RL 的经典"先有鸡还是先有蛋"问题：模型不知道用 ``格式 → 得不到奖励 → 学不会格式。 `format_score=0.1` 的意图是给一个**软引导**：只要用了`` 标签（即使答案错），也给 0.1 分。
 期望模型先学会输出格式，再学会输出正确内容。
 
-**实际效果**：模型确实学会了用 `...` 包装，但内容始终是 "..." 或乱码，
-从不使用 `` 进行工具调用。这导致所有回复分数相同（都是 0.1），
+**实际效果**：模型确实学会了用 `<answer>...</answer>` 包装，但内容始终是 "..." 或乱码，
+从不使用 `<search>` 进行工具调用。这导致所有回复分数相同（都是 0.1），
 GRPO 无法区分好坏。
 
-### 6.2 GRPO 如何比较 n 个回复
+### GRPO 如何比较 n 个回复
 
 GRPO（Group Relative Policy Optimization）的核心思想是：
 **同一 prompt 的多个回复在组内互相比较，好的加强，差的抑制。**
@@ -616,7 +612,7 @@ for i in range(bsz):
     advantages[i, valid_response_length[i] - 1] = scores[i]
 ```
 
-### 6.3 具体例子
+### 具体例子
 
 #### 场景 A：有区分度（理想情况，有学习信号）
 
@@ -682,7 +678,7 @@ PG loss = 0 × log_prob = 0    ← 梯度为零
   ✅ 一旦某条回复"运气好"答对了，GRPO 就能开始正循环
 ```
 
-### 6.4 `norm_adv_by_std_in_grpo` 的作用
+### `norm_adv_by_std_in_grpo` 的作用
 
 GRPO 有一个开关 `norm_adv_by_std_in_grpo`（默认为 True）：
 
@@ -698,7 +694,7 @@ else:
 | `True`（默认） | 除以标准差 → 组内方差大时缩小 advantage，方差小时放大 |
 | `False`（Dr.GRPO） | 不除标准差 → 方差大时 advantage 也大，更新更激进 |
 
-### 6.5 Policy Gradient 最终计算
+### Policy Gradient 最终计算
 
 有了 advantage 之后，PG loss 的计算：
 
@@ -717,6 +713,22 @@ pg_loss = pg_loss.sum() / response_mask.sum()  # 平均
 所有 n=4 回复 reward 相同 → advantage 全为 0 → pg_loss = 0
 → grad_norm = 0 → 模型权重不更新
 ```
+
+GRPO 算法的核心机制：
+
+1. 对每个 prompt 生成 n=4 个回复
+2. 计算每个回复的 reward
+3. 在组内标准化 reward（减去均值，除以标准差）→ 得到 advantage
+4. 用 advantage 加权 policy gradient
+
+当所有 4 个回复的 reward **相同**时（都是 0.1 格式分）：
+
+- 组内均值 = 0.1
+- 组内标准差 = 0
+- advantage = (0.1 - 0.1) / 0 = **0**（除以零时设为 0）
+- PG loss = 0 × log_prob = **0**
+
+模型无法区分好坏回复，因此无法学习。
 
 这就是我们 15 步测试和宿主机 99 步训练中 `actor/pg_loss:0.0` 的原因。
 
@@ -753,11 +765,11 @@ Step 10: score=0.100, pg_loss=0.0      ← 这 batch 恰好没答对
 Step 11: score=0.100, pg_loss=0.0      ← 同上
 ```
 
-RL 训练像**拔河比赛**：每步的 batch 不同，模型在探索中时而进步时而退步。
+RL 训练每步的 batch 不同，模型在探索中时而进步时而退步。
 关键在于**长期趋势**：score 从 0.100 → 0.184 已经证明了学习在发生。
 更多步数后，正确的搜索-回答行为会越来越频繁。
 
-#### 为什么 pg_loss 的绝对值这么小（0.01-0.03）？
+#### 为什么我们的 pg_loss 的绝对值这么小（0.01-0.03）？
 
 1. **小 batch**：8 prompts × 4 回复 = 32 rollout，方差大
 2. **response_length 平均 500+ tokens**：loss 在 token 维度平均后变小
@@ -776,42 +788,9 @@ RL 训练像**拔河比赛**：每步的 batch 不同，模型在探索中时而
 - 被 mask 的原因包括：轨迹超长、observation 被 mask（`mask_observations=True`）、轨迹格式无效等
 
 
-## 10. 训练运行记录
+## 训练运行记录
 
-### 10.1 时间线
-
-| 时间 | 事件 | 结果 |
-|------|------|------|
-| 04:00 | 首次冒烟测试 (5步) | ✅ 成功：Agent Loop, vLLM rollout, reward 全部正常 |
-| 05:40 | 发现模型输出垃圾 token | ⚠️ 模型复制 prompt 中的 "Beijing" 示例 |
-| 06:00 | 修复 prompt → system+user 格式 | ⚠️ 模型复制 "Paris" 示例 |
-| 06:15 | 移除 prompt 中所有示例答案 | ✅ 模型不再盲目复制 |
-| 06:50 | 15步验证测试 | ✅ 全部完成，rewards=0.1 (格式分) |
-| 07:35 | 15步测试结束 | PG loss=0，无学习信号 |
-| 07:40 | 200步正式训练启动 | ▶️ 运行中 |
-
-### 10.2 15步验证测试详细数据 (2026-07-28 06:50-07:35)
-
-训练管道验证成功，15 步全部完成，无报错：
-
-| 指标 | 值 | 说明 |
-|------|-----|------|
-| 单步时间 | 94-96s | 极稳定（gen ~49s, update ~37s, reward ~0.14s） |
-| 吞吐量 | 37-41 tok/s | 端到端（含 rollout + reward + update） |
-| GPU 内存 (allocated) | 74.1 GB | 在所有 8 GPU 上完全一致 |
-| GPU 内存 (reserved) | 89.1 GB | 略超 80GB 但因为 offload 正常工作 |
-| CPU 内存 | 86.5 GB | 优化器状态卸载到 CPU |
-| actor/entropy | 6.2-6.5 (偶有 0.0) | 有输出多样性，但某些 step 完全确定性 |
-| actor/pg_loss | **0.0** (全部) | 无学习信号 |
-| actor/grad_norm | **0.0** (全部) | 梯度为 0，模型权重不更新 |
-| score/mean | **0.1** (全部) | 仅格式奖励，无正确答案 |
-| num_turns | **1** (全部) | 模型从不进行多轮搜索 |
-| tool_calls 耗时 | **0.0s** (全部) | 模型从不调用 Wikipedia 搜索 |
-| response_length | 700-990 tokens | 模型会生成文本但最终只输出 "..." 或乱码 |
-| valid_traj | 3-9% | 只有 3-9% 轨迹有可解析的 `` 标签 |
-| no_loss_on_traj | 88-100% | 大部分轨迹被 mask，不参与 loss 计算 |
-
-### 10.3 Prompt 迭代过程（3 轮优化）
+### Prompt 迭代过程（3 轮优化）
 
 **第 1 轮 — Search-R1 原始格式（失败）**：
 
@@ -850,30 +829,12 @@ Content: "Question: ..."
 
 效果：模型不再复制示例，自己生成内容（但只是 "..." 或无关文本）。
 
-**核心发现**：Qwen2.5-Coder-14B-Instruct 无法理解 Search-R1 的 XML 标签格式。
-模型能生成 `...` 结构（获得 0.1 格式分），但从不在 ``中填入有意义的内容， 也从不使用`` 标签进行工具调用。
+一开始我觉得是Qwen2.5-Coder-14B-Instruct 无法理解 Search-R1 的 XML 标签格式。
+后来发现乱码是 vLLM 0.8.5 V1 引擎的 bug，不是模型问题。
 
-### 10.4 为什么 PG Loss 始终为 0
+总之看起来Coder模型能生成 `...` 结构（获得 0.1 格式分），但从不在 ``中填入有意义的内容， 也从不使用`` 标签进行工具调用。
 
-GRPO 算法的核心机制：
-
-1. 对每个 prompt 生成 n=4 个回复
-2. 计算每个回复的 reward
-3. 在组内标准化 reward（减去均值，除以标准差）→ 得到 advantage
-4. 用 advantage 加权 policy gradient
-
-当所有 4 个回复的 reward **相同**时（都是 0.1 格式分）：
-
-- 组内均值 = 0.1
-- 组内标准差 = 0
-- advantage = (0.1 - 0.1) / 0 = **0**（除以零时设为 0）
-- PG loss = 0 × log_prob = **0**
-
-模型无法区分好坏回复，因此无法学习。这形成了"先有鸡还是先有蛋"的困境：
-
-- 模型不知道如何搜索 → 无法获得正确答案 → reward 无方差 → 无法学习如何搜索
-
-### 10.5 工具服务器表现
+### 工具服务器表现
 
 wiki_search 工具服务器在整个测试中运行正常：
 
@@ -885,90 +846,53 @@ wiki_search 工具服务器在整个测试中运行正常：
 
 ---
 
-## 11. 关键发现与经验教训
+# 关键发现与经验教训
 
-### 11.1 模型选择的决定性影响
+### 模型选择的决定性影响
 
 这是本次实验最重要的发现：**RL 训练的成功与否，80% 取决于基座模型是否理解任务格式**。
 
-Qwen2.5-Coder-14B-Instruct 是为代码生成训练的模型。
-Search-R1 的 ``/`` / `` XML 标签格式对它来说完全是陌生的。
-即使经过 15 步 RL 训练，模型仍然无法学会使用这些标签。
+在 Search-R1 格式的示例数据上做 SFT 预热，再进行 RL 训练。
 
-**强烈建议**：使用 Qwen2.5-14B-Instruct（非 Coder 版本），或先在 Search-R1 格式的
-示例数据上做 SFT 预热，再进行 RL 训练。
 
-### 11.2 兼容性问题
-
-在 vLLM 0.8.5 + torch 2.6.0 的环境下运行 veRL 0.7.0.dev 需要 **8 个兼容性补丁**。
-详见 `PATCHES.md`。主要问题：
-
-- vLLM V1 引擎 API 差异（`CoreEngineProcManager`, `get_tcp_uri`, `reset_mm_cache`）
-- PyTorch attention 工具函数（`flash_attn.bert_padding` → 纯 PyTorch 回退）
-- 空 tensor 安全处理（`debug_metrics`, `compute_data_metrics`）
-
-这些补丁让训练可以跑通，但长期来看应使用官方支持的版本组合（torch 2.8 + vLLM 0.11）。
-
-### 11.3 网络环境约束
+### 网络环境约束
 
 公司代理环境带来的挑战：
 
 1. PyPI 镜像限制（最高 torch 2.6.0）→ 无法升级 vLLM
 2. SSL 证书检查（代理做 SSL inspection）→ 需要 `verify=False`
-3. 代理是双刃剑：需要它访问外网（Wikipedia），但必须绕过它访问本地服务（127.0.0.1）
+3. 代理：需要它访问外网（Wikipedia），但必须绕过它访问本地服务（127.0.0.1）
 
-### 11.4 训练效率
+### 训练效率
 
 - 14B 模型在 8×A100 上：~95 秒/步（32 rollouts）
 - 扩展到 200 步需要 ~5.3 小时
 - 更大的 batch（如 batch=64, n=8）预计每步 ~6-8 分钟，200 步 ~20 小时
 - GPU 内存使用 74-89GB，刚好在 80GB 边界内（感谢 FSDP offload）
 
-### 11.5 奖励设计的重要性
+### 奖励设计的重要性
 
 原始 Search-R1 使用 `format_score=0.0`（无格式奖励）。
 我们改成了 `format_score=0.1`，希望给模型一个"软引导"。
-但结果是模型学会了输出 `` 标签（拿 0.1 分），却没有动力去搜索正确答案。
+但结果是模型学会了输出 `<answer>` 标签（拿 0.1 分），却没有动力去搜索正确答案。
 
 **更好的奖励设计**：
 
 - `format_score` 应随时间衰减（前期引导格式，后期只奖励正确性）
 - 或者使用 **DAPO** 的 filtering 机制：过滤掉低分轨迹，只在高分轨迹上学习
-- 或者增加 `search_bonus`：使用 `` 标签就给额外奖励
+- 一开始想或者增加 `search_bonus`：使用 `<search>` 标签就给额外奖励。 但是HotpotQA 的多跳要求自然体现在 EM 难度上——不额外加 search_bonus。
+模型通过 GRPO 自己发现 "多搜索 → 高 reward" 的规律。
 
 ---
 
-## 12. TODO & 下一步
-
-### 立即
-
-- [x] 完成模型下载
-- [x] 冒烟测试通过（15 步）
-- [ ] 200 步训练运行中，等待完成
-
-### 短期
-
-- [ ] **切换模型**到 Qwen2.5-14B-Instruct（非 Coder）→ 预期工具使用能力显著提升
-- [ ] 或对 Qwen2.5-Coder 做 SFT 预热（在 Search-R1 数据上微调 1 epoch）
-- [ ] 启用 DAPO（filter_groups + dynamic sampling）
-- [ ] 增加 exploration：temperature=1.2, entropy_coeff=0.01
-
-### 长期
-
-- [ ] 在 HotpotQA 测试集上评估最终模型
-- [ ] 尝试多节点扩展（单节点 8 GPU 限制 batch size）
-- [ ] 考虑升级到 torch 2.8 + vLLM 0.11（需要 Docker/venv + 离线下载）
-- [ ] 添加第二个工具（如 calculator 用于数值问题）
-
----
 
 ## 13. SFT 预热数据准备
 
 ### 13.1 动机
 
-15步测试表明 Qwen2.5-Coder-14B-Instruct 完全不理解 ``/`` XML 标签格式，
-GRPO 的 advantage 始终为 0。SFT 预热的目的是在 RL 之前教会模型基本格式：
-``→`` → ``→``。
+15步测试表明 Qwen2.5-Coder-14B-Instruct 完全不理解XML 标签格式，
+GRPO 的 advantage 始终为 0。
+SFT 预热的目的是在 RL 之前教会模型基本格式：
 
 ### 13.2 方法
 
@@ -982,19 +906,14 @@ GRPO 的 advantage 始终为 0。SFT 预热的目的是在 RL 之前教会模型
 4. 如果搜索结果包含 golden answer 文本 → 标记为 "有答案上下文"
 5. 构造标准的多轮轨迹
 
-### 13.3 两轮迭代
+直接用 requests + Wikipedia API
 
-**v1 (prepare_sft_data.py)**: 使用 wikipedia Python 库
-
-- 结果：500 条中仅 2% 有有效搜索上下文
-- 原因：wikipedia 库默认用 HTTP（不是 HTTPS），代理不转发；
-  每个 `summary()` 调用产生额外 API 请求，触发限流
-
-**v2 (prepare_sft_data_v2.py)**: 直接用 requests + Wikipedia API
-
-- 结果：50 条测试中 60% 有有效搜索上下文
+- 结果：500 条测试中 **65% (325条) 答案出现在 Wikipedia 搜索结果中**
 - 改进：HTTPS 直连、用 golden answer 作为搜索词、限流重试
 - 最终：生成 1000 条 SFT 数据（含 60% 高质量轨迹）
+- 100% 格式完整（`<think>` + `<search>` + `<information>` + `<answer>`）
+- 100% API 成功率，41 分钟生成
+
 
 ### 13.4 SFT 数据格式
 
@@ -1014,11 +933,7 @@ GRPO 的 advantage 始终为 0。SFT 预热的目的是在 RL 之前教会模型
 SFT 训练时，input = `messages`，output = `chosen`。模型学习在给定系统提示和问题后，
 生成正确的多轮搜索→回答轨迹。
 
-### 13.5 失败原因诊断与修复
-
-用户提出问题：为什么 98% 的数据条目搜索失败？能否通过重试和超时修复？
-
-**诊断结果**：
+一开始 98% 的数据条目搜索失败：
 
 1. **超时不是问题**：成功的 Wikipedia API 调用在 0.4-1.0s 内完成。10s 超时已足够。
 2. **延迟不足是根本原因**：Wikipedia 每 ~3 个请求后返回 HTTP 429（Too Many Requests），
@@ -1026,86 +941,8 @@ SFT 训练时，input = `messages`，output = `chosen`。模型学习在给定�
 3. **每个问题触发多个 API 调用**：wikipedia 库的 `search()` + `page()` + `summary()`
    每个都是一次独立 API 调用。v1 每个问题可能触发 4-6 次调用，在 0.3s 延迟下迅速耗尽配额。
 
-**修复方案 (v3)**：
-
-- 最小延迟 → 3-5 秒（避开限流窗口）
-- 尊重 `Retry-After` 头（自动等待指定秒数）
-- 每个问题只调用 1 次 API（`wiki_page_summary` by golden answer）
-- 4 次重试 + 指数回退
-- 即使 API 失败也生成模板化轨迹（保证格式正确）
-
-**修复效果**：
-
-| 版本 | 延迟 | API 成功率 | 答案在上下文中 |
-|------|------|-----------|---------------|
-| v1 | 0.3s | 8% | 2% |
-| v2 | 1.5s | ~40% | 60% |
-| **v3** | **3-5s** | **100%** | **70%** |
-
-### 13.6 最终 SFT 数据集
-
-合并去重后（优先 v3 高质量数据）：
-
-- **500 条唯一 SFT 示例**（`data/sft_warmup/sft_final.jsonl`, 869 KB）
-- 100% 格式完整（``+`` + ``+``）
-- **65% (325条) 答案出现在 Wikipedia 搜索结果中**
-- v3 贡献：500 条全量，100% API 成功率，41 分钟生成
-
-### 13.7 数据局限性
-
-- 500 条足够格式学习；答案正确性依赖 RL 阶段
-- 需 3-5 秒 API 间隔以避免 Wikipedia 限流
-- 如需更大规模或更高质量，建议在无代理限制的网络环境中重新生成
-
----
-
-## 14. 当前训练监控
-
-**状态**: 200 步 GRPO 训练运行中（启动于 2026-07-28 ~07:40）
-
-```bash
-# 查看训练步骤
-grep 'step:' /home/workspace/ruizhe/rl_env/full_training_log.txt | tail -5
-
-# 实时监控
-tail -f /home/workspace/ruizhe/rl_env/full_training_log.txt | grep 'step:'
-
-# 查看完整日志
-less /home/workspace/ruizhe/rl_env/full_training_log.txt
-```
-
----
-
-## 15. Docker 环境迁移 (2026-07-29) — vLLM 0.11 消除 5 个补丁
-
-### 动机
-
-宿主机 PyPI 镜像限制（最高 torch 2.6）导致无法升级 vLLM，只能用 0.8.5 V1 引擎。
-HuggingFace 直接推理正常但 vLLM 输出乱码 → 确认是 vLLM 版本兼容性问题。
-
-### Docker 环境
-
-`vllm/vllm-openai:v0.11.0`: Python 3.12, torch 2.8+cu128, vLLM 0.11, Ray 2.49.2
-
-### 补丁迁移
-
-| # | 宿主机 | Docker | 说明 |
-|---|--------|--------|------|
-| 1 get_tcp_uri | 需要 | **不需要** | vLLM 0.11 内置 |
-| 2 CoreEngineProcManager | 需要 | **不需要** | vLLM 0.11 内置 |
-| 3 reset_mm_cache | 需要 | **不需要** | vLLM 0.11 内置 |
-| 4 wait_for_requests_to_drain | 需要 | **不需要** | vLLM 0.11 内置 |
-| 5 VllmConfig.model_config | ~~REVERTED~~ | **不需要** | 源码已还原 |
-| 6 flash_attn fallback | 需要 | **仍需要** | Docker 无 flash_attn |
-| 7 debug_metrics | 需要 | **仍需要** | 非 vLLM 相关 |
-| 8 attn_impl=sdpa | 配置 | **仍需要** | 非 vLLM 相关 |
-
-### 关键发现
-
-vLLM 0.11 + Qwen2.5-14B-Instruct 中模型正确输出 `...query`，
-确认乱码是 vLLM 0.8.5 V1 引擎的 bug，不是模型问题。
-
-### Docker 训练突破 (2026-07-29, 43 步验证)
+   
+### 训练现象 (2026-07-29, 43 步验证)
 
 **Step 1 — 多轮搜索首次成功**：
 
@@ -1135,20 +972,7 @@ Step 12-25: ██████████  0.18-0.52  (开始学习)
 Step 26-43: ████████████████  0.35-0.72  (稳定上升!)
 ```
 
-**宿主机 vs Docker 最终对比**：
-
-| 指标 | 宿主机 99步 | Docker 43步 |
-|------|-----------|------------|
-| valid_traj | 3-9% | **100%** |
-| num_turns | 1.0 | **1.0-3.0** |
-| tool_call_success | 0% | **69%** |
-| score 趋势 | 0.1 不变 | **0.15 → 0.44** |
-| pg_loss | 0.0 | **非零波动** |
-| 模型输出 | 乱码 | 正确格式 |
-
-**核心结论**：Qwen2.5-14B-Instruct + vLLM 0.11 + GRPO = 模型学会了通过 Wikipedia 搜索来回答问题。Score 从 0.10 提升到 0.44（均值），峰值 0.72。
-
-### 关键发现：数据分布不均（破案！排查全部训练现象）
+### 关键发现：数据分布不均
 
 **数据排列**：训练集 152,653 条**完全未混合**——
 前 79,168 条 100% NQ（单跳），后 73,485 条 100% HotpotQA（多跳）。
@@ -1195,10 +1019,6 @@ Step 26-43: ████████████████  0.35-0.72  (稳定
 4. ➕ 长轨迹场景设置 `norm_adv_by_std_in_grpo=False`（Dr.GRPO）
 5. ➕ 长轨迹场景降低 `batch_size=1-2`，保持 `n=4`
 
-### 训练配置遗漏
-
-`save_freq=-1` → 123 步训练全程未保存 checkpoint。
-`trainer.save_freq=50` 可每 50 步保存一次。
 
 ## 实验 2：Shuffle 数据 + 正确 Epoch 设计 (2026-07-30 启动)
 
@@ -1223,31 +1043,15 @@ RL ≠ SFT。RL 不需要多 epoch 来"记住"数据，关键是每个问题给�
 选择 2 epochs：每个问题被看到 2 次，NQ 第一次学格式、第二次学搜索，
 HotpotQA 第一次发现需要多跳、第二次学会搜索链。
 
-### Reward 设计
-
-保持与实验 1 相同：`format_score=0.1`, `score=1.0`。
-HotpotQA 的多跳要求自然体现在 EM 难度上——不额外加 search_bonus。
-模型通过 GRPO 自己发现 "多搜索 → 高 reward" 的规律。
-
-### 监控要点
-
-1. Score 是否在两类问题上分别提升（日志不区分，但 num_turns 可反映搜索策略）
-2. num_turns 是否根据问题复杂度自适应（NQ=1, HotpotQA=2-3）
-3. 检查 save_freq=50 的 checkpoint 是否正常保存
 
 ---
 
-## 16. References
-
-- [veRL](https://github.com/volcengine/verl) — RL training framework
-- [verl-tool](https://github.com/TIGER-AI-Lab/verl-tool) — Tool-augmented RL on veRL
-- [Search-R1](https://github.com/PeterGriffinJin/Search-R1) — Original search-augmented RL
-- [DAPO](https://arxiv.org/abs/2503.14476) — Dynamic sampling for RL
-- [HotpotQA](https://hotpotqa.github.io/) — Multi-hop QA benchmark
+# 技术问题
 
 ## Q1: 为什么用 Dr.GRPO 思路修复 DAPO？
 
-初次我们尝试了 GRPO，一开始的思路 以及和 PPO 的区别：
+初次我们尝试了 GRPO，这里说一下一开始的思路 以及和 PPO 的区别：
+
 
 **核心区别**：PPO 需要 Critic（Value Network）来估计 Advantage，而 GRPO 用**组内相对比较**。
 
@@ -1258,8 +1062,8 @@ HotpotQA 的多跳要求自然体现在 EM 难度上——不额外加 search_bo
 > PPO 的 Critic 是一份与 Actor 同量级的模型，极易 OOM；GRPO 省下这份显存全给 Actor。其优势估计为组内相对：
 > 
 > $$
-> A_i=\frac{r_i-\operatorname{mean}(\mathbf{r})}{\operatorname{std}(\mathbf{r})}
-> $$
+ A_i=\frac{r_i-\operatorname{mean}(\mathbf{r})}{\operatorname{std}(\mathbf{r})}
+ $$
 > 
 > 相比 PPO，组内相对归一化给训练提供比单一 reward + 不可靠 critic 更清晰的信号
 
@@ -1273,13 +1077,147 @@ HotpotQA 的多跳要求自然体现在 EM 难度上——不额外加 search_bo
 vanilla GRPO 的两个已知偏置：
 
 1. **难度偏置**：除以 $\operatorname{std}(\mathbf{r})$ 会放大"极易/极难"题的权重。Dr. GRPO 取消这个缩放，平等对待所有题目。→ veRL 配置 `algorithm.norm_adv_by_std_in_grpo: False`。
-2. **长度偏置**：按序列长度平均会让"更长的错误答案"被低估惩罚。GRPO 按序列长度归一化会导致更长的错误回答被惩罚不足。Dr.GRPO 改用全局常数归一化以消除长度偏置。
+2. **长度偏置**：**按序列长度平均**会让"更长的错误答案"被低估惩罚。GRPO 按序列长度归一化会导致更长的错误回答被惩罚不足。 
+对我们的 DMI 场景来说，长序列的错误答案是很常见的。因此使用 Dr.GRPO 改用全局常数归一化以消除长度偏置。
 
-**DAPO 的四件套**（ByteDance，基于 verl 实现，长 CoT / 多轮场景强烈推荐）：Clip-Higher（非对称裁剪、上界更高）、Dynamic Sampling（重采样至组内有对有错）、Token-Level Policy Gradient Loss、Overlong Reward Shaping（惩罚过长回答）。其中：
+我们尝试使用 Dr.GRPO 改良。
 
-- **Clip-Higher** 治**熵坍缩**：初期观察到熵坍缩现象，通过增大重要性采样比的上裁剪范围来缓解。
-- **Dynamic Sampling** 就是 §索引③ 里 σ=0 空梯度的正解。
-- **Overlong Reward Shaping** 是软惩罚：设一个最大长度，对超过阈值（如 4096）的多余 token 温和降分，这种"软惩罚"避免模型啰嗦又不过于严厉。
+### GRPO vs Dr.GRPO 有什么区别？什么场景该用哪个？
+
+**GRPO**: `advantage = (reward - group_mean) / group_std`
+**Dr.GRPO**: `advantage = reward - group_mean`
+
+**关键区别**：GRPO 除以 std → 当 std 很小时放大 advantage（稀有正确回复被大力强化），当 std 很大时缩小 advantage（分散的 reward 被压平）。Dr.GRPO 跳过了除法，保持原始 reward 差距。
+
+| 场景  | 推荐  | 原因  |
+| --- | --- | --- |
+| 短轨迹、n 大（≥4） | **GRPO** | std 估计可靠，放大稀有正确信号有助于冷启动 |
+| 长轨迹（>10K tokens） | **Dr.GRPO** | reward 方差大，GRPO 易梯度爆炸 |
+| 小 batch（1-2） | **Dr.GRPO** | std 在小样本上极不可靠 |
+| 冷启动（reward=0 为主） | **GRPO** | 少数高 reward 回复需要被放大 |
+
+**开销**：完全一样——Dr.GRPO 只跳过除法运算，不增加任何计算量。
+
+**切换**：一行参数 `algorithm.norm_adv_by_std_in_grpo=False`。
+
+### 那么 DAPO 呢？
+## Completed Version: DAPO's Four Components (+ Two "Implicit" Components)
+
+---
+
+### 0. 先摆出完整目标函数 / First, the Full Objective
+
+DAPO 的全称是 **D**ecoupled Clip and **D**ynamic s**A**mpling **P**olicy **O**ptimization（ByteDance Seed × 清华 AIR，arXiv 2503.14476）。它的四大组件不是四个独立 trick，而是同时体现在**一个目标函数**里的四处修改，所以最清晰的补全方式是先看完整式子，再逐项对应：
+
+$$\mathcal{J}_{\text{DAPO}}(\theta)=\mathbb{E}_{(q,a)\sim\mathcal{D},\,\{o_i\}_{i=1}^{G}\sim\pi_{\theta_{\text{old}}}(\cdot\mid q)}\left[\underbrace{\frac{1}{\textstyle\sum_{i=1}^{G}|o_i|}\sum_{i=1}^{G}\sum_{t=1}^{|o_i|}}_{\text{③ token-level}}\min\Big(r_{i,t}(\theta)\hat{A}_{i,t},\ \operatorname{clip}\big(r_{i,t}(\theta),\,1-\underbrace{\epsilon_{\text{low}}}_{\text{① }0.2},\,1+\underbrace{\epsilon_{\text{high}}}_{\text{① }0.28}\big)\hat{A}_{i,t}\Big)\right]$$
+
+$$\text{s.t.}\quad \underbrace{0<\big|\{o_i\mid \texttt{is\_equivalent}(a,o_i)\}\big|<G}_{\text{② dynamic sampling 约束 / constraint}},\qquad \hat{A}_{i,t}=\frac{R_i-\operatorname{mean}(\{R_j\}_{j=1}^{G})}{\operatorname{std}(\{R_j\}_{j=1}^{G})}$$
+
+其中 $r_{i,t}(\theta)=\dfrac{\pi_\theta(o_{i,t}\mid q,o_{i,<t})}{\pi_{\theta_{\text{old}}}(o_{i,t}\mid q,o_{i,<t})}$，而 $R_i$ 中包含了组件 ④ 的长度整形项。**注意：式子里没有 KL 项**——这是 DAPO 相对 GRPO 的另一个关键删除。
+
+Here $r_{i,t}(\theta)=\dfrac{\pi_\theta(o_{i,t}\mid q,o_{i,<t})}{\pi_{\theta_{\text{old}}}(o_{i,t}\mid q,o_{i,<t})}$, and $R_i$ absorbs the length-shaping term from component ④. **Note there is no KL term** — that is another key deletion of DAPO relative to GRPO.
+
+---
+
+### 1. 补全后的四大组件表 / The Completed Four-Component Table
+
+| 技巧 / Technique | 做法 / Method | 关键机制细节 / Key Mechanism | 解决的问题 / Problem Solved |
+|---|---|---|---|
+| **① Clip-Higher**（解耦裁剪 / decoupled clipping） | 把 PPO 单一 $\epsilon$ 拆成非对称区间 $[1-\epsilon_{\text{low}},\,1+\epsilon_{\text{high}}]$，论文取 $\epsilon_{\text{low}}=0.2,\ \epsilon_{\text{high}}=0.28$ / Split PPO's single $\epsilon$ into an asymmetric range $[1-\epsilon_{\text{low}},\,1+\epsilon_{\text{high}}]$; the paper uses $\epsilon_{\text{low}}=0.2,\ \epsilon_{\text{high}}=0.28$ | 上界 $\epsilon_{\text{high}}$ 放宽以给低概率 token "上升空间"；下界 $\epsilon_{\text{low}}$ **故意不放宽**，否则会把低概率 token 直接压到 0、缩小采样空间 / Raise $\epsilon_{\text{high}}$ to give low-probability tokens headroom to grow; **deliberately keep $\epsilon_{\text{low}}$ small**, since relaxing it would crush low-probability tokens to 0 and shrink the sampling space | 对称裁剪对低概率 token 的提升上限极苛刻 → 策略熵单调下降、rollout 高度同质化 → **熵坍缩**、探索死亡 / Symmetric clipping imposes a brutally tight growth ceiling on low-probability tokens → monotonically decreasing entropy, near-identical rollouts → **entropy collapse** and dead exploration |
+| **② Dynamic Sampling**（动态采样 / dynamic sampling） | 过采样后**过滤掉准确率为 0 或 1 的组**（组内 $\hat{A}\equiv 0$，梯度为零），持续重采样直到凑满一个全是"有效样本"的 batch，以约束 $0<|\{\text{correct}\}|<G$ 写进目标 / Over-sample, then **filter out groups with accuracy 0 or 1** (where $\hat{A}\equiv 0$ and the gradient vanishes), and keep resampling until the batch is full of "effective" samples; encoded as the constraint $0<|\{\text{correct}\}|<G$ | 保持**有效** batch size 恒定，从而稳定梯度方差；论文实测：虽然采样量增加，但因所需训练步数减少，端到端收敛时间反而**略有下降** / Keeps the **effective** batch size constant, stabilizing gradient variance; empirically, despite more sampling, fewer training steps are needed, so end-to-end convergence time actually **drops slightly** | 训练中后期"全对"的提示比例持续攀升，batch 中大量样本贡献零梯度 → 有效信号被稀释、梯度方差变大、训练曲线抖动 / As training proceeds, the fraction of "all-correct" prompts keeps rising, so many samples contribute zero gradient → diluted signal, higher gradient variance, jittery training curves |
+| **③ Token 级损失 / Token-level Loss** | 从 GRPO 的 sample-level $\frac{1}{G}\sum_i \frac{1}{\lvert o_i\rvert}\sum_t$ 改为 token-level $\frac{1}{\sum_i \lvert o_i\rvert}\sum_i\sum_t$ / Replace GRPO's sample-level $\frac{1}{G}\sum_i \frac{1}{\lvert o_i\rvert}\sum_t$ with token-level $\frac{1}{\sum_i \lvert o_i\rvert}\sum_i\sum_t$ | 每个 token 权重相等，长回复对梯度的**总贡献按其长度线性增加**，不再被 $1/\lvert o_i\rvert$ 摊薄 / Every token gets equal weight, so a long response's **total gradient contribution scales linearly with its length** instead of being diluted by $1/\lvert o_i\rvert$ | 双向失衡：(a) 高质量长 CoT 中的推理模式被系统性降权，学不动；(b) 长回复中的**乱码与重复也惩罚不足** → 熵与回复长度出现"不健康"暴涨 / A two-sided failure: (a) reasoning patterns inside high-quality long CoT are systematically down-weighted and under-learned; (b) **gibberish and repetition in long responses are also under-penalized** → unhealthy blow-up of entropy and response length |
+| **④ Overlong Reward Shaping**（超长奖励整形 / overlong reward shaping） | 两级方案：先用 **Overlong Filtering**（把截断样本的 loss 直接 mask 掉），再用 **Soft Overlong Punishment**（分段软惩罚，见下方公式）叠加到规则奖励上 / A two-tier scheme: first **Overlong Filtering** (mask out the loss of truncated samples), then **Soft Overlong Punishment** (a piecewise soft penalty, formula below) added on top of the rule-based reward | 设 $L_{\max}=20480$、缓冲 $L_{\text{cache}}=4096$，即 16384 token 以内不罚、16384–20480 线性递增罚至 $-1$ / With $L_{\max}=20480$ and cache $L_{\text{cache}}=4096$: no penalty below 16384 tokens, then a linearly increasing penalty up to $-1$ over 16384–20480 | 默认把截断回复判为错误，会**惩罚推理本身正确、只是没写完**的样本 → 奖励噪声污染梯度、训练不稳 / Scoring truncated responses as wrong by default **punishes samples whose reasoning is actually sound but merely unfinished** → reward noise pollutes the gradient and destabilizes training |
+
+组件 ④ 的软惩罚公式（论文 Eq. 13）为：
+
+The soft penalty of component ④ (paper Eq. 13) is:
+
+$$R_{\text{length}}(y)=\begin{cases}0, & |y|\le L_{\max}-L_{\text{cache}}\\[4pt] \dfrac{(L_{\max}-L_{\text{cache}})-|y|}{L_{\text{cache}}}, & L_{\max}-L_{\text{cache}}<|y|\le L_{\max}\\[6pt] -1, & |y|>L_{\max}\end{cases}$$
+
+最终奖励 $R_i = R_{\text{correct}}(o_i, a) + R_{\text{length}}(o_i)$，其中 $R_{\text{correct}}\in\{+1,-1\}$ 由规则验证器（答案等价性判定）给出。这个设计的精神是：**长度约束应表达为"渐进变贵"而不是"悬崖式判死"**，避免在 $L_{\max}$ 处出现奖励函数的阶跃不连续。
+
+The final reward is $R_i = R_{\text{correct}}(o_i, a) + R_{\text{length}}(o_i)$, where $R_{\text{correct}}\in\{+1,-1\}$ comes from a rule-based verifier (answer-equivalence checking). The spirit of the design: **a length constraint should be expressed as "progressively more expensive," not as a cliff-edge death sentence**, avoiding a step discontinuity in the reward function at $L_{\max}$.
+
+---
+
+### 2. 两个常被漏掉的"隐性"组件 / Two Frequently Omitted "Implicit" Components
+
+**⑤ 彻底移除 KL 惩罚项。** 这是 DAPO 与经典 RLHF 最哲学性的分歧。在 RLHF 中，KL 项的作用是"别偏离 SFT 模型太远，保住语言质量与安全性"；但在 long-CoT reasoning RL 中，模型**本来就要**从 base 模型的行为分布上大幅漂移（学会自我检查、回溯、超长推理），此时 KL 项就是纯粹的枷锁。DAPO 直接令 $\beta=0$。这与 Dr.GRPO / Open-Reasoner-Zero 等同期工作的结论一致，也是 2025 年"零 KL 训练"成为 reasoning RL 默认配置的关键一步。
+
+**⑤ Complete removal of the KL penalty.** This is DAPO's most philosophical break with classical RLHF. In RLHF, the KL term says "don't drift too far from the SFT model; preserve language quality and safety." But in long-CoT reasoning RL, the model **is supposed to** drift massively from the base model's behavioral distribution (learning self-checking, backtracking, very long deliberation), so the KL term becomes pure shackles. DAPO simply sets $\beta=0$. This matches contemporaneous findings in Dr.GRPO / Open-Reasoner-Zero, and was a key step in making "zero-KL training" the default configuration for reasoning RL in 2025.
+
+**⑥ 纯规则奖励 + 答案等价性验证器。** DAPO 不用任何神经奖励模型，只用可验证的最终答案匹配（AIME 类数学题转换为整数答案），从根上消除 reward hacking。这一点常被当作"实验设置"而非"算法组件"，但它其实是前四个 trick 能成立的前提：只有当奖励绝对可信时，才敢像 ② 那样激进地丢弃样本、像 ④ 那样直接给奖励做手术。
+
+**⑥ Purely rule-based rewards + an answer-equivalence verifier.** DAPO uses no neural reward model at all, only verifiable final-answer matching (AIME-style problems converted to integer answers), eliminating reward hacking at the root. This is often filed under "experimental setup" rather than "algorithmic component," but it is really the precondition for the other four tricks: only when the reward is absolutely trustworthy can you afford to discard samples as aggressively as ② does, or perform surgery directly on the reward as ④ does.
+
+---
+
+<details>
+<summary><b>消融实验与超参（点击展开）/ Ablations and Hyperparameters (click to expand)</b></summary>
+
+论文 Table 1，Qwen2.5-32B **base** 模型起训，AIME 2024 avg@32：
+
+Paper Table 1, trained from the Qwen2.5-32B **base** model, AIME 2024 avg@32:
+
+| 配置 / Setting | AIME24 avg@32 | 增量 / Δ |
+|---|---|---|
+| DeepSeek-R1-Zero-Qwen-32B（对照 / reference） | 47 | — |
+| Naive GRPO | 30 | — |
+| + Overlong Filtering | 36 | +6 |
+| + Clip-Higher | 38 | +2 |
+| + Soft Overlong Punishment | 41 | +3 |
+| + Token-level Loss | 42 | +1 |
+| + Dynamic Sampling | **50 (DAPO)** | +8 |
+
+两点值得注意：**(a)** Token-level Loss 的分数增益最小（+1），但论文明确指出它的价值在于**训练稳定性与"健康"的长度增长曲线**，而非直接刷分——这是评价 RL trick 时容易被单一指标误导的典型例子。**(b)** Dynamic Sampling 贡献最大（+8），说明在后期"有效梯度稀疏化"是长程 RL 最主要的瓶颈之一。
+
+Two things worth noting: **(a)** Token-level Loss gives the smallest score gain (+1), but the paper explicitly states its value lies in **training stability and a "healthy" length-growth curve**, not in raw score — a textbook case of how a single metric can mislead when judging RL tricks. **(b)** Dynamic Sampling contributes the most (+8), indicating that late-stage "effective-gradient sparsification" is one of the primary bottlenecks in long-horizon RL.
+
+**关键超参 / Key hyperparameters:** verl 框架；AdamW，恒定 lr $1\times10^{-6}$ + 20 步线性 warm-up；rollout prompt batch = 512，每 prompt 采 $G=16$；mini-batch = 512（即每次 rollout 做 16 次梯度更新）；$\epsilon_{\text{low}}=0.2,\ \epsilon_{\text{high}}=0.28$；期望最大长度 16384 + 4096 缓冲 = 生成上限 20480；评测 temperature 1.0、top-$p$ 0.7、重复 32 次取 avg@32。
+
+**Key hyperparameters:** verl framework; AdamW with constant lr $1\times10^{-6}$ plus a 20-step linear warm-up; rollout prompt batch = 512 with $G=16$ samples per prompt; mini-batch = 512 (i.e., 16 gradient updates per rollout step); $\epsilon_{\text{low}}=0.2,\ \epsilon_{\text{high}}=0.28$; expected max length 16384 + 4096 cache = 20480 generation cap; evaluation at temperature 1.0, top-$p$ 0.7, repeated 32× for avg@32.
+
+</details>
+
+---
+
+### 3. 与 GRPO / Dr.GRPO 的精确对位 / Precise Alignment with GRPO / Dr.GRPO
+
+把三者放在一起看，DAPO 与 Dr.GRPO 其实**部分诊断相同、处方不同**，这是理解 2025 年这条技术线的关键：
+
+Viewing the three side by side, DAPO and Dr.GRPO in fact share **part of the diagnosis but differ in the prescription** — this is the key to understanding this 2025 technical thread:
+
+| 维度 / Dimension | GRPO | Dr.GRPO | DAPO |
+|---|---|---|---|
+| 长度归一化 $1/\lvert o_i\rvert$ / length normalization | 有（引入长度偏置）/ present (length bias) | **删除**，改用常数 $1/L_{\max}$ 式的无偏聚合 / **removed**, unbiased aggregation | **删除**，改为全局 token 平均 / **removed**, global token averaging |
+| 优势的 std 归一化 / std normalization of advantage | 有 / yes | **删除**（认为它给难/易题错误加权）/ **removed** (argued to mis-weight hard/easy questions) | **保留** / **retained** |
+| 裁剪区间 / clipping range | 对称 / symmetric | 对称 / symmetric | **非对称（Clip-Higher）** / **asymmetric** |
+| KL 项 / KL term | 有 / yes | 通常置零 / typically zero | **置零** / **zero** |
+| 样本过滤 / sample filtering | 无 / none | 无 / none | **动态采样** / **dynamic sampling** |
+| 长度/截断处理 / length & truncation handling | 无 / none | 无 / none | **软惩罚 + 过滤** / **soft penalty + filtering** |
+
+**一句话总结分歧：** Dr.GRPO 的立场是"从统计估计的无偏性出发，把 GRPO 里所有引入偏置的项都删掉"，是一种**理论洁癖式的减法**；DAPO 的立场是"从大规模训练的病理现象（熵坍缩、零梯度、长度暴涨、截断噪声）出发，针对每种病开一味药"，是一种**工程实证式的加法**。两者在"删除 $1/\lvert o_i\rvert$ 长度偏置"上英雄所见略同，但在 std 归一化上分道扬镳——DAPO 保留它，说明在实际大规模训练中，std 归一化带来的方差缩减收益可能超过它引入的加权偏置代价。这个分歧至今没有被完全定论，也是后续工作（如 GSPO、CISPO、以及各类序列级重要性采样变体）继续争论的战场。
+
+**The disagreement in one sentence:** Dr.GRPO's position is "start from unbiasedness of statistical estimation and delete every bias-introducing term in GRPO" — a **theory-purist subtraction**. DAPO's position is "start from the observed pathologies of large-scale training (entropy collapse, zero gradients, length explosion, truncation noise) and prescribe one drug per disease" — an **empirically driven addition**. The two agree on removing the $1/\lvert o_i\rvert$ length bias but part ways on std normalization — DAPO's retention of it suggests that at real scale, the variance-reduction benefit of std normalization may outweigh the weighting bias it introduces. This disagreement is still unsettled and remains the battleground for follow-up work (GSPO, CISPO, and various sequence-level importance-sampling variants).
+
+### 什么问题是 DAPO 能治而 Dr.GRPO 治不了的？
+
+**核心区别（一句话）**：
+Dr.GRPO 只改"组内已有差异的缩放"（`adv=(R-mean)/std` → `adv=R-mean`），
+不改"哪些数据参与训练"；DAPO 的四个组件全部作用在**数据选择 / 梯度配平**层面。
+如果组内 reward 全相等，`R-mean=0` 同样是 0——Dr.GRPO 一样空转。
+
+| 维度  | Dr.GRPO | DAPO |
+| --- | --- | --- |
+| 改变什么 | 组内 advantage 的缩放 | 组构成、裁剪、损失聚合、reward 尺度 |
+| 组内全同分（std=0） | `adv=0`，照样空转 | `filter_groups` 整组丢弃 |
+| 跨组数据选择 | 无   | Dynamic Sampling 过滤 + 重新生成 |
+| 正样本抑制 / 坍缩 | 无   | Clip-Higher 非对称裁剪 |
+| reward 尺度异常 | 无   | Sparse Reward Normalization |
+| 超长轨迹 | 无   | overlong_buffer 惩罚 |
+
+两者在"删除 1/∣o_i∣ 长度偏置"上英雄所见略同，但在 std 归一化上分道扬镳。
+DAPO 保留它，说明在实际大规模训练中，std 归一化带来的方差缩减收益可能超过它引入的加权偏置代价。这个分歧至今没有被完全定论，也是后续工作（如 GSPO、CISPO、以及各类序列级重要性采样变体）继续争论的战场。
 
 ### 关键工程：Observation Token Masking（多轮 RL 的命门）
 
@@ -1309,7 +1247,7 @@ vanilla GRPO 的两个已知偏置：
 > DAPO 在其方法中移除了 KL 散度。
 > 路线 B（保守）——"保留小 KL 防止在稀疏奖励早期策略崩溃/复读，代价是探索受限"。
 
-**关键是你选哪条要给理由，别报数字。**
+
 
 ---
 
@@ -1354,45 +1292,6 @@ Reward Manager 计算得分
 - `action_stop_tokens="</search>,</answer>"` → vLLM 遇到这些 token 时暂停生成
 - Agent Loop 最多 `max_turns=3` 轮交互
 
-## Q4: 遇到了哪些兼容性问题？怎么解决的？
-
-核心矛盾：veRL 0.7.0.dev 要求 vLLM 0.9+，但所有 PyPI 镜像只有 torch 2.6.0 ± vLLM 0.8.5。
-
-**8 个关键补丁**（详见 PATCHES.md）：
-
-1. `get_tcp_uri` → 手动实现 `f"tcp://{host}:{port}"`
-2. `CoreEngineProcManager` → No-op wrapper（vLLM 0.8.5 引擎运行在进程内）
-3. `AsyncLLM.reset_mm_cache()` → No-op
-4. `AsyncLLM.wait_for_requests_to_drain()` → `abort_all_requests()` 替代
-5. `VllmConfig.max_model_len` → 改用 `VllmConfig.model_config`
-6. `flash_attn.bert_padding` → 纯 PyTorch 回退实现
-7. `calculate_debug_metrics` 空 tensor → try/except
-8. `attn_implementation=sdpa` → PyTorch 原生 attention
-
-## 遇到的问题
-
-为什么 Coder 模型失败了而 Instruct 成功了？
-
-- Qwen2.5-Coder-14B 完全不理解 `<think>/<search>/<answer>` 标签 → 输出乱码
-- 根本原因：Coder 版本是代码模型，XML 标签触发代码生成模式
-- 解决：切到 Qwen2.5-14B-Instruct → 立即正常工作
-
-有可能是上面的 patch 把 vllm 框架给我改坏了。不过也可能是-
-
-**根因分析**（从日志直接追踪到）：
-
-- Qwen2.5-Coder 看到 `<search>`, `<think>` 等 XML 标签 → 进入"代码生成模式"
-- 输出：`.0000.0.0.0.0` + 中韩希伯来文字符混合 → 完全乱码
-- 500 条 SFT 数据用了 3 epochs 仍然不够覆盖 14B 代码先验
-
-**验证方法**：
-
-- 直接加载模型，用简单自然语言提问 → 回答正常（"The capital of France is Paris"）
-- 加上 `<think>/<search>` 标签 → 立即输出乱码
-- → 排除了 tokenizer/model 损坏的可能，确认是 prompt 格式不匹配
-
-**面试要点**：展示你区分了"模型没能力"vs"模型和 prompt 不匹配"
-
 ## Q6: multi-turn Agent 的数据流是怎样的？
 
 ```
@@ -1422,24 +1321,9 @@ Loss 只计算生成 token（不包括 prompt 和 observation token），由 `ma
 **反信号（我们实际遇到的）**：
 
 - PG loss = 0.0 持续 99 步 → 空转训练
-- score = 0.1 不变 → 所有回复格式分相同，无区分度
-- → 说明模型没有真正学习，需要检查 reward 设计或模型能力
+- score = 0.1 不变 → 所有回复格式分相同，无区分度 → 说明模型没有真正学习，需要检查 reward 设计或模型能力
 
-## Q8: Wikipedia API 限流怎么处理？
 
-发现了 429 Too Many Requests 并修复：
-
-- **不超时**：API 响应 0.4-1.0s
-- **不限流窗口**：每 ~3 请求后 HTTP 429，`Retry-After: 13s`
-- **修复**：读 Retry-After → 等待指定秒数 → 重试
-- **SFT 数据生成**用 3-5s 延迟 → 100% 成功率（vs 0.3s = 8%）
-
-## Q9: 如果要上线这个系统，还需要做什么？
-
-1. **Reward 优化**：增加 search_bonus（使用搜索就加分），format_score 随步数衰减
-2. **多工具**：可能会加入 calculator 工具（处理数值问题），或者参考 Kimi Researcher 加入代码工具
-3. **更大规模搜索**：搭建本地 Wikipedia 向量库（不用外部 API）
-4. **评估**：在 HotpotQA 官方测试集上报告 EM 和 F1
 
 ## Q10: pg_loss 是什么？为什么有时是负的、有时是正的、有时是零？
 
@@ -1559,24 +1443,6 @@ Loss 只计算生成 token（不包括 prompt 和 observation token），由 `ma
 
 **关键节省**：第 1-2 步可以避免在错误模型和错误 vLLM 上浪费 GPU 时间。
 
-## Q16: GRPO vs Dr.GRPO 有什么区别？什么场景该用哪个？
-
-**GRPO**: `advantage = (reward - group_mean) / group_std`
-**Dr.GRPO**: `advantage = reward - group_mean`
-
-**关键区别**：GRPO 除以 std → 当 std 很小时放大 advantage（稀有正确回复被大力强化），当 std 很大时缩小 advantage（分散的 reward 被压平）。Dr.GRPO 跳过了除法，保持原始 reward 差距。
-
-| 场景  | 推荐  | 原因  |
-| --- | --- | --- |
-| 短轨迹、n 大（≥4） | **GRPO** | std 估计可靠，放大稀有正确信号有助于冷启动 |
-| 长轨迹（>10K tokens） | **Dr.GRPO** | reward 方差大，GRPO 易梯度爆炸 |
-| 小 batch（1-2） | **Dr.GRPO** | std 在小样本上极不可靠 |
-| 冷启动（reward=0 为主） | **GRPO** | 少数高 reward 回复需要被放大 |
-
-**开销**：完全一样——Dr.GRPO 只跳过除法运算，不增加任何计算量。
-
-**切换**：一行参数 `algorithm.norm_adv_by_std_in_grpo=False`。
-
 ## Q17: 训练数据分布不均会有什么后果？你是怎么发现的？
 
 **现象回顾**：训练 123 步后 Score 从 0.10 升到 0.44 但随后停涨，num_turns 从 2.28 降到 1.0。
@@ -1614,21 +1480,6 @@ Loss 只计算生成 token（不包括 prompt 和 observation token），由 `ma
 - NQ 单跳：1 次学会格式，1 次学会搜索
 - HotpotQA 多跳：1 次发现需要多轮搜索，1 次学会搜索链
 
-## Q19: 什么问题是 DAPO 能治而 Dr.GRPO 治不了的？
-
-**核心区别（一句话）**：
-Dr.GRPO 只改"组内已有差异的缩放"（`adv=(R-mean)/std` → `adv=R-mean`），
-不改"哪些数据参与训练"；DAPO 的四个组件全部作用在**数据选择 / 梯度配平**层面。
-如果组内 reward 全相等，`R-mean=0` 同样是 0——Dr.GRPO 一样空转。
-
-| 维度  | Dr.GRPO | DAPO |
-| --- | --- | --- |
-| 改变什么 | 组内 advantage 的缩放 | 组构成、裁剪、损失聚合、reward 尺度 |
-| 组内全同分（std=0） | `adv=0`，照样空转 | `filter_groups` 整组丢弃 |
-| 跨组数据选择 | 无   | Dynamic Sampling 过滤 + 重新生成 |
-| 正样本抑制 / 坍缩 | 无   | Clip-Higher 非对称裁剪 |
-| reward 尺度异常 | 无   | Sparse Reward Normalization |
-| 超长轨迹 | 无   | overlong_buffer 惩罚 |
 
 ### 当前数据集（短轨迹 ~700 tok、n=4、reward∈ {0.1,1.0}）
 
@@ -1715,14 +1566,7 @@ DAPO×Dr.GRPO 组合是设计论证、尚未跑通出数字。
 4. Dr.GRPO 的唯一适用窗：组内有差异、但 std 估计不可靠（小 batch / 长轨迹）。
 
 ---
-
-Gemini Ori
-
----
-
-## 2. 系统架构与实验流程
-
-系统采用 **Rollout 与 Training 物理解耦** 的分布式架构。通过 Ray 统一调度 8 卡 A100 的计算资源，规避传统单节点 RL 显存不足和推理吞吐低下的问题。
+*Rollout 与 Training 物理解耦** 的分布式架构。通过 Ray 统一调度 8 卡 A100 的计算资源，规避传统单节点 RL 显存不足和推理吞吐低下的问题。
 
 > Idea: 生成轨迹的推理引擎 和 更新参数的训练引擎 分开，
 > Ray 负责集群资源调度和进程管理，避免推理慢、训练 OOM 互相拖累。
@@ -1905,24 +1749,6 @@ vanilla GRPO 的两个已知偏置，务必知道：
 - [ ] **显存防爆**：`micro_batch_size=1` 且已开启 `Activation Checkpointing`（选择性重计算）？
 
 ---
-
-## 4. 核心：奖励设计与塑造（Reward Shaping）
-
-### 4.1 密集奖励公式设计 (Shaped Reward)
-
-最终奖励由多个惩罚项与一个终局奖励累加而成，以解决信号稀疏问题：
-
-$$
-R_{total} = R_{format} + R_{validity} + R_{diversity} + R_{step} + R_{accuracy}
-$$
-
-| 奖励维度 | 设计逻辑 (Formulation) | 提点效果 (Hints) |
-| :--- | :--- | :--- |
-| **格式对齐奖励 ($R_{format}$)** | 成功输出并闭合 `thought` 和 `call:search` 给 **$+0.2$**；格式崩溃、标签不匹配给 **$-0.5$** 并强制截断。 | 让模型在第 1~2 个 Epoch 迅速学会 ReAct 语法，降低后续随机探索成本。 |
-| **工具合规奖励 ($R_{validity}$)** | 调用不存在的工具，或检索词为空时给 **$-0.2$**。 | 约束模型不产生“幻觉工具”调用。 |
-| **探索去重惩罚 ($R_{diversity}$)** | 若当前步骤的 Search Query 在历史中已出现过（或语义相似度 $> 0.8$），给 **$-0.4$**。 | **对抗“死循环作弊”**。强制模型在检索受阻时改变思路（试用其他关键词）。 |
-| **步数效率惩罚 ($R_{step}$)** | 每发生一步交互，惩罚 **$-0.05 \times Steps$**。 | **对抗“赖着不走作弊”**。逼迫模型在“获取更多信息”和“尽快结束”之间权衡。 |
-| **终局准确率 ($R_{accuracy}$)** | 解析最后一个 ``。若与 Ground Truth 匹配（EM/F1）给 **$+1.5$**；若错误给 **$-0.5$**；若未生成最终答案给 **$-1.0$**。 | 强化学习的终极目标信号。 |
 
 > 但当前主流的检索类 Agentic RL 恰恰相反——Search-R1[1] 明确采用"简单的、基于结果（outcome-based）的奖励函数"，并证明这比复杂奖励更稳、更能泛化。Search-R1 optimizes LLM reasoning trajectories with multi-turn search interactions, leveraging retrieved token masking for stable RL training and a simple outcome-based reward function.
 > 
@@ -2184,5 +2010,10 @@ Search-R1 证明：outcome-based reward + retrieved token masking 就能实现�
 
 ---
 
-需要的话，我可以进一步：**(a)** 把这份 v2 导出成 Markdown/PDF 文件；**(b)** 写一份对应的 veRL 配置样例（GRPO+DAPO 开关、masking、dynamic sampling 的 yaml）；**(c)** 针对你自研 ReAct 系统，给出接入 `BaseTool` / Agent Loop 的代码骨架。要哪个？
+# References
 
+- [veRL](https://github.com/volcengine/verl) — RL training framework
+- [verl-tool](https://github.com/TIGER-AI-Lab/verl-tool) — Tool-augmented RL on veRL
+- [Search-R1](https://github.com/PeterGriffinJin/Search-R1) — Original search-augmented RL
+- [DAPO](https://arxiv.org/abs/2503.14476) — Dynamic sampling for RL
+- [HotpotQA](https://hotpotqa.github.io/) — Multi-hop QA benchmark
