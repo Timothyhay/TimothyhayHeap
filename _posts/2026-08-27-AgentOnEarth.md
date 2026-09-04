@@ -81,8 +81,34 @@ CompactionEntry 数据结构负责记录摘要。
 
 摘要使用固定的结构化格式（Goal / Progress / Key Decisions / Next Steps / Critical Context 等），并在多次压缩时保留之前的信息、更新进展状态。
 
+重建上下文：下次请求时用 摘要 + firstKeptEntryId 之后的消息
+
+> ### Split Turns
+>
+> A "turn" starts with a user message and includes all assistant responses and tool calls until the next user message. Normally, compaction cuts at turn boundaries.
+> 
+> When a single turn exceeds `keepRecentTokens`, the cut point lands mid-turn at an assistant message. This is a "split turn":
+ 
+```
+Split turn (one huge turn exceeds budget):
+ 
+  entry:  0     1     2      3     4      5      6     7      8
+        ┌─────┬─────┬─────┬──────┬─────┬──────┬──────┬─────┬──────┐
+        │ hdr │ usr │ ass │ tool │ ass │ tool │ tool │ ass │ tool │
+        └─────┴─────┴─────┴──────┴─────┴──────┴──────┴─────┴──────┘
+                ↑                                     ↑
+         turnStartIndex = 1                  firstKeptEntryId = 7
+                │                                     │
+                └──── turnPrefixMessages (1-6) ───────┘
+                                                      └── kept (7-8)
+ 
+  isSplitTurn = true
+  messagesToSummarize = []  (no complete turns before)
+  turnPrefixMessages = [usr, ass, tool, ass, tool, tool]
+```
+
 **分割 Turn 的处理**
-有一个细节处理（甚至比 CC 还好）：如果单个 turn 本身超出 keepRecentTokens，会产生"split turn"，
+有一个细节处理（甚至比 CC 还好）：如果单个 turn 本身超出 keepRecentTokens（默认 20k），会产生"split turn"，
 此时会生成两份摘要（历史摘要 + turn 前缀摘要）并合并。
 
 也有一些 pi 的分支实现做到了并发地compaction来提升体验；具体在压缩的时候怎么存的问题，TencentDB Memory 有一个存 mermaid 图的设计。
