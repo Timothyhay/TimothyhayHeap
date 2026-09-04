@@ -1101,11 +1101,9 @@ vanilla GRPO 的两个已知偏置：
 **切换**：一行参数 `algorithm.norm_adv_by_std_in_grpo=False`。
 
 ### 那么 DAPO 呢？
-## Completed Version: DAPO's Four Components (+ Two "Implicit" Components)
 
----
+Completed Version: DAPO's Four Components (+ Two "Implicit" Components)
 
-### 0. 先摆出完整目标函数 / First, the Full Objective
 
 DAPO 的全称是 **D**ecoupled Clip and **D**ynamic s**A**mpling **P**olicy **O**ptimization（ByteDance Seed × 清华 AIR，arXiv 2503.14476）。它的四大组件不是四个独立 trick，而是同时体现在**一个目标函数**里的四处修改，所以最清晰的补全方式是先看完整式子，再逐项对应：
 
