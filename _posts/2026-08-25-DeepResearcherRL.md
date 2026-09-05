@@ -272,8 +272,6 @@ Agent Loop ──POST──→│  Router (FastAPI + uvicorn)       │──→
 4. **限流防护**：Wikipedia 每 ~3 请求返回 429 `Retry-After: 13s` → 尊重该头并等待
 5. **API 调用优化**：每个问题最多 2 次 API 调用（之前 4-6 次）
 
----
-
 ### Tool: `wiki_search`
 
 **File**: `verl-tool-main/verl_tool/servers/tools/wiki_search.py`
@@ -300,19 +298,9 @@ URL: https://en.wikipedia.org/wiki/Albert_Einstein
 Summary text...</information>
 ```
 
-### RL Reward Shaping
+# 3. Dataset、格式与 Prompt 设计
 
-Simple exact match (EM) reward:
-
-- Extracts text from `<answer>` tags
-- Normalizes (lowercase, remove articles, punctuation, whitespace)
-- Compares with ground truth
-- Returns 1.0 for match, 0.0 otherwise
-- Penalty: `/4` if too many `<answer>` or `</answer>` tags (>10)
-
-## 4. Dataset: 数据来源、格式与 Prompt 设计
-
-### 4.1 数据来源
+### 3.1 数据来源
 
 我们使用 **Search-R1 标准数据集** `PeterJinGo/nq_hotpotqa_train`，来自 Search-R1 论文
 (https://github.com/PeterGriffinJin/Search-R1)。
@@ -325,11 +313,11 @@ Simple exact match (EM) reward:
 | **NQ** (Natural Questions) | 79,168 | 单跳事实型问答，答案通常是实体/数字                     |
 | **HotpotQA**               | 90,447 | **多跳问答**，需要结合多个 Wikipedia 页面才能回答 |
 
-**总计**：169,615 条原始数据 → 按 90/10 分割为 152,653 train / 16,962 val。
+**总计**：169,615 条原始数据（来自Search-R1） → 按 90/10 分割为 152,653 train / 16,962 val。
 
-RAG_ProGuide 数据集（13,289 条、）未使用，因为它缺少多跳推理需求。
+RAG_ProGuide 数据集（13,289 条）未使用，因为它缺少多跳推理需求。
 
-### 4.2 数据格式
+### 3.2 数据格式
 
 每条数据包含以下字段：
 
@@ -363,9 +351,9 @@ RAG_ProGuide 数据集（13,289 条、）未使用，因为它缺少多跳推理
 `examples/data_preprocess/search_r1.py` 脚本从原始 NQ/HotpotQA 转换而来。
 我们的 `prepare_data.py` 仅做了 train/val 分割。
 
-### 4.3 Prompt 设计（使用 Search-R1 标准）
+### 4.3 Prompt 设计
 
-我们参考了 Search-R1 论文的标准指令格式。
+我们参考了 Search-R1 论文的标准指令格式，在这个基础上做了修改。
 这是一个嵌入在**单个 user message** 中的指令（无独立 system message），
 对 DMI 的 DAG 依赖回答，还需要在 user prompt 中增加 fact-list，对 final answer 要求输出 new topic / sources。
 
@@ -384,14 +372,14 @@ Question: {question}
 
 **指令拆解**：
 
-| 标签       | 用途     | Agent 行为                              |
-| ---------- | -------- | --------------------------------------- |
-| thinkthink | 推理过程 | 模型在每次获取新信息后进行思考          |
-| `query`  | 搜索动作 | 触发 Wikipedia 搜索工具调用             |
-| `...`    | 搜索结果 | 工具服务器返回的观察（observation）     |
-| `...`    | 最终答案 | 触发 episode 结束，提取答案进行 EM 打分 |
+| 标签                               | 用途     | Agent 行为                              |
+|----------------------------------| -------- | --------------------------------------- |
+| `<think>...</think>`             | 推理过程 | 模型在每次获取新信息后进行思考          |
+| `<search>query</search>`         | 搜索动作 | 触发 Wikipedia 搜索工具调用             |
+| `<information>...</information>` | 搜索结果 | 工具服务器返回的观察（observation）     |
+| `<answer>...</answer>`           | 最终答案 | 触发 episode 结束，提取答案进行 EM 打分 |
 
-### 4.4 HotpotQA vs NQ 问题对比
+### 3.4 HotpotQA vs NQ 问题对比
 
 **NQ（单跳）**：答案可直接从 Wikipedia 找到，无需组合多篇文档。
 
@@ -413,9 +401,9 @@ A: ['Delhi']
    → 需要查 "Oberoi family" → 关联的酒店公司 → 总部城市
 ```
 
-这也是为什么 Agent 需要多轮搜索（`max_turns=3`）：多跳问题单次搜索往往不够。
+这也是为什么 Agent 需要多轮搜索（`max_turns=7`）：多跳问题单次搜索往往不够。
 
-### 4.7 多轮交互的数据流
+### 3.7 多轮交互的数据流
 
 在一次训练 rollout 中，数据在 Agent 和 Tool Server 之间的流转：
 
@@ -424,36 +412,37 @@ A: ['Delhi']
     │
     ▼
 ┌─ vLLM 生成 ─────────────────────────────────────────┐
-│   我需要搜索这个问题...                │
-│   death row inmates United States   │
-└──────────────────────────────────────────────────────┘
+│   我需要搜索这个问题...                                │
+│   death row inmates United States                  │
+└────────────────────────────────────────────────────┘
     │ 检测到  → 调用 tool_server
     ▼
 ┌─ Tool Server (wiki_search) ─────────────────────────┐
-│  返回:                                   │
-│  Doc 1 (Title: Capital punishment...)                │
-│  As of 2020, there were 2,718 death row inmates...   │
-│                                        │
-└──────────────────────────────────────────────────────┘
+│  返回：                                              │
+│  Doc 1 (Title: Capital punishment...)               │
+│  As of 2020, there were 2,718 death row inmates...  │
+└─────────────────────────────────────────────────────┘
     │ 将 observation 拼接到对话中
     ▼
-┌─ vLLM 继续生成 ─────────────────────────────────────┐
-│   根据搜索结果，答案是 2,718           │
-│   2,718                             │
-└──────────────────────────────────────────────────────┘
-    │ 检测到  → episode 结束
+┌─ vLLM 继续生成 ───────────────────────────── ─────────┐
+│   根据搜索结果，答案是 2,718                            │
+│   2,718                                             │
+└─────────────────────────────────────────────────────┘
+    │ 检测到 → episode 结束
     ▼
 ┌─ Reward Manager ────────────────────────────────────┐
-│  提取 "2,718" → 标准化 → 比对 ground_truth           │
+│  提取 "2,718" → 标准化 → 比对 ground_truth             │
 │  匹配! → reward = 1.0                                │
-└──────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────┘
 ```
 
-# Training Configuration
+# 4. Training Configuration
 
-### Algorithm: DAPO/GRPO
+## Algorithm: DAPO/GRPO
 
-DAPO = GRPO + Dynamic Sampling Filter
+我们最后用的是结合 Dr. GRPO + DAPO 的算法。大致可以认为：
+
+DAPO+ = Dr.GRPO + Dynamic Sampling Filter
 
 Key DAPO additions (from `train_7b_dapo.sh`):
 
@@ -468,18 +457,18 @@ actor_rollout_ref.actor.loss_agg_mode='token-mean'
 
 ### Hyperparameters for 14B Model
 
-| Parameter                  | Value | Rationale                                   |
-| -------------------------- | ----- | ------------------------------------------- |
-| n (samples/prompt)         | 8     | Group size for GRPO advantage normalization |
-| batch_size                 | 64    | Conservative for 14B memory                 |
-| ppo_mini_batch_size        | 32    | Inner update batch                          |
-| max_prompt_length          | 4096  | Covers most HotpotQA questions              |
-| max_response_length        | 6144  | Room for think + search + answer            |
-| max_turns                  | 3     | Multi-hop needs multiple searches           |
-| lr                         | 1e-6  | Conservative LR for 14B                     |
-| gpu_memory_utilization     | 0.55  | Conservative for 14B + vLLM                 |
-| do_offload                 | True  | Offload optimizer states to CPU             |
-| tensor_model_parallel_size | 1     | vLLM TP size; no tensor parallelism         |
+| Parameter                  | Value | Rationale                                           |
+| -------------------------- | ----- |-----------------------------------------------------|
+| n (samples/prompt)         | 8     | Group size for GRPO advantage normalization         |
+| batch_size                 | 64    | Conservative for 14B memory                         |
+| ppo_mini_batch_size        | 32    | Inner update batch                                  |
+| max_prompt_length          | 4096  | （在只对 Search-R1 数据测试时）Covers most HotpotQA questions |
+| max_response_length        | 6144  | Room for think + search + answer                    |
+| max_turns                  | 3     | Multi-hop needs multiple searches                   |
+| lr                         | 1e-6  | Conservative LR for 14B                             |
+| gpu_memory_utilization     | 0.55  | Conservative for 14B + vLLM                         |
+| do_offload                 | True  | Offload optimizer states to CPU                     |
+| tensor_model_parallel_size | 1     | vLLM TP size; no tensor parallelism                 |
 
 ### GPU Memory Budget (per GPU)
 
@@ -494,29 +483,35 @@ Total:             ~44GB / 80GB ✅
 
 ## Reward 设计与 GRPO 比较机制
 
-### Reward
+### Reward 获取
 
-#### 第一层：提取答案（`extract_solution`）
+**获取步骤：**
 
-#### 第二层：Exact Match 比对（`em_check`）
+1. 提取答案（`extract_solution`）
+2. Exact Match 比对（`em_check`）
+3. 最终打分（`compute_score`）
 
-**normalize 实例**：`"The 2003 University of Oxford election"` → `"2003 university of oxford election"`
+其中，比对时需要**normalize 实例**：
+`"The 2003 University of Oxford election"` → `"2003 university of oxford election"`
 
 1. 小写化: "The University" → "the university"
 2. 去冠词: 移除 a, an, the
 3. 去标点: 移除所有 punctuation
 4. 合并空格: "hello   world" → "hello world"
 
-#### 第三层：最终打分（`compute_score`）
+**Reward Shaping:**
 
-**reward的三个等级**：
+Simple exact match (EM) reward:
 
-| 模型输出          | 得分           | 含义                           |
-| ----------------- | -------------- | ------------------------------ |
-| 无 `` 标签        | **0.0**  | 完全不符合格式                 |
-| `错误答案`      | **0.1**  | 格式正确，内容错误（引导奖励） |
-| `正确答案`      | **1.0**  | 完全正确                       |
-| 正确但标签 >10 次 | **0.25** | 正确但输出冗余（惩罚）         |
+- Extracts text from `<answer>` tags
+- Normalizes (lowercase, remove articles, punctuation, whitespace)
+- Compares with ground truth
+- Returns 1.0 for match, 0.0 otherwise
+- Penalty: `/4` if too many `<answer>` or `</answer>` tags (>10)
+  (设计改为：reward /= i, i for answer tag amount)
+
+> 完全不符合格式 0；有 <answer> 0.1；答案对（EM）1；标签出现多次得分 /= 出现次数
+
 
 **为什么设置 `format_score=0.1`？**
 
@@ -524,15 +519,15 @@ Total:             ~44GB / 80GB ✅
 期望模型先学会输出格式，再学会输出正确内容。
 
 **实际效果**：模型确实学会了用 `<answer>...</answer>` 包装，但内容始终是 "..." 或乱码，
-从不使用 `<search>` 进行工具调用。这导致所有回复分数相同（都是 0.1），
-GRPO 无法区分好坏。
+从不使用 `<search>` 进行工具调用。
+这导致所有回复分数相同（都是 0.1）， 对 GRPO 来说无法区分好坏。
 
 ### GRPO 如何比较 n 个回复
 
 GRPO（Group Relative Policy Optimization）的核心思想是：
 **同一 prompt 的多个回复在组内互相比较，好的加强，差的抑制。**
 
-#### 第一步：每个回复得到一个标量 reward
+#### 1 每个回复得到一个标量 reward
 
 ```python
 # token_level_rewards: shape (batch, response_length)
@@ -542,7 +537,7 @@ scores = token_level_rewards.sum(dim=-1)
 #       |--- prompt_1 ---|    |--- prompt_2 ---|
 ```
 
-#### 第二步：按 prompt 分组（`index` = uid）
+#### 2 按 prompt 分组（`index` = uid）
 
 ```python
 id2score = defaultdict(list)
@@ -557,7 +552,7 @@ for i in range(bsz):
 # }
 ```
 
-#### 第三步：组内标准化（GRPO 的核心）
+#### 3 组内标准化
 
 ```python
 # 计算每组均值和标准差
@@ -575,7 +570,7 @@ for i in range(bsz):
     scores[i] = (scores[i] - id2mean[index[i]]) / (id2std[index[i]] + 1e-6)
 ```
 
-#### 第四步：Advantage 赋值到 Token 级别
+#### 4 Advantage 赋值到 Token 级别
 
 ```python
 advantages = torch.zeros_like(token_level_rewards)
@@ -614,7 +609,7 @@ PG loss = -Σ(advantage × log_prob)
   ✅ 模型学到了"搜索后给出正确答案"更好
 ```
 
-#### 场景 B：全部相同（我们的现状，无学习信号）
+#### 场景 B：全部相同（我遇到的情况，无学习信号）
 
 ```
 Prompt: "total number of death row inmates in the us?"
@@ -638,7 +633,7 @@ PG loss = 0 × log_prob = 0    ← 梯度为零
   ❌ 模型权重完全不更新，训练在"空转"
 ```
 
-#### 场景 C：恰好有一条偶然正确（突破僵局）
+#### 场景 C：恰好有一条偶然正确 - 突破僵局 
 
 ```
 3 个回复得 0.1（格式分），1 个回复碰巧得 1.0（正确答案）
@@ -677,7 +672,7 @@ pg_loss = pg_loss * response_mask   # 只看生成 token，忽略 prompt 和 obs
 pg_loss = pg_loss.sum() / response_mask.sum()  # 平均
 ```
 
-### 6.6 pg_loss 的三种情况详解
+### pg_loss 的三种情况详解
 
 #### pg_loss = 0：无学习（冷启动困境）
 
@@ -686,12 +681,13 @@ pg_loss = pg_loss.sum() / response_mask.sum()  # 平均
 → grad_norm = 0 → 模型权重不更新
 ```
 
-GRPO 算法的核心机制：
+OK 总结一下 - GRPO 算法的核心机制是：
 
 1. 对每个 prompt 生成 n=4 个回复
 2. 计算每个回复的 reward
 3. 在组内标准化 reward（减去均值，除以标准差）→ 得到 advantage
-4. 用 advantage 加权 policy gradient
+4. 用 advantage 加权 policy gradient 
+> loss = - (log_prob * advantage).mean()
 
 当所有 4 个回复的 reward **相同**时（都是 0.1 格式分）：
 
@@ -700,8 +696,7 @@ GRPO 算法的核心机制：
 - advantage = (0.1 - 0.1) / 0 = **0**（除以零时设为 0）
 - PG loss = 0 × log_prob = **0**
 
-模型无法区分好坏回复，因此无法学习。
-
+grad_norm = 0. 模型无法区分好坏回复，因此无法学习。
 这就是我们 15 步测试和宿主机 99 步训练中 `actor/pg_loss:0.0` 的原因。
 
 #### pg_loss < 0：正向学习 ✅
@@ -761,7 +756,9 @@ RL 训练每步的 batch 不同，模型在探索中时而进步时而退步。
 
 ## 训练运行记录
 
-### Prompt 迭代过程（3 轮优化）
+### Prompt 迭代过程
+
+看看就好，只是记录离谱乌龙。
 
 **第 1 轮 — Search-R1 原始格式（失败）**：
 
@@ -805,15 +802,7 @@ Content: "Question: ..."
 
 总之看起来Coder模型能生成 `...` 结构（获得 0.1 格式分），但从不在 ``中填入有意义的内容， 也从不使用`` 标签进行工具调用。
 
-### 工具服务器表现
-
-wiki_search 工具服务器在整个测试中运行正常：
-
-- 健康检查始终通过（HTTP 200）
-- `tool_call_success=1.0` 表示工具服务器可达
-- 但 `tool_calls` 耗时 = 0.0s，说明模型从未发送 `` 请求
-- 代理配置正确：Wikipedia API 可通过公司代理访问
-- SSL 证书问题已通过 `verify=False` + `trust_env=True` 解决
+BTW，wiki_search 工具服务器在整个测试中运行正常：
 
 ---
 
@@ -821,17 +810,9 @@ wiki_search 工具服务器在整个测试中运行正常：
 
 ### 模型选择的决定性影响
 
-这是本次实验最重要的发现：**RL 训练的成功与否，80% 取决于基座模型是否理解任务格式**。
+RL 训练的成功与否，很大程度取决于基座模型是否理解任务格式。
 
 在 Search-R1 格式的示例数据上做 SFT 预热，再进行 RL 训练。
-
-### 网络环境约束
-
-公司代理环境带来的挑战：
-
-1. PyPI 镜像限制（最高 torch 2.6.0）→ 无法升级 vLLM
-2. SSL 证书检查（代理做 SSL inspection）→ 需要 `verify=False`
-3. 代理：需要它访问外网（Wikipedia），但必须绕过它访问本地服务（127.0.0.1）
 
 ### 训练效率
 
