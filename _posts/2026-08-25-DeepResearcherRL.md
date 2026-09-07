@@ -966,10 +966,7 @@ Step 26-43: ████████████████  0.35-0.72  (稳定
 **训练改进清单**（基于全部发现）：
 
 1. ➕ 对数据做 `shuffle`，确保单跳/多跳混合
-2. ➕ 设置 `save_freq=50` 保存 checkpoint
-3. ➕ 增加步数至 1000+ 或按需
-4. ➕ 长轨迹场景设置 `norm_adv_by_std_in_grpo=False`（Dr.GRPO）
-5. ➕ 长轨迹场景降低 `batch_size=1-2`，保持 `n=4`
+2. ➕ 长轨迹场景设置 `norm_adv_by_std_in_grpo=False`（Dr.GRPO），对 GRPO 降低 `batch_size=1-2`，保持 `n=4`
 
 ## 实验 2：Shuffle 数据 + 正确 Epoch 设计 (2026-07-30 启动)
 
