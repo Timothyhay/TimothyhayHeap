@@ -109,6 +109,8 @@ veRL 本身是通用 RL 训练框架（PPO/GRPO/DAPO + FSDP + vLLM），
 原生 veRL 的 rollout 是一次性生成文本，
 不会中途暂停去调用外部工具再继续生成。不过现在改造自定义抽象层应该可以实现了。而且其实现在的原生veRL解决了一个Search-R1提到的问题：外部工具返回的 Observation 必须被 Mask 掉。
 
+
+
 但是在早期版本的 veRL 中，它只是一个针对传统单轮 Prompt-Response（如数学、代码长思考题）设计的纯文本 RL 引擎。无法实现多轮交互，Rollout 是一次性的；而且还需要自己管理对话 history；也不支持并发异步工具调用。
 
 总之，原生 veRL 还是有一些局限：veRL 官方的设计理念是提供机制而非策略，文档说 “Non-goal: How tool is defined and how to call tool”。也就是说，工具如何统一定义、多模态观察怎么处理、多轮轨迹如何自动化做 loss mask，都需要开发者手写不少胶水代码
@@ -241,8 +243,9 @@ Step 3: 计算 reward
 2. **Observation 拼接**：工具返回的 `<information>...</information>` 会被拼接到
    对话历史中，作为下一轮 vLLM 生成的输入。模型看到搜索结果后可以继续推理。
 3. **Loss Masking**：`mask_observations=True` 确保 observation token（工具返回的内容）
-   不参与 loss 计算。模型只需要学习"何时搜索"和"搜索后的答案"，不需要学习
-   复述搜索结果的文本。
+   不参与 loss 计算。模型只需要学习"何时搜索"和"搜索后的答案"，不需要学习复述搜索结果的文本。这也是 Search-R1提出的（现在看来根本就是基本常识的）工程关键点。
+   在 DMI 的工作中，就是**对 `<information>` 内的检索 token 置零 mask**，只学习其他的模型生成内容的 loss。
+
 4. **多轨迹并发**：Agent Loop 支持异步并发处理多条轨迹，
    每条轨迹有独立的 `trajectory_id` 和对话历史。
 
@@ -317,7 +320,31 @@ Summary text...</information>
 
 RAG_ProGuide 数据集（13,289 条）未使用，因为它缺少多跳推理需求。
 
-### 3.2 数据格式
+#### HotpotQA vs NQ 问题对比
+
+**NQ（单跳）**：答案可直接从 Wikipedia 找到，无需组合多篇文档。
+
+```
+Q: total number of death row inmates in the us?
+A: ['2,718']
+```
+
+**HotpotQA（多跳）**：必须组合多个 Wikipedia 页面的信息才能回答。
+
+```
+Q: Musician and satirist Allie Goertz wrote a song about the "The Simpsons"
+   character Milhouse, who Matt Groening named after who?
+A: ['President Richard Nixon']
+   → 需要先查 "Allie Goertz" → "Milhouse" → "Matt Groening" → Nixon
+
+Q: The Oberoi family is part of a hotel company that has a head office in what city?
+A: ['Delhi']
+   → 需要查 "Oberoi family" → 关联的酒店公司 → 总部城市
+```
+
+这也是为什么 Agent 需要多轮搜索（`max_turns=7`）：多跳问题单次搜索往往不够。
+
+### 数据格式
 
 每条数据包含以下字段：
 
@@ -351,7 +378,7 @@ RAG_ProGuide 数据集（13,289 条）未使用，因为它缺少多跳推理需
 `examples/data_preprocess/search_r1.py` 脚本从原始 NQ/HotpotQA 转换而来。
 我们的 `prepare_data.py` 仅做了 train/val 分割。
 
-### 4.3 Prompt 设计
+### Prompt 设计
 
 我们参考了 Search-R1 论文的标准指令格式，在这个基础上做了修改。
 这是一个嵌入在**单个 user message** 中的指令（无独立 system message），
@@ -379,31 +406,8 @@ Question: {question}
 | `<information>...</information>` | 搜索结果 | 工具服务器返回的观察（observation）     |
 | `<answer>...</answer>`           | 最终答案 | 触发 episode 结束，提取答案进行 EM 打分 |
 
-### 3.4 HotpotQA vs NQ 问题对比
 
-**NQ（单跳）**：答案可直接从 Wikipedia 找到，无需组合多篇文档。
-
-```
-Q: total number of death row inmates in the us?
-A: ['2,718']
-```
-
-**HotpotQA（多跳）**：必须组合多个 Wikipedia 页面的信息才能回答。
-
-```
-Q: Musician and satirist Allie Goertz wrote a song about the "The Simpsons"
-   character Milhouse, who Matt Groening named after who?
-A: ['President Richard Nixon']
-   → 需要先查 "Allie Goertz" → "Milhouse" → "Matt Groening" → Nixon
-
-Q: The Oberoi family is part of a hotel company that has a head office in what city?
-A: ['Delhi']
-   → 需要查 "Oberoi family" → 关联的酒店公司 → 总部城市
-```
-
-这也是为什么 Agent 需要多轮搜索（`max_turns=7`）：多跳问题单次搜索往往不够。
-
-### 3.7 多轮交互的数据流
+### 多轮交互的数据流
 
 在一次训练 rollout 中，数据在 Agent 和 Tool Server 之间的流转：
 
@@ -656,10 +660,10 @@ else:
     scores[i] = scores[i] - id2mean[index[i]]  # 只减均值，不除标准差
 ```
 
-| 设置                 | 效果                                                   |
-| -------------------- | ------------------------------------------------------ |
-| `True`（默认）     | 除以标准差 → 组内方差大时缩小 advantage，方差小时放大 |
-| `False`（Dr.GRPO） | 不除标准差 → 方差大时 advantage 也大，更新更激进      |
+- `True`（默认）会除以标准差。组内方差大时缩小 advantage，方差小时放大。
+- `False`（Dr.GRPO），不除标准差。组内方差大时 advantage 也大，更新更激进。
+
+但是实际上这个项到底该不该有其实业界有争议的。Dr.GRPO 总之是去了。
 
 ### Policy Gradient 最终计算
 
@@ -734,7 +738,7 @@ Step 11: score=0.100, pg_loss=0.0      ← 同上
 
 RL 训练每步的 batch 不同，模型在探索中时而进步时而退步。
 关键在于**长期趋势**：score 从 0.100 → 0.184 已经证明了学习在发生。
-更多步数后，正确的搜索-回答行为会越来越频繁。
+更多步数后，正确的 搜索-回答 行为会越来越频繁。
 
 grad_norm 平稳在截断阈值以下（如 0.1~1.0）就代表在正常训练，不要被 pg_loss 误导总之。
 pg_loss 不下降是正常的，原因是策略梯度的优化目标是动态变化的。
@@ -758,11 +762,77 @@ pg_loss 不下降是正常的，原因是策略梯度的优化目标是动态变
 - 我们训练中 `no_loss_on_traj/mean ≈ 0.88-1.0`：88-100% 的轨迹被跳过
 - 被 mask 的原因包括：轨迹超长、observation 被 mask（`mask_observations=True`）、轨迹格式无效等
 
-# 5. 训练运行记录
+# 5. SFT 预热
+
+## 为什么要 SFT 预热，预热到什么时候为止
+
+为了让模型进入 RL 阶段后，能迅速产生有区分度的 Advantage，平稳涌现出 DeepResearch 级别的长程推理与检索能力，使用 SFT 先预热是至关重要的。
+
+如果直接从 Base 模型开始纯 RL（像 DeepSeek-R1-Zero），模型不仅不知道怎么组织长链逻辑，甚至根本不知道什么时候该打出 <search>、什么时候闭合 </think>。
+总之就是**格式输出**都会有问题。
+
+而且 DeepSeek 团队在 R1-Zero 实验中还发现，纯 RL 训练出的模型虽然推理能力很强，但会出现极其严重的病态行为：
+- 中英文严重混杂（Language Mixing）；
+- 自创无意义缩写和乱码符号；
+- 思维链极度冗长、可读性极差。
+
+冷启动 SFT 中固定格式和人类的语言习惯能确保模型在后续强化学习探索时不至于偏离人类可读的轨道。
+
+**到什么时候就行了：** **格式遵从率**达到临界点（比如95%都带我们的answer标签）；Pass@k 等**业务指标有非零基线**、或者说具备其他初始正在探索的信号；
+或者**边际效益递减**了：SFT 的 Eval Loss 不再显著下降，刚出现微弱平缓拐点时立即early stop（通常高质量长链数据只需要训 1 ~ 2 个 Epoch，极少超过 3 个）。
+
+总之不需要做得很彻底，但是要让模型行为信号积极。
+
+## 数据构造
+
+所以总之我在 Search-R1 格式的示例数据上做 SFT 预热。
+不过注意，不能只用前面示例的 HotpotQA 做 SFT。 如果只用 HotpotQA 做 SFT，直接去做长链系统的 RL，会有很多问题（大概率）。
+
+首先，HotpotQA 是典型的人工构造 2-hop 数据集，逻辑链路很短，很多时候模型只要搜 1~2 次就能凑齐答案。会导致模型习得检索 1~2 次就该结并输出答案的先验。
+在 DMI 的 DeepResearch 场景就会让研究流程过早结束。
+
+最后，我们需要对齐 DMI 特有的交互协议与工具行为。也就是 Factlist 机制和依赖话题相关的提示词。多少需要一些这样的训练数据。
+
+（这 200 条数据必须是包含 多轮交替轨迹 的完整 Demonstration），同时对内部长链数据做适度过采样。
+当然考虑到内部高质量长链数据较少，我们留一部分给后面的 RL 探索与验证。
+
+
+构造数据的一个例子 - *使用 Wikipedia API 直接搜索，构造 Search-R1 格式*的示范轨迹。
+
+对每个 HotpotQA 问题：
+
+1. 用 golden answer 本身作为搜索词（最优策略）
+2. 用清理后的问题关键词作为补充搜索
+3. 对每个搜索词调用 Wikipedia API 获取真实内容
+4. 如果搜索结果包含 golden answer 文本 → 标记为 "有答案上下文"
+5. 构造标准的多轮轨迹
+
+直接用 requests + Wikipedia API
+
+- 结果：500 条测试中 **65% (325条) 答案出现在 Wikipedia 搜索结果中**
+- 改进：HTTPS 直连、用 golden answer 作为搜索词、限流重试
+- 最终：生成 1000 条 SFT 数据（含 60% 高质量轨迹）
+- 100% 格式完整（`<think>` + `<search>` + `<information>` + `<answer>`）
+- 100% API 成功率，41 分钟生成
+
+同时这里我们获得一个关键发现：数据分布一点要均匀。
+
+**数据排列**：训练集 152,653 条**完全未混合**。
+前 79,168 条 100% NQ（单跳），后 73,485 条 100% HotpotQA（多跳）。
+只有 2 个连续块，中间没有任何穿插。
+
+**对训练的影响**：
+
+- 200 步 × batch_size=8 = 1,600 条，全部落在 NQ 单跳区域
+- 模型**从未见过 HotpotQA 多跳问题**
+- Score 提升全部来自 NQ 事实型问题，多跳能力完全未训练
+
+
+# 6. 训练运行记录
 
 ## Prompt 迭代过程
 
-看看就好，只是记录离谱乌龙。
+这一节看看就好，只是记录离谱乌龙。
 
 **第 1 轮 — Search-R1 原始格式（失败）**：
 
@@ -804,9 +874,18 @@ Content: "Question: ..."
 一开始我觉得是Qwen2.5-Coder-14B-Instruct 无法理解 Search-R1 的 XML 标签格式。
 后来发现乱码是 vLLM 0.8.5 V1 引擎的 bug，不是模型问题。
 
-总之看起来Coder模型能生成 `...` 结构（获得 0.1 格式分），但从不在 ``中填入有意义的内容， 也从不使用`` 标签进行工具调用。
+> **排查过程**：
+> 1. **现象**：训练日志显示 `score/mean=0.1` 持续 99 步，`num_turns=1`，模型从不调用搜索
+> 2. **怀疑 1**：模型能力不够 → 用简单英文提问 "What is the capital of France?" → 正常回答 
+> 3. **怀疑 2**：prompt 格式不对 → 三轮迭代（Search-R1 原始 → 加 system message → 去掉示例答案）→ 仍有乱码
+> 4. **怀疑 3**：tokenizer 有问题 → 检查 chat_template 正确应用 
+> 5. **怀疑 4**：vLLM 推理和 HuggingFace 推理不一致 → **关键验证！** HF 推理正常，vLLM 推理乱码
+> 6. **结论**：vLLM 0.8.5 V1 引擎的 token 生成 bug → 切换到 Docker vLLM 0.11 → 完美解决
 
-BTW，wiki_search 工具服务器在整个测试中运行正常：
+
+总之看起来Coder模型能生成 `<answer>...</answer>` 结构（获得 0.1 格式分），但从不在 `<answer>`中填入有意义的内容， 也从不使用`<search>` 标签进行工具调用。
+
+BTW，wiki_search 工具服务器在整个测试中运行正常。
 
 
 ## 训练效率
@@ -823,73 +902,10 @@ BTW，wiki_search 工具服务器在整个测试中运行正常：
 - 一开始想或者增加 `search_bonus`：使用 `<search>` 标签就给额外奖励。 但是HotpotQA 的多跳要求自然体现在 EM 难度上——不额外加 search_bonus。
   模型通过 GRPO 自己发现 "多搜索 → 高 reward" 的规律。
 
-# 5. SFT 预热
-
-## 为什么要 SFT 预热，预热到什么时候为止
-
-为了让模型进入 RL 阶段后，能迅速产生有区分度的 Advantage，平稳涌现出 DeepResearch 级别的长程推理与检索能力，使用 SFT 先预热是至关重要的。
-
-如果直接从 Base 模型开始纯 RL（像 DeepSeek-R1-Zero），模型不仅不知道怎么组织长链逻辑，甚至根本不知道什么时候该打出 <search>、什么时候闭合 </think>。
-总之就是**格式输出**都会有问题。
-
-而且 DeepSeek 团队在 R1-Zero 实验中还发现，纯 RL 训练出的模型虽然推理能力很强，但会出现极其严重的病态行为：
-- 中英文严重混杂（Language Mixing）；
-- 自创无意义缩写和乱码符号；
-- 思维链极度冗长、可读性极差。
-
-冷启动 SFT 中固定格式和人类的语言习惯能确保模型在后续强化学习探索时不至于偏离人类可读的轨道。
-
-**到什么时候就行了：** **格式遵从率**达到临界点（比如95%都带我们的answer标签）；Pass@k 等**业务指标有非零基线**、或者说具备其他初始正在探索的信号；
-或者**边际效益递减**了：SFT 的 Eval Loss 不再显著下降，刚出现微弱的平缓拐点时立即停机（通常高质量长链数据只需要训 1 ~ 2 个 Epoch，极少超过 3 个）。
-
-总之不需要做得很彻底，但是要让模型行为信号积极。
-
-## 数据构造
-
-所以总之我在 Search-R1 格式的示例数据上做 SFT 预热。
-不过注意，不能只用前面示例的 HotpotQA 做 SFT。 如果只用 HotpotQA 做 SFT，直接去做长链系统的 RL，会有很多问题（大概率）。
-
-首先，HotpotQA 是典型的人工构造 2-hop 数据集，逻辑链路很短，很多时候模型只要搜 1~2 次就能凑齐答案。会导致模型习得检索 1~2 次就该结并输出答案的先验。
-在 DMI 的 DeepResearch 场景就会让研究流程过早结束。
-
-最后，我们需要对齐 DMI 特有的交互协议与工具行为。也就是 Factlist 机制和依赖话题相关的提示词。多少需要一些这样的训练数据。
-
-（这 200 条数据必须是包含 多轮交替轨迹 的完整 Demonstration），同时对内部长链数据做适度过采样。
-当然考虑到内部高质量长链数据较少，我们留一部分给后面的 RL 探索与验证。
-
-
-构造数据的一个例子 - *使用 Wikipedia API 直接搜索，构造 Search-R1 格式*的示范轨迹。
-
-对每个 HotpotQA 问题：
-
-1. 用 golden answer 本身作为搜索词（最优策略）
-2. 用清理后的问题关键词作为补充搜索
-3. 对每个搜索词调用 Wikipedia API 获取真实内容
-4. 如果搜索结果包含 golden answer 文本 → 标记为 "有答案上下文"
-5. 构造标准的多轮轨迹
-
-直接用 requests + Wikipedia API
-
-- 结果：500 条测试中 **65% (325条) 答案出现在 Wikipedia 搜索结果中**
-- 改进：HTTPS 直连、用 golden answer 作为搜索词、限流重试
-- 最终：生成 1000 条 SFT 数据（含 60% 高质量轨迹）
-- 100% 格式完整（`<think>` + `<search>` + `<information>` + `<answer>`）
-- 100% API 成功率，41 分钟生成
-
-同时这里我们获得一个关键发现：数据分布一点要均匀。
-
-**数据排列**：训练集 152,653 条**完全未混合**——
-前 79,168 条 100% NQ（单跳），后 73,485 条 100% HotpotQA（多跳）。
-只有 2 个连续块，中间没有任何穿插。
-
-**对训练的影响**：
-
-- 200 步 × batch_size=8 = 1,600 条，全部落在 NQ 单跳区域
-- 模型**从未见过 HotpotQA 多跳问题**
-- Score 提升全部来自 NQ 事实型问题，多跳能力完全未训练
-
-
 ### 训练现象 (2026-07-29, 43 步验证)
+
+后来我换了非 Coder 的 instruct 模型，使用了更新的 vLLM 版本修复了问题。
+完成预热后使用 Dr. GRPO 进行 RL。
 
 **Step 1 — 多轮搜索首次成功**：
 
@@ -929,7 +945,7 @@ Step 26-43: ████████████████  0.35-0.72  (稳定
     {"role": "system", "content": "<系统提示>"},
     {"role": "user", "content": "Question: <问题>"}
   ],
-  "chosen": "...\nquery\n...\n...\n答案",
+  "chosen": "<think>...</think>\n<search>query</search>\n<information>...</information>\n<think>...</think>\n<answer>答案</answer>",
   "question": "原始问题",
   "golden_answers": ["答案"],
   "found_answer_context": true/false
@@ -968,18 +984,6 @@ Step 26-43: ████████████████  0.35-0.72  (稳定
 1. ➕ 对数据做 `shuffle`，确保单跳/多跳混合
 2. ➕ 长轨迹场景设置 `norm_adv_by_std_in_grpo=False`（Dr.GRPO），对 GRPO 降低 `batch_size=1-2`，保持 `n=4`
 
-## 实验 2：Shuffle 数据 + 正确 Epoch 设计 (2026-07-30 启动)
-
-### 改进点
-
-| 改进       | 实验 1                          | 实验 2                                              |
-| ---------- | ------------------------------- | --------------------------------------------------- |
-| 数据       | 152K 未 shuffle（全在 NQ 区域） | **1,526 条随机混合**（50% NQ + 50% HotpotQA） |
-| Epoch      | 200 步 ≈ 0.01 epoch            | **382 步 ≈ 2 epochs**                        |
-| Checkpoint | save_freq=-1（丢失）            | **save_freq=50**                              |
-| 算法       | GRPO                            | GRPO                                                |
-| 日志       | 单文件                          | 时间戳独立保存                                      |
-
 ### Epoch 设计逻辑
 
 RL ≠ SFT。RL 不需要多 epoch 来"记住"数据，关键是每个问题给几次尝试：
@@ -993,9 +997,9 @@ HotpotQA 第一次发现需要多跳、第二次学会搜索链。
 
 ---
 
-# 技术问题
+# 6. 技术问题
 
-## Q1: 为什么用 Dr.GRPO 思路修复 DAPO？
+## Q1: 为什么用 Dr.GRPO 思路 + DAPO？
 
 初次我们尝试了 GRPO，这里说一下一开始的思路 以及和 PPO 的区别：
 
@@ -1008,11 +1012,11 @@ HotpotQA 第一次发现需要多跳、第二次学会搜索链。
 > PPO 的 Critic 是一份与 Actor 同量级的模型，极易 OOM；GRPO 省下这份显存全给 Actor。其优势估计为组内相对：
 >
 > $$
->
+>A_i=\frac{r_i-\operatorname{mean}(\mathbf{r})}{\operatorname{std}(\mathbf{r})}
+
 >
 > $$
 
-A_i=\frac{r_i-\operatorname{mean}(\mathbf{r})}{\operatorname{std}(\mathbf{r})}
 
 $$
 > 
@@ -1171,10 +1175,6 @@ Dr.GRPO 只改"组内已有差异的缩放"（`adv=(R-mean)/std` → `adv=R-mean
 两者在"删除 1/∣o_i∣ 长度偏置"上英雄所见略同，但在 std 归一化上分道扬镳。
 DAPO 保留它，说明在实际大规模训练中，std 归一化带来的方差缩减收益可能超过它引入的加权偏置代价。这个分歧至今没有被完全定论，也是后续工作（如 GSPO、CISPO、以及各类序列级重要性采样变体）继续争论的战场。
 
-### 关键工程：Observation Token Masking（多轮 RL 的命门）
-
-在计算 log-prob 和 policy loss 时，**必须对 `<information>` 内的检索 token 置零 mask**，只对模型自己生成的 think/search/answer 计 loss。这是 Search-R1 最关键的创新之一：RL 期间检索内容被排除在优化之外，只有模型自己的推理参与更新，迫使模型"对检索结果做推理"而非"照抄"，从而提升稳定性与泛化。不做 mask 会让模型去拟合外部网页内容，导致学偏/坍缩。实验显示做 masking 训练更稳、提升更大。
-
 ### 可以改进的多轮 credit assignment
 
 轨迹级单标量 reward 广播到所有 turn 是最简做法，但 GRPO 在多轮设定下被广泛报告不稳定。
@@ -1240,7 +1240,7 @@ Reward Manager 计算得分
 - Tool Server 是独立进程，HTTP 通信，支持多 worker 并发
 - 使用 Ray 分发工具调用（生产环境）或线程池（开发环境）
 - `action_stop_tokens="</search>,</answer>"` → vLLM 遇到这些 token 时暂停生成
-- Agent Loop 最多 `max_turns=3` 轮交互
+- Agent Loop 最多 `max_turns=7` 轮交互
 
 ## Q6: multi-turn Agent 的数据流是怎样的？
 
@@ -1299,41 +1299,6 @@ Loss 只计算生成 token（不包括 prompt 和 observation token），由 `ma
 - 假学习：pg_loss ≠ 0 但 score 始终不涨 → 模型在过拟合噪声
 - 真学习：pg_loss 波动 + score 趋势上升 → 我们在 Docker 训练中看到的
 
-## Q11: 为什么需要 Docker 环境？vLLM 0.8.5 和 0.11 有什么区别？
-
-**核心矛盾**：宿主机 PyPI 镜像最高 torch 2.6 → 无法装 vLLM ≥ 0.9。
-
-**vLLM 0.8.5 的问题**（宿主机）：
-
-- V1 引擎是实验性的，对 Qwen2.5 系列有 token 生成 bug
-- HuggingFace 直接推理正常，vLLM 推理输出多语言乱码
-- 需要 5 个兼容性补丁才能运行 veRL
-
-**vLLM 0.11 的解决**（Docker）：
-
-- 使用 `vllm/vllm-openai:v0.11.0` 镜像（torch 2.8 + CUDA 12.8）
-- 5 个补丁全部不需要（vLLM API 一致）
-- 模型正确输出 `<think>...<search>query</search>` 格式
-- 100% valid_traj vs 宿主机 3-9%
-
-**为什么 Docker 在宿主机上行不通？**
-
-- 8×A100 + FSDP + Ray + vLLM 的内存峰值接近宿主机 503GB
-- Docker 容器被 OOM Killer 杀掉（exit code 137）
-- 最终方案：无 `--memory` 限制 + `--shm-size=20g` + `--ipc=host`
-
-## Q12: Coder 模型输出乱码，你是怎么排查到根因的？
-
-**排查过程（面试重点！）**：
-
-1. **现象**：训练日志显示 `score/mean=0.1` 持续 99 步，`num_turns=1`，模型从不调用搜索
-2. **怀疑 1**：模型能力不够 → 用简单英文提问 "What is the capital of France?" → 正常回答 ✅
-3. **怀疑 2**：prompt 格式不对 → 三轮迭代（Search-R1 原始 → 加 system message → 去掉示例答案）→ 仍有乱码
-4. **怀疑 3**：tokenizer 有问题 → 检查 chat_template 正确应用 ✅
-5. **怀疑 4**：vLLM 推理和 HuggingFace 推理不一致 → **关键验证！** HF 推理正常，vLLM 推理乱码
-6. **结论**：vLLM 0.8.5 V1 引擎的 token 生成 bug → 切换到 Docker vLLM 0.11 → 完美解决
-
-**面试技巧**：展示系统性的排查思路——逐一排除假设，最终定位到推理引擎层。
 
 ## Q13: 训练 43 步后 Score 从 0.10 涨到 0.72，这意味着什么？
 
@@ -1357,39 +1322,6 @@ Loss 只计算生成 token（不包括 prompt 和 observation token），由 `ma
 - Step 43: 1.0（直接回答）
 - 解读：模型学会了判断问题难度——简单问题直接答，复杂问题才搜索
 
-## Q14: SFT 预热为什么对 Coder 无效但对 Instruct 没必要？
-
-**Coder 模型的 SFT**（500 条 × 3 epochs）：
-
-- 目标：教会模型 `<think>` → `<search>` → `<answer>` 格式
-- 结果：学会了 `<answer>` 格式（valid_traj 提升 10%），但没学会 `<search>`
-- 原因：Coder 的代码先验太强，500 条不够翻转 14B 参数
-
-**Instruct 模型不需要 SFT**：
-
-- Instruct 模型天然理解指令格式
-- 第一次生成就正确使用 `<think>`, `<search>`, `<answer>`
-- 100% valid_traj from step 1
-- 结论：选择正确的基座模型比做更多 SFT 更重要
-
-**面试金句**：*"RL 训练的成功与否，80% 取决于基座模型是否理解任务格式。Instruct 模型零样本就能正确输出 XML 标签，Coder 模型 500 条 SFT 都不够。"*
-
-## Q15: 如果重新做这个项目，你会怎么优化流程？
-
-**当前流程的问题**：
-
-1. 在宿主机 vLLM 0.8.5 上浪费了 99+200 步（~15 小时 GPU）才发现乱码问题
-2. Docker 环境配置反复试错（OOM、工具服务器连接、pip install）
-3. SFT 数据生成遇到 Wikipedia 限流
-
-**优化后的流程**：
-
-1. **第一步**：用 HuggingFace 直接测试模型对 Search-R1 格式的理解（5 分钟）
-2. **第二步**：用 vLLM 直接测试（确认推理引擎兼容性，10 分钟）
-3. **第三步**：小规模 RL 验证（10 步，确认 reward + tool + multi-turn 都正常）
-4. **第四步**：大规模训练（200-1000 步）
-
-**关键节省**：第 1-2 步可以避免在错误模型和错误 vLLM 上浪费 GPU 时间。
 
 ## Q17: 训练数据分布不均会有什么后果？你是怎么发现的？
 
