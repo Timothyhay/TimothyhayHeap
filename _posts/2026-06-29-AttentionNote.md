@@ -5,6 +5,8 @@ tags: LLM
 comments: true
 ---
 
+俗话说得好， Resnet 就是 LSTM 旋转了 90 度，从时序变成了深度； transformer 就是 attention + resnet，大道至简这一块。
+
 本文简单谈了谈笔者对注意力机制的理解，以及几种主流注意力机制做了统一风格的最小实现。
 
 # 注意力机制的发展
@@ -70,7 +72,34 @@ $$
 
 ## 一、缩放点积注意力（SDPA）
 
-它是 MHA 的内部基本组件：先计算 query 与每个 key 的关联度作为权重，再对 value 加权求和。
+Scaled Dot-Product Attention 是 MHA 的内部基本组件：先计算 query 与每个 key 的关联度作为权重，再对 value 加权求和。
+
+给定输入 $X \in \mathbb{R}^{n \times d}$ （n=序列长度/token数，d=模型隐藏层维度/embedding维度），做三次线性投影：$Q = XW_Q,\; K = XW_K,\; V = XW_V$，然后
+
+$$
+\text{Attention}(Q,K,V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}} + M\right)V
+$$
+
+计算顺序：Given an input matrix $X$, 
+we first linearly project it into $Q$, $K$, $V$ representations using learnable projection matrices; 
+next, we compute the raw attention logits by taking the dot product $QK^T$(Q K transpose), 
+scale them by $\sqrt{d_k}$(The square root of d sub k) to prevent gradient vanishing caused by softmax saturation, 
+and optionally plus a causal or padding mask with $-\infty$;
+finally, we apply the Softmax function row-wise along the sequence dimension to obtain a normalized attention probability matrix,
+and multiply by the Value matrix $V$ to produce the final output.
+
+
+其中 $M$ 是掩码（因果掩码为上三角 $-\infty$）。
+
+直觉：每个 query 用点积衡量与所有 key 的相关性，softmax 归一化为权重，再对 value 加权求和。
+
+```
+Input X
+      │
+      ├─── W_Q ───> Q (Query) ──┐
+      ├─── W_K ───> K (Key)   ──┴─> MatMul (Q·K^T) ──> Scale (/√d_k) ──> [Mask] ──> Softmax ──┐
+      └─── W_V ───> V (Value) ─────────────────────────────────────────────────────────────┴─> MatMul (Score·V) ──> Output
+```
 
 ```python
 import torch
@@ -124,6 +153,10 @@ def test_sdpa():
 if __name__ == "__main__":
     test_sdpa()
 ```
+
+为什么除以 $\sqrt{d_k}$：
+
+若 $q, k$ 各分量独立、均值 0、方差 1，则 $q\cdot k = \sum_i q_i k_i$ 的方差为 $d_k$。$d_k$ 大时，点积量级很大，softmax 进入饱和区（近似 one-hot），梯度趋近于 0。除以 $\sqrt{d_k}$ 把方差拉回 1。
 
 ---
 
