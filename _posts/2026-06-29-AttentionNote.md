@@ -4,7 +4,6 @@ title: A Casual Explanation of Common Attention Mechanisms
 tags: LLM
 comments: true
 ---
-
 俗话说得好， Resnet 就是 LSTM 旋转了 90 度，从时序变成了深度； transformer 就是 attention + resnet，大道至简这一块。
 
 本文简单谈了谈笔者对注意力机制的理解，以及几种主流注意力机制做了统一风格的最小实现。
@@ -16,6 +15,7 @@ comments: true
 2019 年至今：Transformer 已成事实标准，主要矛盾转移到了"自回归推理时如何降低 KV Cache 的显存占用与访存带宽压力"。MQA、GQA、MLA 都是为解决这一矛盾而生，它们并不改变注意力的数学本质，而是在 K/V 的"存储与共享方式"上做文章。
 
 ---
+
 ### 在开始之前，注意力是什么
 
 $$
@@ -38,12 +38,7 @@ Attention 对于当前 token，模型首先计算它与历史所有 token 的相
 在大规模训练中，还有一个极其重要的经验规律叫 Scaling Law。研究者发现，当参数量、数据量和训练计算量同步增加时，训练损失会按照幂律下降，大致满足：
 
 $$
-L(C)
-====
-
-A C^{-\alpha}
-+
-B
+L(C)==A C^{-\alpha}+B
 $$
 
 其中 (C) 是计算预算。这意味着模型性能不会突然饱和，而是持续改善，只是边际收益越来越低。这一发现极大改变了整个行业的发展方向，因为它说明堆算力、堆数据、堆参数并非盲目行为，而是一种有理论依据的工程路线。
@@ -54,13 +49,14 @@ $$
 
 因此，对于真正参与训练的人来说，预训练最值得深入理解的其实不是“预测下一个 token”这句话本身，而是三个更深层的问题：第一，为什么仅靠预测 token 就能形成世界模型；第二，数据分布如何决定最终能力边界；第三，梯度下降为什么会在超大规模参数空间中自发形成抽象表示。这三个问题至今仍然是大模型研究最核心、也最有趣的部分。
 
-
 # 实现
 
 这里重在讨论：
 
 - **多头注意力（MHA）**：2017 年开山之作《Attention Is All You Need》提出，是当前主流 LLM 的基石。每个头都有自己独立的 Q、K、V。
-> - **缩放点积注意力（SDPA）**：注意力计算的最小单元，在 2017 年《Attention Is All You Need》提出，在点积注意力基础上加入 $\frac{1}{\sqrt{d_k}}$ 缩放。注意力机制本身最早可追溯到 2014 年 Bahdanau 等人的**加性注意力**，但 Q/K/V 框架与缩放点积形式均来自 Transformer。
+
+> - **缩放点积注意力（SDPA）**：注意力计算的最小单元，在 2017 年《Attention Is All You Need》提出，在点积注意力基础上加入 $\frac{1}{\sqrt{d_k}}$ 缩放，缓解 softmax 梯度消失的问题。注意力机制本身最早可追溯到 2014 年 Bahdanau 等人的**加性注意力**，但 Q/K/V 框架与缩放点积形式均来自 Transformer。它是多头注意力（MHA）的内部基本组件。
+
 - **多查询注意力（MQA）**：出自 2019 年《Fast Transformer Decoding: One Write-Head is All You Need》。所有头共享同一份 K、V，只保留各自独立的 Q，从而大幅压缩 KV Cache。代表模型有 PaLM、StarCoder、Falcon 等。
 - **分组查询注意力（GQA）**：出自 2023 年《GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints》，是 MHA 与 MQA 的折中。设头数为 $h$、组数为 $g$（$g$ 整除 $h$）：$g=h$ 时退化为 MHA，$g=1$ 时退化为 MQA，$1<g<h$ 时 KV Cache 压缩到 $\frac{g}{h}$。代表模型有 Llama-2-70B（$g=8$）与 Llama-3 全系列。
 - **多头隐注意力（MLA）**：出自 2024 年 DeepSeek-V2 技术报告，用低秩线性变换压缩 K、V，只缓存一个低维潜向量，进一步压缩 KV Cache。
@@ -68,6 +64,7 @@ $$
 > **关于 KV Cache**：在自回归生成中，新预测的第 $t$ 个 token 不会改变已经算好的前 $t-1$ 个位置的 K、V，因此可以把它们缓存下来，避免重复计算。Prefill（预填充）阶段会一次性算出 prompt 全部 token 的 K、V 并写入缓存，KV Cache 的加速收益主要体现在逐 token 的 decode 阶段。
 
 > 缩放因子写作 `head_dim ** 0.5`、掩码统一用 `masked_fill`（约定 `True` 表示被遮蔽）、注释和形状标注统一。
+
 ---
 
 ## 一、缩放点积注意力（SDPA）
@@ -80,14 +77,13 @@ $$
 \text{Attention}(Q,K,V) = \text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}} + M\right)V
 $$
 
-计算顺序：Given an input matrix $X$, 
-we first linearly project it into $Q$, $K$, $V$ representations using learnable projection matrices; 
-next, we compute the raw attention logits by taking the dot product $QK^T$(Q K transpose), 
-scale them by $\sqrt{d_k}$(The square root of d sub k) to prevent gradient vanishing caused by softmax saturation, 
+计算顺序：Given an input matrix $X$,
+we first linearly project it into $Q$, $K$, $V$ representations using learnable projection matrices;
+next, we compute the raw attention logits by taking the dot product $QK^T$(Q K transpose),
+scale them by $\sqrt{d_k}$(The square root of d sub k) to prevent gradient vanishing caused by softmax saturation,
 and optionally plus a causal or padding mask with $-\infty$;
 finally, we apply the Softmax function row-wise along the sequence dimension to obtain a normalized attention probability matrix,
 and multiply by the Value matrix $V$ to produce the final output.
-
 
 其中 $M$ 是掩码（因果掩码为上三角 $-\infty$）。
 
@@ -158,31 +154,51 @@ if __name__ == "__main__":
 
 若 $q, k$ 各分量独立、均值 0、方差 1，则 $q\cdot k = \sum_i q_i k_i$ 的方差为 $d_k$。$d_k$ 大时，点积量级很大，softmax 进入饱和区（近似 one-hot），梯度趋近于 0。除以 $\sqrt{d_k}$ 把方差拉回 1。
 
+
+注意力的更早源头。 注意力机制本身最早可追溯到 2014 年 Bahdanau 等人在神经机器翻译中提出的加性注意力（用一个小型前馈网络计算对齐分数），其动机是缓解 seq2seq 中"把整句压进一个固定向量"的信息瓶颈。但真正奠定今天范式的——显式的 Q/K/V 抽象与缩放点积这种可高度并行化的打分形式——均来自 Transformer。点积形式相比加性形式的最大优势在于可直接用高度优化的矩阵乘法实现，在 GPU 上吞吐远高于加性注意力，这也是它能成为主流的关键工程原因。
+
 ---
 
 ## 二、多头注意力（MHA）
 
+**为什么要"多头"而不是"一个大头"？** 单个注意力头在做 softmax 加权时，本质上倾向于聚焦到少数位置上，表达能力受限。多头允许模型在不同子空间中并行关注不同类型的关系——例如有的头捕捉语法依赖、有的头捕捉指代或长程语义关联——相当于"集成"了多组互补的注意力模式，而且由于每个头维度更小（$d_k=d_{\text{model}}/h$），总计算量与单个全维注意力基本持平。
+
+正是 MHA 这种"每个头各存一份 K/V"的设计，埋下了后续所有优化的伏笔：**在自回归解码时，所有头、所有层、所有历史 token 的 K/V 都必须缓存下来**，KV Cache 随序列长度和头数线性膨胀，成为长上下文推理的主要显存与带宽瓶颈。
+
 「多头」指并行计算多组注意力，每个头从不同的子空间「视角」捕获信息。设输入为 $X$（一批 token 向量），$W^Q,W^K,W^V\in\mathbb{R}^{d_{model}\times d_{model}}$，将输出切分为 $h$ 个头、每个头维度 $d_k=d_{model}/h$。计算步骤如下：
+
+相比于只做一次点积，MHA 将 $Q, K, V$ 投影到 $h$ 个不同的低维子空间，分别独立计算注意力（即执行 $h$ 次 SDPA），最后将所有头的输出拼接（Concat）并通过一个线性层融合。
+* 目的是让模型在不同的位置同时关注来自不同子空间（语义、语法、相对距离等）的信息。
 
 **1）线性投影得到 Q、K、V：**
 
-$$Q = XW^Q,\qquad K = XW^K,\qquad V = XW^V$$
+$$
+Q = XW^Q,\qquad K = XW^K,\qquad V = XW^V
+$$
 
 **2）计算第 $i$ 个头的缩放点积得分（$d_k$ 为每个头的维度）：**
 
-$$\text{scores}_i=\frac{Q_iK_i^{\top}}{\sqrt{d_k}}$$
+$$
+\text{scores}_i=\frac{Q_iK_i^{\top}}{\sqrt{d_k}}
+$$
 
 **3）用 Softmax 得到注意力权重：**
 
-$$A_i=\mathrm{softmax}\!\left(\frac{Q_iK_i^{\top}}{\sqrt{d_k}}\right)$$
+$$
+A_i=\mathrm{softmax}\!\left(\frac{Q_iK_i^{\top}}{\sqrt{d_k}}\right)
+$$
 
 **4）用注意力权重对 $V$ 加权求和，得到每个头的输出：**
 
-$$\text{head}_i = A_iV_i=\mathrm{softmax}\!\left(\frac{Q_iK_i^{\top}}{\sqrt{d_k}}\right)V_i$$
+$$
+\text{head}_i = A_iV_i=\mathrm{softmax}\!\left(\frac{Q_iK_i^{\top}}{\sqrt{d_k}}\right)V_i
+$$
 
 **5）拼接所有头的输出，再乘以输出投影矩阵 $W^O$，得到最终结果：**
 
-$$\mathrm{MultiHead}(X)=\mathrm{Concat}(\text{head}_1,\dots,\text{head}_h)\,W^O$$
+$$
+\mathrm{MultiHead}(X)=\mathrm{Concat}(\text{head}_1,\dots,\text{head}_h)\,W^O
+$$
 
 实现代码如下：
 
@@ -261,7 +277,16 @@ if __name__ == "__main__":
 
 ## 三、带 KV Cache 的 MHA
 
-KV Cache 通过缓存并逐步追加 K、V，在 decode 阶段以空间换时间。下面演示逐 token 解码：每一步只输入一个新 token，与缓存的历史 K、V 拼接后做注意力——由于新 query 天然只能看到自己和历史，所以无需再额外加因果掩码。
+KV Cache 主要用于 Decoder 在逐 token 生成（decode）阶段减少重复计算：Prefill 阶段会一次性算出 prompt 所有 token 的 K、V 并写入缓存，decode 阶段每生成一个新 token，只需计算它自己的 Q、K、V，再与缓存中的历史 K、V 拼接即可。本代码仅作示例。
+
+实际上：
+
+- **Prefill 阶段会一次性计算 prompt 所有 token 的 K、V，并把它们写入 KV Cache**，供后续 decode 复用。所以并不是「prefill 不需要 KV Cache」，而是「KV Cache 的*加速收益*主要体现在逐 token 的 decode 阶段」。
+- **P/D 分离（Prefill/Decode disaggregation）** 是一种把预填充和解码放到不同实例/硬件上执行的部署优化，和「prefill 是否需要 KV Cache」是两回事。
+
+
+逐 token 解码：每一步只输入一个新 token，与缓存的历史 K、V 拼接后做注意力。
+由于新 query 天然只能看到自己和历史，所以无需再额外加因果掩码。
 
 ```python
 import torch
@@ -316,25 +341,35 @@ class MultiHeadAttentionWithCache(nn.Module):
 
 
 def test_MHA_with_cache():
-    torch.manual_seed(0)
-    batch_size, seq_len, hidden_size, num_heads = 2, 5, 64, 4
+    '''
+    用全量 KV Cache 做 decode 时，单个 query 本来就可以看到所有已缓存的历史 key，`current_causal_mask` 实际上全是 `False`、不起任何作用，这里保留只是为了和接口对齐，逻辑上没问题。
+    '''
+    batch_size = 2
+    seq_len = 5
+    hidden_size = 64
+    num_heads = 4
 
     hidden_state = torch.randn(batch_size, seq_len, hidden_size)
-    mha = MultiHeadAttentionWithCache(hidden_size, num_heads)   # 注意: 必须先实例化模型
+    causal_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
+
+    mha = MultiHeadAttention(hidden_size, num_heads)   # ← 缺了这一行
 
     past_key_value = None
     outputs = []
     for i in range(seq_len):
-        current_input = hidden_state[:, i:i + 1, :]            # 当前单个 token
+        current_input = hidden_state[:, i:i+1, :]
+        current_causal_mask = causal_mask[i:i+1, :i+1]   # 全 False，等价于不掩码（用全量缓存时本就无需再掩码）
         output_step, past_key_value = mha(
             current_input,
+            causal_mask=current_causal_mask,
             past_key_value=past_key_value,
-            use_cache=True,
+            use_cache=True
         )
         outputs.append(output_step)
 
-    output = torch.cat(outputs, dim=1)                          # 合并各步输出
-    print("MHA+KV in:", tuple(hidden_state.shape), " out:", tuple(output.shape))
+    output = torch.cat(outputs, dim=1)
+    print("Input shape:", hidden_state.shape)
+    print("Output shape:", output.shape)
 
 
 if __name__ == "__main__":
@@ -346,6 +381,13 @@ if __name__ == "__main__":
 ## 四、多查询注意力（MQA）
 
 所有头共享同一份 K、V（投影维度仅为 `head_dim`），Q 仍按头独立。计算时让单头的 K、V 通过广播与多头 Q 相乘。
+公开确认使用 MQA 的代表是 **Falcon（如 Falcon-40B）**。
+
+
+出自 2019 年《Fast Transformer Decoding: One Write-Head is All You Need》。其核心改动是：**所有头共享同一份 K、V，只保留各自独立的 Q**，从而把 KV Cache 压缩到原来的 $\frac{1}{h}$。
+
+**为什么这样能行、又为什么需要它？** 论文的出发点是一个关键观察：自回归解码时性能往往**不受算力限制，而受访存带宽限制**——每生成一个 token 都要把全部 KV Cache 从显存读进计算单元，参数和缓存的"搬运"成本主导了延迟。既然瓶颈在 K/V 的读取量，那么让所有头共用一份 K/V 就能成倍减少需要搬运和存储的数据，显著加快解码、增大可容纳的 batch 与上下文长度。代价是表达能力略有损失（K/V 不再各头独立），在部分任务上有小幅质量下降。
+
 
 ```python
 import torch
@@ -423,6 +465,8 @@ if __name__ == "__main__":
 ## 五、分组查询注意力（GQA）
 
 把 $h$ 个头分成 $g$ 组，每组共享一对 K、V，组内的多个 query 头复用同一份 K、V。
+
+将所有 Head $h$ 分为 $g$ 个组（要求 $g$ 整除 $h$），每组共享同一对 K、V（组内的多个 query 头复用同一份 K、V。）。当 $g=h$ 时退化为 MHA，$g=1$ 时退化为 MQA；当 $1<g<h$ 时，KV Cache 压缩到 MHA 的 $\frac{g}{h}$，压缩率不如 MQA 的 $\frac{1}{h}$，但保留了更大的自由度，效果更有保证。在 Llama-2/3-70B 中 $g=8$。
 
 ```python
 import torch
@@ -510,6 +554,10 @@ if __name__ == "__main__":
 
 ## 六、多头隐注意力（MLA）
 
+出自 2024 年 DeepSeek-V2 技术报告。它换了一个思路：不再靠"让多个头共享 K/V"来省缓存，而是**用低秩线性变换把 K、V 联合压缩到一个低维潜向量（latent vector）**，推理时只缓存这个潜向量，使用时再通过上投影矩阵恢复出各头所需的 K/V。
+
+**为什么这是又一次进步？** GQA/MQA 是通过"减少 K/V 的份数"来省缓存，但这必然以牺牲头间多样性为代价。MLA 的目标是**在把 KV Cache 压得比 GQA 更小的同时，尽量保住接近 MHA 的表达能力**——因为各头仍可从同一潜向量解出不同的 K/V，而非简单共享同一份。此外，得益于矩阵吸收等技巧，上投影可以被合并进其他权重，从而避免显式重建完整 K/V 的额外开销。这使得 MLA 在极小缓存占用下仍保持较强性能，成为 DeepSeek 系列长上下文与高效推理的关键设计。
+
 MLA 的核心是**低秩压缩**：把 K、V 联合压缩成一个低维潜向量 $c^{KV}$，推理时**只缓存这个潜向量**，需要时再升维还原出各头的 K、V，从而把 KV Cache 压到极小。
 
 由于 RoPE 是位置相关的、无法与「升维」矩阵直接合并，MLA 采用**解耦 RoPE**：额外用一小段、所有头共享的维度专门承载位置编码，与不带位置编码的「内容」维度拼接。简化的公式（$h$ 为输入隐状态）：
@@ -518,6 +566,9 @@ MLA 的核心是**低秩压缩**：把 K、V 联合压缩成一个低维潜向�
 - KV 低秩压缩：$c^{KV}=hW^{DKV}$（**被缓存**），升维得到 $k^{C}=c^{KV}W^{UK}$、$v^{C}=c^{KV}W^{UV}$
 - 解耦 RoPE：$q^{R}=\mathrm{RoPE}(q^{R})$，共享的 $k^{R}=\mathrm{RoPE}(hW^{KR})$（**也被缓存**）
 - 拼接得到完整 Q、K：$q=[q^{C};\,q^{R}]$，$k=[k^{C};\,k^{R}]$，再走标准缩放点积注意力
+
+
+
 
 ```python
 import torch
@@ -652,250 +703,69 @@ if __name__ == "__main__":
 
 ### 几点统一说明
 
-- **掩码约定**：`causal_mask`/`padding_mask` 中 `True` 表示「需要被遮蔽」的位置，用 `masked_fill(mask, -inf)` 屏蔽；`causal_mask = torch.triu(ones, diagonal=1).bool()` 即屏蔽未来位置。
+- **掩码约定**：`causal_mask`/`padding_mask` 中 `True` 表示「需要被遮蔽」的位置，用 `masked_fill(mask, -inf)` 屏蔽；`causal_mask = torch.triu(ones, diagonal=1).bool()` 即屏蔽未来位置。有关掩码的写法，`attention_scores += mask * -1e9` 在混合精度（fp16/bf16）下，`-1e9` 可能溢出/精度不佳，且 `+=` 原地操作偶尔会干扰 autograd。教材里更推荐 `attention_scores = attention_scores.masked_fill(mask, float('-inf'))`，语义也更清晰。
 - **合并多头**：`transpose` 之后张量内存非连续，统一用 `reshape`（等价于 `.contiguous().view(...)`），避免 `view` 报错。
 - **MLA 简化**：为聚焦核心思想，这里省略了 DeepSeek-V2 实际使用的 YaRN/`mscale` 缩放修正与「矩阵吸收（absorb）」等推理加速技巧；`qk_rope_head_dim` 需为偶数以适配 RoPE。
-- 每个文件独立 `import`、独立 `test_*`，可单独运行；上面的形状逻辑我已用 NumPy 等价模拟验证（GQA 扩展、MLA 低秩压缩与解耦 RoPE 的形状/广播均正确）。建议你在本地装好 PyTorch 后再各跑一遍 `test_*` 做最终确认。
 
-如果你愿意，我可以再补一段把这些模块统一在一起、加上前馈层与残差/归一化的「完整 Transformer Decoder Block」示例，作为教材的收尾章节。
 
----
+### 脉络
 
-## 一、史实与概念错误
 
-### 1.（重要）缩放点积注意力的出处搞错了
-
-原文：
-
-> 缩放点积注意力（Scaled Dot-Product Attention）：2014 年《Neural Machine Translation by Jointly Learning to Align and Translate》提出的单头注意力……
-
-这里有两个事实错误：
-
-- **2014 年 Bahdanau 等人的那篇论文提出的是「加性注意力 / Additive (Bahdanau) Attention」**，用一个前馈网络（concat + tanh）来计算对齐分数，并**不是**点积形式，更没有 $1/\sqrt{d_k}$ 的缩放。
-- **「缩放点积注意力」这个具体形式恰恰是 2017 年《Attention is All You Need》提出的**，缩放因子 $\frac{1}{\sqrt{d_k}}$ 正是该论文的贡献。点积式注意力的雏形一般追溯到 Luong 等人 2015 年的工作，但「缩放版」来自 Transformer。
-
-另外，原文后面还有一句：
-
-> 缩放点积注意力早于 Transformer 被提出，受到的关注并不多……
-
-这句也不准确——**注意力机制**确实早于 Transformer（2014/2015），但**「缩放点积注意力」本身就是 Transformer 提出的**，并非早于它。
-
-**建议改为：**
-
-> 缩放点积注意力（Scaled Dot-Product Attention）是 2017 年《Attention is All You Need》中定义的注意力计算单元，其核心是在点积注意力的基础上加入了 $\frac{1}{\sqrt{d_k}}$ 缩放因子，以缓解 $d_k$ 较大时点积数值过大、导致 softmax 梯度消失的问题。它是多头注意力（MHA）的内部基本组件。
-
-并把概念段落里「2014 年那篇论文提出单头注意力」的归属删掉或改成「注意力机制最早可追溯到 2014 年 Bahdanau 等人的加性注意力，而缩放点积形式由 Transformer 提出」。同时注意：原文用 Query/Key/Value 的框架去描述 2014 年的工作其实是「时代错位」——Q/K/V 的统一表述也是 Transformer 才有的。
-
-### 2. MQA 的使用者列表存疑
-
-原文：
-
-> 使用 MQA 的模型包括 PaLM、StarCoder、Gemini 等。
-
-- PaLM、StarCoder 使用 MQA 是论文/技术报告里明确写过的，没问题。
-- **Gemini 的注意力结构并未公开披露**，把它列为 MQA 的代表缺乏可靠依据。更稳妥、且公开确认使用 MQA 的代表是 **Falcon（如 Falcon-40B）**。
-
-建议把 Gemini 换成 Falcon，或至少去掉 Gemini。
-
-### 3. KV Cache 与 Prefill 的描述容易误导
-
-原文：
-
-> 即使是 Decoder-only 的模型，在预处理输入（Prefill）的时候也不需要利用 KV Cache（P/D 分离）……
-
-这句不准确。实际上：
-
-- **Prefill 阶段会一次性计算 prompt 所有 token 的 K、V，并把它们写入 KV Cache**，供后续 decode 复用。所以并不是「prefill 不需要 KV Cache」，而是「KV Cache 的*加速收益*主要体现在逐 token 的 decode 阶段」。
-- **P/D 分离（Prefill/Decode disaggregation）** 是一种把预填充和解码放到不同实例/硬件上执行的部署优化，和「prefill 是否需要 KV Cache」是两回事，放在这里当作括号注解会让读者混淆。
-
-建议改为：
-
-> KV Cache 主要用于 Decoder 在逐 token 生成（decode）阶段减少重复计算：Prefill 阶段会一次性算出 prompt 所有 token 的 K、V 并写入缓存，decode 阶段每生成一个新 token，只需计算它自己的 Q、K、V，再与缓存中的历史 K、V 拼接即可。本代码仅作示例。
-
-### 4. GQA 段落里的公式变量缺失
-
-补全后应为（设头数为 $h$，组数为 $g$）：
-
-> 将所有 Head 分为 $g$ 个组（要求 $g$ 整除 $h$），每组共享同一对 K、V。当 $g=h$ 时退化为 MHA，$g=1$ 时退化为 MQA；当 $1<g<h$ 时，KV Cache 压缩到 MHA 的 $\frac{g}{h}$，压缩率不如 MQA 的 $\frac{1}{h}$，但保留了更大的自由度，效果更有保证。在 Llama-2/3-70B 中 $g=8$。
-
----
-
-## 二、代码 Bug（会直接报错）
-
-### Bug 1：`test_MHA_with_cache()` 里 `mha` 未定义
-
-这个测试函数里循环调用了 `mha(...)`，但**从头到尾没有实例化 `mha`**，运行会直接抛 `NameError: name 'mha' is not defined`。需要在循环前补上模型实例化：
-
-```python
-def test_MHA_with_cache():
-    batch_size = 2
-    seq_len = 5
-    hidden_size = 64
-    num_heads = 4
-
-    hidden_state = torch.randn(batch_size, seq_len, hidden_size)
-    causal_mask = torch.triu(torch.ones(seq_len, seq_len), diagonal=1).bool()
-
-    mha = MultiHeadAttention(hidden_size, num_heads)   # ← 缺了这一行
-
-    past_key_value = None
-    outputs = []
-    for i in range(seq_len):
-        current_input = hidden_state[:, i:i+1, :]
-        current_causal_mask = causal_mask[i:i+1, :i+1]   # 全 False，等价于不掩码（用全量缓存时本就无需再掩码）
-        output_step, past_key_value = mha(
-            current_input,
-            causal_mask=current_causal_mask,
-            past_key_value=past_key_value,
-            use_cache=True
-        )
-        outputs.append(output_step)
-
-    output = torch.cat(outputs, dim=1)
-    print("Input shape:", hidden_state.shape)
-    print("Output shape:", output.shape)
-```
-
-（顺带说明：用全量 KV Cache 做 decode 时，单个 query 本来就可以看到所有已缓存的历史 key，`current_causal_mask` 实际上全是 `False`、不起任何作用，这里保留只是为了和接口对齐，逻辑上没问题。）
-
-### Bug 2：GQA 的 `split_head` 中 `.expand(...).view(...)` 会报错
-
-```python
-x = x[:, :, None, :, :].expand(...).view(batch_size, self.num_heads, seq_len, self.head_dim)
-```
-
-`expand()` 返回的是**非连续（non-contiguous）张量**（被扩展维度的 stride 为 0），紧接着对它调用 `.view()` 去合并维度时，PyTorch 会抛出：
-
-```
-RuntimeError: view size is not compatible with input tensor's size and stride
-(at least one dimension spans across two contiguous subspaces). Use .reshape(...) instead.
-```
-
-把最后的 `.view` 改成 `.reshape` 即可（`reshape` 会在必要时自动 `contiguous`）：
-
-```python
-def split_head(self, x, group_num=None):
-    batch_size, seq_len = x.size()[:2]
-
-    if group_num is None:
-        return x.view(batch_size, -1, self.num_heads, self.head_dim).transpose(1, 2)
-    else:
-        # (batch_size, group_num, seq_len, head_dim)
-        x = x.view(batch_size, -1, group_num, self.head_dim).transpose(1, 2)
-        # 每组 K/V 复制 num_heads // group_num 份
-        x = (
-            x[:, :, None, :, :]
-            .expand(batch_size, group_num, self.num_heads // group_num, seq_len, self.head_dim)
-            .reshape(batch_size, self.num_heads, seq_len, self.head_dim)   # ← view 改成 reshape
-        )
-        return x
-```
-
----
-
-## 三、可选的小改进（不影响正确性）
-
-这些不算错误，但作为教材会更严谨：
-
-- **缩放因子的设备/写法**：`torch.sqrt(torch.tensor(d_k, dtype=torch.float32))` 每次都在 CPU 上新建张量，放到 GPU 训练时会有设备不一致风险。更简洁稳妥的写法是直接 `attention_scores = ... / (self.head_dim ** 0.5)`。
-- **掩码写法**：`attention_scores += mask * -1e9` 在混合精度（fp16/bf16）下，`-1e9` 可能溢出/精度不佳，且 `+=` 原地操作偶尔会干扰 autograd。教材里更推荐 `attention_scores = attention_scores.masked_fill(mask, float('-inf'))`，语义也更清晰。
-- **SDPA 代码注释**：`ScaledDotProductAttention` 里几处注释写了 `(batch_size, num_heads, seq_len, ...)`，但这个类本身并没有 `num_heads` 维度（heads 是 MHA 才拆出来的），建议把注释里的 `num_heads` 去掉，避免读者困惑。
-- **MLA 部分仍是 `TODO`**：如果要作为完整教材，这一节需要补全（DeepSeek-V2 的低秩 KV 压缩 + 解耦 RoPE 部分是 MLA 的关键，容易讲错，值得单独花篇幅）。
-
----
-
-### 小结
-
-最需要修的是这几处：
-
-1. **SDPA 出处**（最严重的史实错误：应归于 2017 年 Transformer，而非 2014 年 Bahdanau 论文）；
-2. **GQA `split_head` 的 `.view` → `.reshape`**（必崩）；
-3. **`test_MHA_with_cache` 漏了 `mha = MultiHeadAttention(...)`**（必崩 `NameError`）；
-4. Prefill/KV Cache 表述、MQA 模型列表（Gemini 存疑）、GQA 公式变量补全这几处概念性瑕疵。
-
-把以上几点改掉后，这篇博客作为入门教材就比较扎实了。需要的话，我可以帮你把整篇（含 MLA 一节）重写成一份可直接运行、注释统一的完整版本。
-
-Reference:
-https://hwcoder.top/Manual-Coding-1
-
-
-下面是扩写后的版本。我在保留专业性的基础上，补充了每种机制的设计动机，并用一条主线——**KV Cache 的显存与带宽瓶颈**——把这条演进脉络串了起来，让你能看出"为什么"会这样一步步发展。
-
----
-
-### 演进主线：从"如何算注意力"到"如何让推理负担得起注意力"
-
-理解这条发展线，关键是抓住两个不同阶段的核心矛盾：
-
-- **2017 年之前到 2017 年**：要解决的是"**怎样让模型高效地建模长程依赖**"。这一阶段诞生了注意力机制本身，以及 Transformer 的 Q/K/V 框架和多头设计。
-- **2019 年至今**：Transformer 已成事实标准，主要矛盾转移到了"**自回归推理时如何降低 KV Cache 的显存占用与访存带宽压力**"。MQA、GQA、MLA 都是为解决这一矛盾而生，它们并不改变注意力的数学本质，而是在 **K/V 的"存储与共享方式"上做文章**。
-
-把这两个阶段分开看，后面四种机制的逻辑就非常清楚了。
-
----
-
-### 1. 缩放点积注意力（SDPA）：注意力的最小计算单元
-
-注意力计算的最小单元，由 2017 年《Attention Is All You Need》提出，在点积注意力基础上加入 $\frac{1}{\sqrt{d_k}}$ 缩放因子，其完整形式为：
-
-$$\text{Attention}(Q,K,V)=\text{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right)V$$
-
-**为什么要除以 $\sqrt{d_k}$？** 当维度 $d_k$ 较大时，$Q$ 与 $K$ 的点积结果方差会随 $d_k$ 线性增大（若各分量独立、均值为 0、方差为 1，则点积方差约为 $d_k$）。点积数值过大会把 softmax 推向饱和区，使其输出接近 one-hot，导致梯度极小、训练难以推进。除以 $\sqrt{d_k}$ 正是为了把点积方差重新归一到 1 附近，稳定梯度。
-
-**注意力的更早源头。** 注意力机制本身最早可追溯到 2014 年 Bahdanau 等人在神经机器翻译中提出的**加性注意力**（用一个小型前馈网络计算对齐分数），其动机是缓解 seq2seq 中"把整句压进一个固定向量"的信息瓶颈。但真正奠定今天范式的——**显式的 Q/K/V 抽象**与**缩放点积**这种可高度并行化的打分形式——均来自 Transformer。点积形式相比加性形式的最大优势在于可直接用高度优化的矩阵乘法实现，在 GPU 上吞吐远高于加性注意力，这也是它能成为主流的关键工程原因。
-
----
-
-### 2. 多头注意力（MHA）：把表示空间拆成多个子空间
-
-2017 年开山之作《Attention Is All You Need》提出，是当前主流 LLM 的基石。其做法是把 $Q$、$K$、$V$ 分别线性投影到 $h$ 个低维子空间，在每个子空间独立做一次 SDPA，再把 $h$ 个头的输出拼接并线性变换。**每个头都有自己独立的 Q、K、V 投影。**
-
-**为什么要"多头"而不是"一个大头"？** 单个注意力头在做 softmax 加权时，本质上倾向于聚焦到少数位置上，表达能力受限。多头允许模型在不同子空间中并行关注不同类型的关系——例如有的头捕捉语法依赖、有的头捕捉指代或长程语义关联——相当于"集成"了多组互补的注意力模式，而且由于每个头维度更小（$d_k=d_{\text{model}}/h$），总计算量与单个全维注意力基本持平。
-
-正是 MHA 这种"每个头各存一份 K/V"的设计，埋下了后续所有优化的伏笔：**在自回归解码时，所有头、所有层、所有历史 token 的 K/V 都必须缓存下来**，KV Cache 随序列长度和头数线性膨胀，成为长上下文推理的主要显存与带宽瓶颈。
-
----
-
-### 3. 多查询注意力（MQA）：让所有头共享同一份 K/V
-
-出自 2019 年《Fast Transformer Decoding: One Write-Head is All You Need》。其核心改动是：**所有头共享同一份 K、V，只保留各自独立的 Q**，从而把 KV Cache 压缩到原来的 $\frac{1}{h}$。
-
-**为什么这样能行、又为什么需要它？** 论文的出发点是一个关键观察：自回归解码时性能往往**不受算力限制，而受访存带宽限制**——每生成一个 token 都要把全部 KV Cache 从显存读进计算单元，参数和缓存的"搬运"成本主导了延迟。既然瓶颈在 K/V 的读取量，那么让所有头共用一份 K/V 就能成倍减少需要搬运和存储的数据，显著加快解码、增大可容纳的 batch 与上下文长度。代价是表达能力略有损失（K/V 不再各头独立），在部分任务上有小幅质量下降。代表模型有 PaLM、StarCoder、Falcon 等。
-
----
-
-### 4. 分组查询注意力（GQA）：在质量与效率之间取折中
-
-出自 2023 年《GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints》，是 MHA 与 MQA 之间的**可调折中**。设头数为 $h$、组数为 $g$（要求 $g$ 整除 $h$），让每 $\frac{h}{g}$ 个查询头共享一组 K/V：
-
-- $g=h$ 时，每头各有一份 K/V，退化为 **MHA**；
-- $g=1$ 时，全部头共享一份 K/V，退化为 **MQA**；
-- $1<g<h$ 时，KV Cache 压缩到 $\frac{g}{h}$。
-
-**为什么需要它？** MQA 虽快，但把 $h$ 份 K/V 压成 1 份过于激进，在大模型上质量损失明显且训练不稳定。GQA 引入"组"这个旋钮，让我们能在"接近 MHA 的质量"和"接近 MQA 的速度"之间平滑取舍。论文还提出一个很实用的工程贡献：**可以从已训练好的 MHA 检查点出发，通过对每组内的 K/V 投影做均值池化来初始化，再用极少量算力继续训练（uptraining）**，无需从零重训就能得到 GQA 模型。这种"低成本改造既有模型"的特性，使它迅速成为业界默认选择。代表模型有 Llama-2-70B（$g=8$）与 Llama-3 全系列。
-
----
-
-### 5. 多头隐注意力（MLA）：用低秩压缩换取更小的缓存
-
-出自 2024 年 DeepSeek-V2 技术报告。它换了一个思路：不再靠"让多个头共享 K/V"来省缓存，而是**用低秩线性变换把 K、V 联合压缩到一个低维潜向量（latent vector）**，推理时只缓存这个潜向量，使用时再通过上投影矩阵恢复出各头所需的 K/V。
-
-**为什么这是又一次进步？** GQA/MQA 是通过"减少 K/V 的份数"来省缓存，但这必然以牺牲头间多样性为代价。MLA 的目标是**在把 KV Cache 压得比 GQA 更小的同时，尽量保住接近 MHA 的表达能力**——因为各头仍可从同一潜向量解出不同的 K/V，而非简单共享同一份。此外，得益于矩阵吸收等技巧，上投影可以被合并进其他权重，从而避免显式重建完整 K/V 的额外开销。这使得 MLA 在极小缓存占用下仍保持较强性能，成为 DeepSeek 系列长上下文与高效推理的关键设计。
-
----
-
-### 一句话总结这条脉络
-
-| 机制 | 年份 | 核心动机 | K/V 处理方式 | KV Cache 相对量 |
-|---|---|---|---|---|
-| SDPA | 2017 | 稳定梯度、可并行打分 | —（单次计算） | — |
-| MHA | 2017 | 多子空间建模、表达力 | 每头独立 K/V | $1$（基准） |
-| MQA | 2019 | 缓解解码访存带宽瓶颈 | 全部头共享一份 K/V | $\frac{1}{h}$ |
-| GQA | 2023 | 质量与效率可调折中 | 分组共享 K/V | $\frac{g}{h}$ |
-| MLA | 2024 | 小缓存 + 保表达力 | 低秩潜向量压缩 | 进一步压缩 |
+| 机制 | 年份 | 核心动机             | K/V 处理方式       | KV Cache 相对量 |
+| ---- | ---- | -------------------- | ------------------ | --------------- |
+| SDPA | 2017 | 稳定梯度、可并行打分 | —（单次计算）     | —              |
+| MHA  | 2017 | 多子空间建模、表达力 | 每头独立 K/V       | $1$（基准）     |
+| MQA  | 2019 | 缓解解码访存带宽瓶颈 | 全部头共享一份 K/V | $\frac{1}{h}$   |
+| GQA  | 2023 | 质量与效率可调折中   | 分组共享 K/V       | $\frac{g}{h}$   |
+| MLA  | 2024 | 小缓存 + 保表达力    | 低秩潜向量压缩     | 进一步压缩      |
 
 可以看到：**SDPA 与 MHA 解决"怎么算得好"，而 MQA → GQA → MLA 这条线，本质上都是在解决同一个工程难题——如何在自回归推理中既压住 KV Cache、又尽量不损失模型质量**，只是手段从"粗暴共享"逐步演进到"分组折中"再到"低秩压缩"，越来越精细。
 
+
+# 交叉注意力
+
+在传统的 Self-attention（自注意力） 中，Query、Key 和 Value 均来自于同一个序列/模态。
+它的作用是让序列内的元素互相交互（例如一句话中的主语去注意动词）。
+
+而 Cross-attention（交叉注意力） 的核心区别在于：
+
+Q 来自一个序列（或模态）X - Encoder-Decoder 架构中，Q 来自 decoder；
+
+K 和 V 来自另一个序列（或模态）Y - Encoder-Decoder 架构中，K/V 来自 encoder。
+
+Cross-attention 的本质是：让一个序列去查询并“吸收”另一个序列的信息。
+
+Reranker 语境中的"cross-attention"：通常指 cross-encoder——把 query 和 document 拼成一个序列 [CLS] q [SEP] d [SEP]，做全量自注意力，query 的每个 token 都能和 document 的每个 token 交互。这是"early interaction"。
+
+
+假设输入序列 $X \in \mathbb{R}^{N \times d_x}$（目标序列，长度为 $N$）和 $Y \in \mathbb{R}^{M \times d_y}$（上下文/源序列，长度为 $M$）：
+
+1. **线性映射**：
+   $$Q = X W_Q \quad (Q \in \mathbb{R}^{N \times d_k})$$
+   $$K = Y W_K \quad (K \in \mathbb{R}^{M \times d_k})$$
+   $$V = Y W_V \quad (V \in \mathbb{R}^{M \times d_v})$$
+   *(注意：$W_Q$ 映射自 $X$，而 $W_K, W_V$ 映射自 $Y$；$X$ 和 $Y$ 的序列长度 $N$ 和 $M$ 可以完全不相等，但映射后的 $Q$ 和 $K$ 维度必须匹配)*
+
+2. **计算注意力权重并加权**：
+   $$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q K^T}{\sqrt{d_k}}\right) V$$
+    * 输出的维度是 $N \times d_v$，其形状只与 Query 的序列长度 $N$ 相关，而与 Key/Value 的长度 $M$ 无关。
+
+典型场景是机器翻译（原始 Transformer 的 Encoder-Decoder）、文本生成图像（如 Stable Diffusion）、多模态感知（如 BLIP-2、Flamingo、Perceiver）。
+
+
+### 三、 Cross-attention vs. MHA vs. SDPA：核心区别
+
+Cross-attention 和其他注意力也不是一个维度的互斥概念。
+
+1. **Cross-attention vs. SDPA**：
+    * SDPA 是**算法实现/内核**，Cross-attention 是**应用模式**。
+    * Cross-attention 的底层计算，不管是单头还是多头，核心都依赖 SDPA 算子来计算注意力分布。
+
+2. **Cross-attention vs. MHA**：
+    * MHA **既可以是 Self-attention，也可以是 Cross-attention**。
+    * 如果传入 MHA 的是同一个输入 `MHA(x, x, x)`，它就是 **Multi-Head Self-attention**；
+    * 如果传入 MHA 的是不同输入 `MHA(x, y, y)`，它就是 **Multi-Head Cross-attention**。
+    * 在现代神经网络中，**Cross-attention 几乎百分之百都是以 Multi-Head（MHA）的形式来实现的**。
 
 # Special Thank
 
