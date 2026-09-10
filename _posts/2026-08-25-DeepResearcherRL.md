@@ -4,6 +4,7 @@ title: LLM Agentic RL w/ hand-made vanilla Deep Researcher Agent
 tags: LLM
 comments: true
 ---
+
 本文记录了在 8 卡 A100 节点上，基于 **veRL (Ray + vLLM + FSDP)** 框架，对大语言模型进行 Multi-turn Agent 强化学习训练的实践，
 以及后续放缩到 910B 集群的迁移方案。
 
@@ -108,8 +109,6 @@ Use veRL (Ray + vLLM + FSDP) to run Agentic RL training (GRPO/DAPO) on Qwen2.5-C
 veRL 本身是通用 RL 训练框架（PPO/GRPO/DAPO + FSDP + vLLM），
 原生 veRL 的 rollout 是一次性生成文本，
 不会中途暂停去调用外部工具再继续生成。不过现在改造自定义抽象层应该可以实现了。而且其实现在的原生veRL解决了一个Search-R1提到的问题：外部工具返回的 Observation 必须被 Mask 掉。
-
-
 
 但是在早期版本的 veRL 中，它只是一个针对传统单轮 Prompt-Response（如数学、代码长思考题）设计的纯文本 RL 引擎。无法实现多轮交互，Rollout 是一次性的；而且还需要自己管理对话 history；也不支持并发异步工具调用。
 
@@ -245,7 +244,6 @@ Step 3: 计算 reward
 3. **Loss Masking**：`mask_observations=True` 确保 observation token（工具返回的内容）
    不参与 loss 计算。模型只需要学习"何时搜索"和"搜索后的答案"，不需要学习复述搜索结果的文本。这也是 Search-R1提出的（现在看来根本就是基本常识的）工程关键点。
    在 DMI 的工作中，就是**对 `<information>` 内的检索 token 置零 mask**，只学习其他的模型生成内容的 loss。
-
 4. **多轨迹并发**：Agent Loop 支持异步并发处理多条轨迹，
    每条轨迹有独立的 `trajectory_id` 和对话历史。
 
@@ -401,11 +399,10 @@ Question: {question}
 
 | 标签                               | 用途     | Agent 行为                              |
 |----------------------------------| -------- | --------------------------------------- |
-| `<think>...</think>`             | 推理过程 | 模型在每次获取新信息后进行思考          |
-| `<search>query</search>`         | 搜索动作 | 触发 Wikipedia 搜索工具调用             |
-| `<information>...</information>` | 搜索结果 | 工具服务器返回的观察（observation）     |
-| `<answer>...</answer>`           | 最终答案 | 触发 episode 结束，提取答案进行 EM 打分 |
-
+| `...`             | 推理过程 | 模型在每次获取新信息后进行思考          |
+| `query`         | 搜索动作 | 触发 Wikipedia 搜索工具调用             |
+| `...` | 搜索结果 | 工具服务器返回的观察（observation）     |
+| `...`           | 最终答案 | 触发 episode 结束，提取答案进行 EM 打分 |
 
 ### 多轮交互的数据流
 
@@ -515,7 +512,6 @@ Simple exact match (EM) reward:
   (设计改为：reward /= i, i for answer tag amount)
 
 > 完全不符合格式 0；有 <answer> 0.1；答案对（EM）1；标签出现多次得分 /= 出现次数
-
 
 **为什么设置 `format_score=0.1`？**
 
@@ -637,7 +633,7 @@ PG loss = 0 × log_prob = 0    ← 梯度为零
   ❌ 模型权重完全不更新，训练在"空转"
 ```
 
-#### 场景 C：恰好有一条偶然正确 - 突破僵局 
+#### 场景 C：恰好有一条偶然正确 - 突破僵局
 
 ```
 3 个回复得 0.1（格式分），1 个回复碰巧得 1.0（正确答案）
@@ -690,7 +686,8 @@ OK 总结一下 - GRPO 算法的核心机制是：
 1. 对每个 prompt 生成 n=4 个回复
 2. 计算每个回复的 reward
 3. 在组内标准化 reward（减去均值，除以标准差）→ 得到 advantage
-4. 用 advantage 加权 policy gradient 
+4. 用 advantage 加权 policy gradient
+
 > loss = - (log_prob * advantage).mean()
 
 当所有 4 个回复的 reward **相同**时（都是 0.1 格式分）：
@@ -772,6 +769,7 @@ pg_loss 不下降是正常的，原因是策略梯度的优化目标是动态变
 总之就是**格式输出**都会有问题。
 
 而且 DeepSeek 团队在 R1-Zero 实验中还发现，纯 RL 训练出的模型虽然推理能力很强，但会出现极其严重的病态行为：
+
 - 中英文严重混杂（Language Mixing）；
 - 自创无意义缩写和乱码符号；
 - 思维链极度冗长、可读性极差。
@@ -795,7 +793,6 @@ pg_loss 不下降是正常的，原因是策略梯度的优化目标是动态变
 
 （这 200 条数据必须是包含 多轮交替轨迹 的完整 Demonstration），同时对内部长链数据做适度过采样。
 当然考虑到内部高质量长链数据较少，我们留一部分给后面的 RL 探索与验证。
-
 
 构造数据的一个例子 - *使用 Wikipedia API 直接搜索，构造 Search-R1 格式*的示范轨迹。
 
@@ -826,7 +823,6 @@ pg_loss 不下降是正常的，原因是策略梯度的优化目标是动态变
 - 200 步 × batch_size=8 = 1,600 条，全部落在 NQ 单跳区域
 - 模型**从未见过 HotpotQA 多跳问题**
 - Score 提升全部来自 NQ 事实型问题，多跳能力完全未训练
-
 
 # 6. 训练运行记录
 
@@ -875,18 +871,17 @@ Content: "Question: ..."
 后来发现乱码是 vLLM 0.8.5 V1 引擎的 bug，不是模型问题。
 
 > **排查过程**：
+> 
 > 1. **现象**：训练日志显示 `score/mean=0.1` 持续 99 步，`num_turns=1`，模型从不调用搜索
-> 2. **怀疑 1**：模型能力不够 → 用简单英文提问 "What is the capital of France?" → 正常回答 
+> 2. **怀疑 1**：模型能力不够 → 用简单英文提问 "What is the capital of France?" → 正常回答
 > 3. **怀疑 2**：prompt 格式不对 → 三轮迭代（Search-R1 原始 → 加 system message → 去掉示例答案）→ 仍有乱码
-> 4. **怀疑 3**：tokenizer 有问题 → 检查 chat_template 正确应用 
+> 4. **怀疑 3**：tokenizer 有问题 → 检查 chat_template 正确应用
 > 5. **怀疑 4**：vLLM 推理和 HuggingFace 推理不一致 → **关键验证！** HF 推理正常，vLLM 推理乱码
 > 6. **结论**：vLLM 0.8.5 V1 引擎的 token 生成 bug → 切换到 Docker vLLM 0.11 → 完美解决
-
 
 总之看起来Coder模型能生成 `<answer>...</answer>` 结构（获得 0.1 格式分），但从不在 `<answer>`中填入有意义的内容， 也从不使用`<search>` 标签进行工具调用。
 
 BTW，wiki_search 工具服务器在整个测试中运行正常。
-
 
 ## 训练效率
 
@@ -935,8 +930,6 @@ Step 12-25: ██████████  0.18-0.52  (开始学习)
 Step 26-43: ████████████████  0.35-0.72  (稳定上升!)
 ```
 
-
-
 **SFT 数据格式**
 
 ```json
@@ -960,7 +953,6 @@ Step 26-43: ████████████████  0.35-0.72  (稳定
 3. **每个问题触发多个 API 调用**：wikipedia 库的 `search()` + `page()` + `summary()`
    每个都是一次独立 API 调用。v1 每个问题可能触发 4-6 次调用，在 0.3s 延迟下迅速耗尽配额。
 
-   
 ### Dr.GRPO 适用性分析
 
 **GRPO vs Dr.GRPO**：
@@ -1010,15 +1002,11 @@ HotpotQA 第一次发现需要多跳、第二次学会搜索链。
 - GRPO 省掉 Critic → 节省 ~50% GPU 内存和训练时间，更适合 14B 大模型
 
 > PPO 的 Critic 是一份与 Actor 同量级的模型，极易 OOM；GRPO 省下这份显存全给 Actor。其优势估计为组内相对：
->
+> 
 > $$
->A_i=\frac{r_i-\operatorname{mean}(\mathbf{r})}{\operatorname{std}(\mathbf{r})}
-
->
+> A_i=\frac{r_i-\operatorname{mean}(\mathbf{r})}{\operatorname{std}(\mathbf{r})}
 > $$
 
-
-$$
 > 
 > 相比 PPO，组内相对归一化给训练提供比单一 reward + 不可靠 critic 更清晰的信号
 
@@ -1072,15 +1060,6 @@ $$
 其中 $r_{i,t}(\theta)=\dfrac{\pi_\theta(o_{i,t}\mid q,o_{i,<t})}{\pi_{\theta_{\text{old}}}(o_{i,t}\mid q,o_{i,<t})}$，而 $R_i$ 中包含了组件 ④ 的长度整形项。**注意：式子里没有 KL 项**——这是 DAPO 相对 GRPO 的另一个关键删除。
 
 Here $r_{i,t}(\theta)=\dfrac{\pi_\theta(o_{i,t}\mid q,o_{i,<t})}{\pi_{\theta_{\text{old}}}(o_{i,t}\mid q,o_{i,<t})}$, and $R_i$ absorbs the length-shaping term from component ④. **Note there is no KL term** — that is another key deletion of DAPO relative to GRPO.
-
----
-
-### 1. 补全后的四大组件表 / The Completed Four-Component Table
-
-| 技巧 / Technique                                             | 做法 / Method                                                                                                                                                                                                                                                                                                                                                       | 关键机制细节 / Key Mechanism                                                                                                                                                                                                                                                                                                                                                                                | 解决的问题 / Problem Solved                                                                                                                                                                                                                                                                                       |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **① Clip-Higher**（解耦裁剪 / decoupled clipping）    | 把 PPO 单一$\epsilon$ 拆成非对称区间 $[1-\epsilon_{\text{low}},\,1+\epsilon_{\text{high}}]$，论文取 $\epsilon_{\text{low}}=0.2,\ \epsilon_{\text{high}}=0.28$ / Split PPO's single $\epsilon$ into an asymmetric range $[1-\epsilon_{\text{low}},\,1+\epsilon_{\text{high}}]$; the paper uses $\epsilon_{\text{low}}=0.2,\ \epsilon_{\text{high}}=0.28$ | 上界$\epsilon_{\text{high}}$ 放宽以给低概率 token "上升空间"；下界 $\epsilon_{\text{low}}$ **故意不放宽**，否则会把低概率 token 直接压到 0、缩小采样空间 / Raise $\epsilon_{\text{high}}$ to give low-probability tokens headroom to grow; **deliberately keep $\epsilon_{\text{low}}$ small**, since relaxing it would crush low-probability tokens to 0 and shrink the sampling space | 对称裁剪对低概率 token 的提升上限极苛刻 → 策略熵单调下降、rollout 高度同质化 →**熵坍缩**、探索死亡 / Symmetric clipping imposes a brutally tight growth ceiling on low-probability tokens → monotonically decreasing entropy, near-identical rollouts → **entropy collapse** and dead exploration |
-| **② Dynamic Sampling**（动态采样 / dynamic sampling） | 过采样后**过滤掉准确率为 0 或 1 的组**（组内 $\hat{A}\equiv 0$，梯度为零），持续重采样直到凑满一个全是"有效样本"的 batch，以约束 $0<                                                                                                                                                                                                                        | \{\text{correct}\}                                                                                                                                                                                                                                                                                                                                                                                          |                                                                                                                                                                                                                                                                                                                   |
 
 组件 ④ 的软惩罚公式（论文 Eq. 13）为：
 
@@ -1206,14 +1185,18 @@ DAPO 保留它，说明在实际大规模训练中，std 归一化带来的方�
 **三层 Reward 结构**：
 
 1. 无 `<answer>` 标签 → `reward = 0.0`
-2. 有 `<answer>` 但答案错 → `reward = 0.1`（format_score，引导格式）
-3. 答案完全匹配（EM） → `reward = 1.0`
+2. 有 `<answer>` 但答案错 → `reward = 0.1`（format_score，引导格式）；reward 除以 `` 出现次数3. 答案完全匹配（EM） → `reward = 1.0`
+4.
 
 **为什么不直接用 0/1 二值 reward？**
 
 - RL 有"冷启动"问题：如果模型从不会输出 `<answer>`，所有 reward = 0
 - GRPO 组内标准化后所有 advantage = 0 → PG loss = 0 → 模型不更新
 - `format_score=0.1` 给了一个"梯子"，模型先学会格式，再学内容
+
+主流的检索类 Agentic RL 设计通常没有很复杂。——**Search-R1 明确采用"简单的、基于结果（outcome-based）的奖励函数"**，并证明这比复杂奖励更稳、更能泛化。Search-R1 optimizes LLM reasoning trajectories with multi-turn search interactions, leveraging retrieved token masking for stable RL training and a simple outcome-based reward function.
+
+其核心论点是：复杂的神经奖励模型容易被钻空子（gamed）或需要过度工程；只需定义答案正确性即可扩展到新领域。你手动加的每一个 shaping 项（尤其 diversity、step penalty）都是一个可被 hack 的攻击面。**面试正确答案不是"我设计了 5 个奖励"，而是"我优先用 outcome reward，只保留最小格式约束，把复杂偏好交给相对优势去自然涌现"。
 
 ## Q3: Tool Server 怎么工作？Agent 怎么调用工具的？
 
@@ -1299,7 +1282,6 @@ Loss 只计算生成 token（不包括 prompt 和 observation token），由 `ma
 - 假学习：pg_loss ≠ 0 但 score 始终不涨 → 模型在过拟合噪声
 - 真学习：pg_loss 波动 + score 趋势上升 → 我们在 Docker 训练中看到的
 
-
 ## Q13: 训练 43 步后 Score 从 0.10 涨到 0.72，这意味着什么？
 
 **实际数据（Docker vLLM 0.11 + Instruct）**：
@@ -1321,7 +1303,6 @@ Loss 只计算生成 token（不包括 prompt 和 observation token），由 `ma
 - Step 1: 2.28（多轮搜索）
 - Step 43: 1.0（直接回答）
 - 解读：模型学会了判断问题难度——简单问题直接答，复杂问题才搜索
-
 
 ## Q17: 训练数据分布不均会有什么后果？你是怎么发现的？
 
@@ -1505,11 +1486,11 @@ veRL 官方在底层将训练后端抽象成了通用的 Engine/Worker 接口，
 
 1. **极大地节省显存**：PPO 需要维护一个与 Actor 相同规模的 **Critic（评论员）模型** 来预测状态价值（State Value），这在 8 卡节点上微调 7B+ 模型时极易造成 OOM。GRPO 取消了 Critic 模型，将显存和计算资源全部释放给 Actor。
 2. **相对优势估算**：对每一个输入 $Prompt$，让模型并行 Rollout 产生一组成员（采样数 $G = 5$）。通过这组轨迹的奖励均值和标准差，计算组内的相对优势（Advantage）：
-
+   
    $$
    A_i = \frac{r_i - \text{mean}(R)}{\text{std}(R)}
    $$
-
+   
    这自然地建立了一个基线（Baseline），极大地稳定了强化学习的梯度更新。
 
 ### 3.2 现代改良：从 vanilla GRPO → Dr.GRPO / DAPO
@@ -1629,7 +1610,7 @@ vanilla GRPO 的两个已知偏置，务必知道：
 ---
 
 > 但当前主流的检索类 Agentic RL 恰恰相反——Search-R1[1] 明确采用"简单的、基于结果（outcome-based）的奖励函数"，并证明这比复杂奖励更稳、更能泛化。Search-R1 optimizes LLM reasoning trajectories with multi-turn search interactions, leveraging retrieved token masking for stable RL training and a simple outcome-based reward function.
->
+> 
 > 其核心论点是：复杂的神经奖励模型容易被钻空子（gamed）或需要过度工程；只需定义答案正确性即可扩展到新领域。你手动加的每一个 shaping 项（尤其 diversity、step penalty）都是一个可被 hack 的攻击面。面试正确答案不是"我设计了 5 个奖励"，而是"我优先用 outcome reward，只保留最小格式约束，把复杂偏好交给相对优势去自然涌现"。 我在修订版把 shaping 降级为"可选辅助项 + 明确风险标注"。
 
 ### 4.2 如何防御 Reward Hacking（奖励作弊）？
@@ -1682,15 +1663,6 @@ vanilla GRPO 的两个已知偏置，务必知道：
 ---
 
 # 修订说明：Gemini 版的 5 个致命问题（面试会被打的点）
-
-<details>
-<summary><b>① 最重要：重度 Reward Shaping 与当前 SOTA 方向相反（会被直接质疑"你在制造 Reward Hacking 表面积"）</b></summary>
-
-Gemini 设计了 5 项密集奖励（format / validity / diversity / step / accuracy）。但当前主流的检索类 Agentic RL 恰恰相反——**Search-R1 明确采用"简单的、基于结果（outcome-based）的奖励函数"**，并证明这比复杂奖励更稳、更能泛化。Search-R1 optimizes LLM reasoning trajectories with multi-turn search interactions, leveraging retrieved token masking for stable RL training and a simple outcome-based reward function.
-
-其核心论点是：复杂的神经奖励模型容易被钻空子（gamed）或需要过度工程；只需定义答案正确性即可扩展到新领域。你手动加的每一个 shaping 项（尤其 diversity、step penalty）都是一个可被 hack 的攻击面。**面试正确答案不是"我设计了 5 个奖励"，而是"我优先用 outcome reward，只保留最小格式约束，把复杂偏好交给相对优势去自然涌现"。** 我在修订版把 shaping 降级为"可选辅助项 + 明确风险标注"。
-
-</details>
 
 <details>
 <summary><b>② GRPO 优势公式除以 std 会引入"难度偏置"，长度归一化会引入"长度偏置"（Dr.GRPO 的核心批评）</b></summary>
@@ -1890,7 +1862,6 @@ Search-R1 证明：outcome-based reward + retrieved token masking 就能实现�
 
 # 番外：Search R1
 
-
 ## Search-R1: Contributions and RL Implementation
 
 ### Core Contributions
@@ -1903,11 +1874,15 @@ The contributions span three levels:
 
 The standard RL objective for LLMs treats the entire output sequence $y$ as generated solely by the model:
 
-$$\max_{\pi_\theta} \mathbb{E}_{x \sim D, y \sim \pi_\theta(\cdot|x)}\left[r_\phi(x,y)\right] - \beta D_{\text{KL}}\left[\pi_\theta(y|x) \| \pi_{\text{ref}}(y|x)\right]$$
+$$
+\max_{\pi_\theta} \mathbb{E}_{x \sim D, y \sim \pi_\theta(\cdot|x)}\left[r_\phi(x,y)\right] - \beta D_{\text{KL}}\left[\pi_\theta(y|x) \| \pi_{\text{ref}}(y|x)\right]
+$$
 
 Search-R1 extends this to incorporate an external search engine $\mathcal{R}$:
 
-$$\max_{\pi_\theta} \mathbb{E}_{x \sim D,\, y \sim \pi_\theta(\cdot|x;\mathcal{R})}\left[r_\phi(x,y)\right] - \beta D_{\text{KL}}\left[\pi_\theta(y|x;\mathcal{R}) \| \pi_{\text{ref}}(y|x;\mathcal{R})\right]$$
+$$
+\max_{\pi_\theta} \mathbb{E}_{x \sim D,\, y \sim \pi_\theta(\cdot|x;\mathcal{R})}\left[r_\phi(x,y)\right] - \beta D_{\text{KL}}\left[\pi_\theta(y|x;\mathcal{R}) \| \pi_{\text{ref}}(y|x;\mathcal{R})\right]
+$$
 
 where $\pi_\theta(\cdot|x;\mathcal{R}) = \pi_\theta(\cdot|x) \bowtie \mathcal{R}$, with $\bowtie$ denoting the interleaving of LLM generation and retrieval. The full rollout trajectory thus contains both model-generated tokens and retrieved document content.
 
@@ -1926,6 +1901,7 @@ Concretely, with masking the 7B model's average EM rises from 0.343 to 0.431. [T
 **3. Multi-Turn Interleaved Reasoning and Search Protocol**
 
 The model uses special tokens to structure its output:
+
 - `<think>...</think>` — reasoning process
 - `<search>...</search>` — search query issued by the model
 - `<information>...</information>` — retrieved results injected by the system
@@ -1943,7 +1919,9 @@ Search-R1 supports both **PPO** and **GRPO**. Here is a detailed breakdown of ea
 
 #### PPO Implementation
 
-$$J_{\text{PPO}}(\theta) = \mathbb{E}\left[\frac{1}{\sum_t I(y_t)} \sum_{t: I(y_t)=1} \min\left(\frac{\pi_\theta(y_t|x,y_{<t};\mathcal{R})}{\pi_{\text{old}}(y_t|x,y_{<t};\mathcal{R})} A_t,\ \text{clip}(\cdot, 1\pm\epsilon)\, A_t\right)\right]$$
+$$
+J_{\text{PPO}}(\theta) = \mathbb{E}\left[\frac{1}{\sum_t I(y_t)} \sum_{t: I(y_t)=1} \min\left(\frac{\pi_\theta(y_t|x,y_{<t};\mathcal{R})}{\pi_{\text{old}}(y_t|x,y_{<t};\mathcal{R})} A_t,\ \text{clip}(\cdot, 1\pm\epsilon)\, A_t\right)\right]
+$$
 
 The advantage $A_t$ is computed using Generalized Advantage Estimation (GAE, $\lambda = \gamma = 1$), requiring a separate Value LLM. The policy LLM uses a learning rate of 1e-6, while the value LLM uses 1e-5. Training runs for 500 steps on 8×H100 GPUs with a total batch size of 512. [PPO Setup](https://www.alphaxiv.org/abs/2503.09516?page=16)
 
@@ -1951,7 +1929,9 @@ The advantage $A_t$ is computed using Generalized Advantage Estimation (GAE, $\l
 
 GRPO eliminates the value model entirely. For each question, $G=5$ responses are sampled, and the advantage is computed from within-group relative rewards:
 
-$$J_{\text{GRPO}}(\theta) = \mathbb{E}\left[\frac{1}{G}\sum_{i=1}^G \frac{1}{\sum_t I(y_{i,t})} \sum_{t: I(y_{i,t})=1} \min\left(\frac{\pi_\theta}{\pi_{\text{old}}} \hat{A}_{i,t},\ \text{clip}(\cdot, 1\pm\epsilon)\hat{A}_{i,t}\right) - \beta D_{\text{KL}}[\pi_\theta \| \pi_{\text{ref}}]\right]$$
+$$
+J_{\text{GRPO}}(\theta) = \mathbb{E}\left[\frac{1}{G}\sum_{i=1}^G \frac{1}{\sum_t I(y_{i,t})} \sum_{t: I(y_{i,t})=1} \min\left(\frac{\pi_\theta}{\pi_{\text{old}}} \hat{A}_{i,t},\ \text{clip}(\cdot, 1\pm\epsilon)\hat{A}_{i,t}\right) - \beta D_{\text{KL}}[\pi_\theta \| \pi_{\text{ref}}]\right]
+$$
 
 Notably, the KL divergence is added directly to the loss function rather than used as a reward penalty term, and the retrieved token mask is also applied when computing the KL term.
 
@@ -1961,7 +1941,9 @@ Notably, the KL divergence is added directly to the loss function rather than us
 
 The reward design is intentionally minimal — outcome reward only, no process reward, no neural reward model:
 
-$$r_\phi(x, y) = \text{EM}(a_{\text{pred}}, a_{\text{gold}})$$
+$$
+r_\phi(x, y) = \text{EM}(a_{\text{pred}}, a_{\text{gold}})
+$$
 
 > "We adopt a rule-based reward system that consists solely of final outcome rewards, which assess the correctness of the model's response." [Reward Design](https://www.alphaxiv.org/abs/2503.09516?page=6)
 
@@ -1998,3 +1980,4 @@ The case studies also reveal that the model spontaneously develops **self-verifi
 - [Search-R1](https://github.com/PeterGriffinJin/Search-R1) — Original search-augmented RL
 - [DAPO](https://arxiv.org/abs/2503.14476) — Dynamic sampling for RL
 - [HotpotQA](https://hotpotqa.github.io/) — Multi-hop QA benchmark
+
