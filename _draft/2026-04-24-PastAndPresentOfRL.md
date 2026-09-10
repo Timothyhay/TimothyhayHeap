@@ -90,6 +90,8 @@ $$
 
 asks: since the RLHF optimum has a closed-form solution, why run RL at all?
 
+换句话说，DPO 的 idea 是 在带有 KL 正则项的强化学习优化目标下，语言模型本身就可以直接作为隐式奖励模型（Implicit Reward Model）。
+
 **核心推导**：KL 约束下的 RLHF 目标，其最优策略为
 
 **Core derivation**: Under the KL-constrained RLHF objective, the optimal policy is
@@ -98,13 +100,30 @@ $$
 \pi^*(y \mid x) \propto \pi_{\text{ref}}(y \mid x)\exp\left(\frac{1}{\beta} r(x, y)\right)
 $$
 
-反解出 $r(x,y) = \beta \log \frac{\pi^*(y|x)}{\pi_{\text{ref}}(y|x)} + \text{const}$，代入 Bradley–Terry 偏好模型，奖励函数被**隐式地重参数化为策略本身**，得到纯监督损失：
+可以反解出 reward $r(x,y) = \beta \log \frac{\pi^*(y|x)}{\pi_{\text{ref}}(y|x)} + \text{const}$，代入 Bradley–Terry 偏好模型，（配分函数 $Z(x)$ 相消）奖励函数被**隐式地重参数化为策略本身**，得到纯监督损失：
 
 Inverting this gives $r(x,y) = \beta \log \frac{\pi^*(y|x)}{\pi_{\text{ref}}(y|x)} + \text{const}$. Substituting into the Bradley–Terry preference model, the reward function is **implicitly reparameterized as the policy itself**, yielding a purely supervised loss:
 
 $$
 \mathcal{L}_{\text{DPO}} = -\mathbb{E}_{(x, y_w, y_l)}\left[\log \sigma\left(\beta \log \frac{\pi_\theta(y_w \mid x)}{\pi_{\text{ref}}(y_w \mid x)} - \beta \log \frac{\pi_\theta(y_l \mid x)}{\pi_{\text{ref}}(y_l \mid x)}\right)\right]
 $$
+
+
+
+DPO 能够跳过显式奖励模型，核心在于它将 **KL 约束下的 RLHF 最优解** 与 **Bradley-Terry 偏好模型** 进行了巧妙的数学结合：首先，带有 KL 正则的传统 RLHF 目标存在一个闭式解（Closed-form solution），将该解反向推导即可得到一个**隐式奖励函数**——它等于策略模型与参考模型的对数概率比，加上一个难以计算的配分函数（归一化因子）$Z(x)$；然而关键的一步是，当把这个隐式奖励代入 Bradley-Terry 偏好概率模型时，胜出项与失败项做差使得**配分函数 $Z(x)$ 被精确抵消**。这就直接建立了人类偏好概率与模型自身生成概率的等价映射，从而将复杂的强化学习与奖励建模，彻底简化为一个无需采样的二分类交叉熵优化任务。
+
+> "The core insight of DPO lies in analytically combining the **closed-form solution of the KL-constrained RL objective** with the **Bradley-Terry preference model**. Specifically, the optimal policy under standard RLHF can be inverted to express an **implicit reward** as the log-ratio between the policy and reference model, plus an intractable prompt-dependent partition function $Z(x)$. Crucially, when plugging this implicit reward back into the Bradley-Terry preference formulation, the partition function $Z(x)$ **perfectly cancels out** in the reward difference $r(x, y_w) - r(x, y_l)$. This allows us to parameterize human preference probabilities directly through the language model's own token probabilities, thereby collapsing the complex, multi-stage RL pipeline into a simple, stable binary cross-entropy loss."
+
+keywords：
+
+* **Closed-form solution / 闭式解**（体现数理底子）
+* **Implicit reward / 隐式奖励**（体现对 DPO 核心概念的理解）
+* **Partition function cancels out / 配分函数对消**（最核心的技术巧思）
+* **Binary cross-entropy / 二分类交叉熵**（点出工程落地的最终形态）
+
+
+
+
 
 **意义与局限**：
 
