@@ -150,7 +150,7 @@ if __name__ == "__main__":
     test_sdpa()
 ```
 
-为什么除以 $\sqrt{d_k}$：
+为什么除以 $\sqrt{d_k}$：防止点积数值过大导致 Softmax 函数进入梯度饱和区（梯度消失），从而保证训练过程的稳定性。
 
 若 $q, k$ 各分量独立、均值 0、方差 1，则 $q\cdot k = \sum_i q_i k_i$ 的方差为 $d_k$。$d_k$ 大时，点积量级很大，softmax 进入饱和区（近似 one-hot），梯度趋近于 0。除以 $\sqrt{d_k}$ 把方差拉回 1。
 
@@ -753,7 +753,7 @@ Reranker 语境中的"cross-attention"：通常指 cross-encoder——把 query 
 典型场景是机器翻译（原始 Transformer 的 Encoder-Decoder）、文本生成图像（如 Stable Diffusion）、多模态感知（如 BLIP-2、Flamingo、Perceiver）。
 
 
-### 三、 Cross-attention vs. MHA vs. SDPA：核心区别
+### Cross-attention vs. MHA vs. SDPA：核心区别
 
 Cross-attention 和其他注意力也不是一个维度的互斥概念。
 
@@ -766,6 +766,105 @@ Cross-attention 和其他注意力也不是一个维度的互斥概念。
     * 如果传入 MHA 的是同一个输入 `MHA(x, x, x)`，它就是 **Multi-Head Self-attention**；
     * 如果传入 MHA 的是不同输入 `MHA(x, y, y)`，它就是 **Multi-Head Cross-attention**。
     * 在现代神经网络中，**Cross-attention 几乎百分之百都是以 Multi-Head（MHA）的形式来实现的**。
+
+---
+
+# KVCache 相关
+
+
+### 一、 核心原理与运行机制
+
+#### 考点 1：为什么只需要 Cache $K$ 和 $V$，而不需要 Cache $Q$？
+* **自回归与因果掩码（Causal Mask）**：在生成第 $t$ 个 Token 时，只有当前第 $t$ 个 Token 作为查询向量 $q_t$，去和历史所有 Token 的 $k_1, \dots, k_t$ 计算注意力权重，
+并加权求和 $v_1, \dots, v_t$。
+* **历史 $Q$ 已经完成使命**：过去生成的 $q_{<t}$ 不会再参与未来任何 Token 的注意力计算；
+但过去的 $k_{<t}$ 和 $v_{<t}$ 在未来的每一轮 Decode 都要被重复使用。
+因此**缓存 $K, V$ 可以避免 $O(N^2)$ 的重复投影计算，将单步解码复杂度降为 $O(N)$**。
+
+#### 考点 2：Prefill 与 Decode 阶段在计算/访存特征上的本质差异
+| 阶段 | 输入/输出特征 | 瓶颈类型 | 矩阵运算类型 |
+| :--- | :--- | :--- | :--- |
+| **Prefill（预填充/Prompt）** | 输入所有 Prompt Token（长序列），并行计算 | **计算密集型（Compute-bound）** | GEMM（通用矩阵乘法，高算力利用率） |
+| **Decode（自回归解码）** | 每次只输入 1 个 Token（Seq_len=1） | **访存/带宽密集型（Memory-bound）** | GEMV（矩阵-向量乘法，受显存带宽限制） |
+
+* **延伸追问**：为什么 Decode 阶段 GPU 算力利用率（MFU）通常很低？
+  * *答*：因为每次计算只处理一个 Token，但每个 Layer 都要从 HBM（显存）中把庞大的历史 KV Cache 全量加载到 SRAM 中一次，算力被内存带宽卡死（Arithmetic Intensity 极低）。
+
+---
+
+### 二、 KV Cache 显存占用计算（高频手撕推导）
+
+#### 考点 3：单请求 KV Cache 显存公式
+$$\text{Memory (Bytes)} = 2 \times n_{\text{layers}} \times n_{\text{kv\_heads}} \times d_{\text{head}} \times \text{seq\_len} \times \text{bytes\_per\_element} \times \text{batch\_size}$$
+
+* **各项含义**：
+  * **$2$**：分别存 $K$ 和 $V$；
+  * **$n_{\text{layers}}$**：Transformer 层数；
+  * **$n_{\text{kv\_heads}}$**：KV 头数（注意不是 Q 头数！）；
+  * **$d_{\text{head}}$**：每个 Head 的隐层维度（通常为 $\frac{d_{\text{model}}}{n_{\text{q\_heads}}}$）；
+  * **$\text{bytes\_per\_element}$**：精度（FP16/BF16 为 2 字节，FP8 为 1 字节，INT4 为 0.5 字节）。
+
+> **面试现场速算题举例**：
+> LLaMA-3-8B（32 层, GQA 8 个 KV heads, $d_{\text{head}}=128$, BF16 精度），在上下文长度为 8K、Batch Size=1 时，KV Cache 占用多少显存？
+> $$\text{Size} = 2 \times 32 \times 8 \times 128 \times 8192 \times 2 \text{ Bytes} \approx 1,073,741,824 \text{ Bytes} = \mathbf{1\text{ GB}}$$
+
+---
+
+### 三、 旨在减少 KV Cache 的注意力架构演进（重中之重）
+
+面试官最喜欢问：“为了减少 KV Cache 的显存瓶颈，模型结构经历了哪些演进？”
+
+```
+MHA (1:1)  ──►  MQA (N:1)  ──►  GQA (N:G)  ──►  MLA (低秩压缩)
+```
+
+1. **MHA (Multi-Head Attention)**：$Q, K, V$ 头数相同（$n_Q = n_{KV}$），KV Cache 显存开销极大。
+2. **MQA (Multi-Query Attention)**：所有 $Q$ 头共享同一组 $K$ 和 $V$（$n_{KV} = 1$）。KV Cache 减少为原来的 $\frac{1}{n_Q}$，极大提升推理吞吐，但模型容量和表达能力有所下降。
+3. **GQA (Grouped-Query Attention)**：折中方案，将 $Q$ 头分组，每组共享一个 KV 头（如 LLaMA-2/3、Mistral、Qwen）。通常 8 个 $Q$ 共享 1 个 $KV$，显存压缩到 $\frac{1}{8}$ 且几乎不损耗模型精度。
+4. **MLA (Multi-head Latent Attention，DeepSeek-V2/V3 核心)**：
+   * **原理**：将 $K$ 和 $V$ 联合通过低秩矩阵压缩为一个低维的隐向量 $c_t^{KV}$，只缓存这个隐向量（外加一个带解耦 RoPE 的 Key 向量 $k_t^R$）。
+   * **效果**：将 KV Cache 的大小压缩到甚至低于 MQA 的级别，同时保留了强于 MHA 的模型表达能力。
+
+---
+
+### 四、 长上下文与 KV Cache 压缩/淘汰算法（算法层）
+
+当上下文达到 32k/128k/1M 时，全量保留 KV Cache 不可承受，业内常见的算法方案：
+
+#### 考点 4：Attention Sink 与 StreamingLLM
+* **现象**：当去除最早几个 Token 的 KV Cache 时，模型的注意力会剧烈崩溃。
+* **原因**：Softmax 计算具有“无惩罚吸收多余注意力分值”的特性，模型倾向于将首部无意义的几个 Token（如 `<s>`）作为**注意力汇聚点（Attention Sink）**。
+* **方案（StreamingLLM）**：**固定保留前几个 Sink Tokens + 滑动窗口局域 Tokens**，即可实现近乎无限长序列的稳定流式推理。
+
+#### 考点 5：基于重要性的稀疏与剪枝（H2O, SnapKV, PyramidKV）
+* **Heavy-Hitter Oracle (H2O)**：根据累积的注意力权重打分，保留得分最高的少数“重击者（Heavy-Hitter）”Token 和最近的局部 Token，其余丢弃。
+* **KV 量化（KV Cache Quantization）**：
+  * 将 KV Cache 转为 FP8、INT8 或 INT4 存储。
+  * *考点细节*：Key 向量通常存在特定的“异常通道（Outlier Channels）”，直接按张量量化容易精度崩塌，通常需要 Per-Channel 量化或结合旋转变换（如 QuaRot）。
+
+---
+
+### 五、 显存管理与系统级工程考点（工程框架层）
+
+#### 考点 6：PagedAttention（vLLM 的核心突破）
+* **解决的痛点**：传统框架连续预分配显存导致的**内部内存碎片**（为最大 seq_len 预分配空间却没用完）和**外部内存碎片**。
+* **核心思路**：借鉴操作系统虚拟内存分页机制。将 KV Cache 划分为固定大小的 **Block（如 16 或 32 个 Token）**，逻辑上连续，物理上通过 Block Table 离散存储，实现显存的按需动态分配与零浪费。
+
+#### 考点 7：Prompt Caching / RadixAttention（SGLang 等）
+* **核心思想**：在多轮对话、Few-shot 任务、多 Agent 场景中，大量 Prompt 前缀是完全重复的。
+* **实现**：用基数树（Radix Tree）维护和缓存共享前缀的 KV Cache，避免重复计算 Prefill。
+
+---
+
+### 💡 面试答题套路总结（如何拿高分）
+
+当面试官问到 KV Cache 时，推荐按照**“痛点 $\to$ 瓶颈本质 $\to$ 架构演进 $\to$ 系统优化”**的主线来回答：
+
+> 1. **定义与动机**：自回归因果特性决定了只需缓存 $K,V$，避免 $O(N^2)$ 重复计算；
+> 2. **指出痛点**：Decode 阶段受限于显存带宽（Memory-bound），且显存开销随序列线性暴涨；
+> 3. **算法/架构解法**：模型端从 **MHA $\to$ GQA $\to$ MLA** 压缩维度，算法端用 **StreamingLLM / H2O / 量化** 淘汰稀疏 Token；
+> 4. **系统工程落地**：底层借助 **PagedAttention** 解决内存碎片，利用 **Prompt Caching** 实现跨请求复用。
+
 
 # Special Thank
 
