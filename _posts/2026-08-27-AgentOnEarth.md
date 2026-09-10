@@ -184,6 +184,7 @@ p.s. 这个流程中有钩子（beforeToolCall/afterToolCall/shouldStopAfterTurn
 
 Pi 原版选择跳过 SubAgent 是明智的，因为它避免了复杂的分布式状态管理。
 
+吴恩达等人推崇的 Multi-agent Collaboration 在工程生产中往往是玩具——多个 Agent 互相客套、圆桌会议导致延迟成倍飙升、死锁震荡以及幻觉级联放大。
 Caller-Callee（SubAgent as a Tool）模式
 
 防止循环等协作问题 - 强行引入有向无环图（DAG）的单向推进约束，禁止无条件的双向 Loop。
