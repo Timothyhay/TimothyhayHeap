@@ -1500,7 +1500,11 @@ vanilla GRPO 的两个已知偏置，务必知道：
 1. **难度偏置**：除以 $\operatorname{std}(\mathbf{r})$ 会放大"极易/极难"题的权重。Dr. GRPO 取消这个缩放，平等对待所有题目。→ veRL 配置 `algorithm.norm_adv_by_std_in_grpo: False`。
 2. **长度偏置**：按序列长度平均会让"更长的错误答案"被低估惩罚。GRPO 按序列长度归一化会导致更长的错误回答被惩罚不足。Dr.GRPO 改用全局常数归一化以消除长度偏置。
 
-**DAPO 的四件套**（ByteDance，基于 verl 实现，长 CoT / 多轮场景强烈推荐）：Clip-Higher（非对称裁剪、上界更高）、Dynamic Sampling（重采样至组内有对有错）、Token-Level Policy Gradient Loss、Overlong Reward Shaping（惩罚过长回答）。其中：
+**DAPO 的四件套**（长 CoT / 多轮场景推荐）：
+Clip-Higher（非对称裁剪、上界更高）、
+Dynamic Sampling（重采样至组内有对有错）、
+Token-Level Policy Gradient Loss、
+Overlong Reward Shaping（惩罚过长回答）。其中：
 
 - **Clip-Higher** 治**熵坍缩**：初期观察到熵坍缩现象，通过增大重要性采样比的上裁剪范围来缓解。
 - **Dynamic Sampling** 就是 §索引③ 里 σ=0 空梯度的正解。
