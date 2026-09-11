@@ -4,7 +4,6 @@ title: 禅，RSI 与 Agent 最简实现艺术
 tags: Agent
 comments: true
 ---
-
 Note: 这篇文章还在施工中。
 [WIP]
 
@@ -12,7 +11,10 @@ Note: 这篇文章还在施工中。
 以至于一整年内有关 Agent 组成部分的截图都持续地在各大公司/高校组会/咨询公司或者公众号的材料中出现。
 
 她将 LLM Agent 的核心公式定义为：
-> Agent = LLM + Planning + Memory + Tool Use
+
+$$
+Agent = LLM + Planning + Memory + Tool Use
+$$
 
 时过境迁，LLM 本身的输出答案能力和驱动状态机流转的能力，加上设计过的规划与反思(Planning)、长短期记忆(Memory)、各种组件/钩子/Skills相关的工具调用(ToolCall)的能力依然可以概况一个Agent的组成部分。
 
@@ -26,9 +28,10 @@ Note: 这篇文章还在施工中。
 因此，笔者认为 Agent 实际上只需要考虑决策、规划层、存储层、执行层、协同层五个方面的设计即可。
 也就是对应 -
 
-$
+$$
 Agent = LLM + Planning + Memory + Tool Use + Collaboration
-$
+
+$$
 
 这样的设计。
 
@@ -36,7 +39,6 @@ $
 和最后动手做 long-horizon trajectory SFT & Agentic RL 的全流程里对 Agent 框架设计的一些理解。
 
 *这里预计不含 long-horizon LLM 后训练相关内容，将在其他文章中展开。
-
 
 # 1. Memory
 
@@ -86,9 +88,9 @@ CompactionEntry 数据结构负责记录摘要。
 > ### Split Turns
 >
 > A "turn" starts with a user message and includes all assistant responses and tool calls until the next user message. Normally, compaction cuts at turn boundaries.
-> 
+>
 > When a single turn exceeds `keepRecentTokens`, the cut point lands mid-turn at an assistant message. This is a "split turn":
- 
+
 ```
 Split turn (one huge turn exceeds budget):
  
@@ -140,24 +142,25 @@ pi 有一个树状的会话历史记录设计。
 但上下文管理的做法现在有了一个新思路：
 
 DeepSeek Harness 讨论了一个问题，对带很多需要动态加载的插件的现代复杂系统中，存在两个问题：
+
 1. **卸载副作用**：插件卸载后，其注册的监听器、状态改变或钩子容易遗漏，导致系统状态污染。
 2. **依赖管理混乱**：组件间的依赖关系在动态变化时难以自动响应与有序调度。
 
 换句话说，他们把造成的挑战分为了两个维度：
+
 1. 时间可组合性（Temporal Composability）：组件在被移除或替换时，能够完整撤销（Revert）其产生的全部副作用。
 2. 空间可组合性（Spatial Composability）：能够声明并响应式地解析不同组件之间的跨模块依赖。
 
 DSH 将编程语言理论中的 Effect（效应） 与 Coeffect（余效应 / 上下文需求） 概念提升至运行时机制，提出了以下核心设计：
 
 > - 可逆效应（Revertible Effects - 解决时间维度）
-> 每个对上下文进行的修改或状态转换，运行时都会自动持有并维护其对应的逆操作。当插件卸载时，运行时会自动按序反向执行逆操作，实现安全卸载。
+>   每个对上下文进行的修改或状态转换，运行时都会自动持有并维护其对应的逆操作。当插件卸载时，运行时会自动按序反向执行逆操作，实现安全卸载。
 > - 响应式余效应（Reactive Coeffects - 解决空间维度）
-> 组件以声明式的方式定义自己对外部环境/服务的依赖需求（Coeffect Specification）。当环境中的服务出现、变化或销毁时，系统自动驱动该组件的激活或休眠，保证依赖关系的响应式自治。
+>   组件以声明式的方式定义自己对外部环境/服务的依赖需求（Coeffect Specification）。当环境中的服务出现、变化或销毁时，系统自动驱动该组件的激活或休眠，保证依赖关系的响应式自治。
 > - 上下文范式（The Context Paradigm）
-> 将 Effect 上下文和 Coeffect 上下文统一为单一的 Context 类型。所有组件的副作用和依赖都通过上下文进行调解，确保不同组件交错运行时互不干扰，满足观测等价性（Observational Equivalence）。
+>   将 Effect 上下文和 Coeffect 上下文统一为单一的 Context 类型。所有组件的副作用和依赖都通过上下文进行调解，确保不同组件交错运行时互不干扰，满足观测等价性（Observational Equivalence）。
 > - 动态组合演算（Calculus of Dynamic Composition）
-> 给出了形式化的演算规则与元理论，证明了时空可组合性可以从单一组件无缝扩展到整个由多组件交织构成的复杂系统。
-
+>   给出了形式化的演算规则与元理论，证明了时空可组合性可以从单一组件无缝扩展到整个由多组件交织构成的复杂系统。
 
 Codex 最近在做实验性的上下文压缩方案：
 1. 完成一个阶段性目标或上下文即将耗尽时，主动调用 new_context 工具开启一个全新的、干净的上下文窗口
@@ -177,8 +180,19 @@ p.s. 这个流程中有钩子（beforeToolCall/afterToolCall/shouldStopAfterTurn
 
 # 3. Tool Use
 
+工具的收敛与元工具化
+
+关键是做好反设计。批判为业务定义成百上千个高度特化的 RPC/API 工具，模型不仅难以精准选择，还会炸毁 System Prompt 的 KV Cache。
 
 # 4. Collaboration
+
+
+Pi 原版选择跳过 SubAgent 是明智的，因为它避免了复杂的分布式状态管理。
+
+吴恩达等人推崇的 Multi-agent Collaboration 在工程生产中往往是玩具——多个 Agent 互相客套、圆桌会议导致延迟成倍飙升、死锁震荡以及幻觉级联放大。
+Caller-Callee（SubAgent as a Tool）模式
+
+防止循环等协作问题 - 强行引入有向无环图（DAG）的单向推进约束，禁止无条件的双向 Loop。
 
 # Reference
 
