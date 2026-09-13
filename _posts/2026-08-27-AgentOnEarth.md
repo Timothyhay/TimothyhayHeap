@@ -184,6 +184,10 @@ p.s. 这个流程中有钩子（beforeToolCall/afterToolCall/shouldStopAfterTurn
 
 关键是做好反设计。批判为业务定义成百上千个高度特化的 RPC/API 工具，模型不仅难以精准选择，还会炸毁 System Prompt 的 KV Cache。
 
+
+> Remote Procedure Call（远程过程调用）RPC 的核心思想是：“让你像调用本地函数一样，去调用运行在另一台机器或另一个进程中的函数”。底层的网络连接、数据打包（序列化）、发送、等待响应、解包等复杂过程，都被 RPC 框架屏蔽了。
+而 API 是一个顶层的大概念，而 RPC 是实现 API 的一种具体模式或技术手段。
+一句话总结关系：所有的 RPC 都是一种 API，但并非所有 API 都是 RPC。
 # 4. Collaboration
 
 
