@@ -224,12 +224,12 @@ mathematically analyzed GRPO's gradient estimator and found **two systematic bia
 
 1. **长度偏差**：损失中的 $\frac{1}{|o_i|}$ 归一化导致——**答错时，回复越长每 token 惩罚越小**。模型学会"错了就啰嗦"，这是 R1 类训练中回复长度不断膨胀的重要原因之一（并非全是"更深入思考"）。
 2. **难度偏差**：除以组内 $\text{std}(r)$ 会放大接近全对或全错（低方差）问题的权重，使不同难度的问题获得失真的梯度权重。
-3. **Length bias**: the $\frac{1}{|o_i|}$ normalization in the loss means that **for incorrect answers, the longer the response, the smaller the per-token penalty**. The model learns to "ramble when wrong" — a major cause of ever-growing response lengths in R1-style training (not all of it is "deeper thinking").
-4. **Difficulty bias**: dividing by the within-group $\text{std}(r)$ amplifies the weight of questions that are nearly all-correct or all-wrong (low variance), giving questions of different difficulty distorted gradient weights.
 
-**修正**极其简单：**删掉这两个归一化项**——
+**Length bias**: the $\frac{1}{|o_i|}$ normalization in the loss means that **for incorrect answers, the longer the response, the smaller the per-token penalty**. The model learns to "ramble when wrong" — a major cause of ever-growing response lengths in R1-style training (not all of it is "deeper thinking").
+**Difficulty bias**: dividing by the within-group $\text{std}(r)$ amplifies the weight of questions that are nearly all-correct or all-wrong (low variance), giving questions of different difficulty distorted gradient weights.
 
-**The fix** is extremely simple: **remove both normalization terms** —
+**修正**极其简单：**删掉这两个归一化项** remove both normalization terms
+
 
 $$
 \hat{A}_i = r_i - \text{mean}(r_1, \dots, r_G) \quad (\text{不再除以 std / no longer divided by std}), \qquad \text{损失聚合去掉 / loss aggregation drops } \tfrac{1}{|o_i|}
