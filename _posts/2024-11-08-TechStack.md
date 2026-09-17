@@ -1,5 +1,5 @@
 ---
-layout: blogpage
+layout: modern-article
 title: How do I set up my own secret base?
 comments: true
 tags: Skill Jekyll
@@ -21,6 +21,10 @@ Use it to enrich the functions of a static website.
 ### Visitor Counter
 
 借助这类工具通过 JS 存储访问数据，实现了 Visitor Counter 的功能。
+
+## CloudFlare
+
+随着小型云服务 LeanCloud 悄无声息地倒闭，我切换到了[CloudFlare](https://dash.cloudflare.com/)来实现访问统计、网页流畅度分析的功能。
 
 
 ## CI/CD
