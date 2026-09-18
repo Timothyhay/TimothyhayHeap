@@ -1025,21 +1025,18 @@ vanilla GRPO 的两个已知偏置：
 
 我们尝试使用 Dr.GRPO 改良。
 
-### GRPO vs Dr.GRPO 有什么区别？什么场景该用哪个？
-
 **GRPO**: `advantage = (reward - group_mean) / group_std`
 **Dr.GRPO**: `advantage = reward - group_mean`
 
-**关键区别**：GRPO 除以 std → 当 std 很小时放大 advantage（稀有正确回复被大力强化），当 std 很大时缩小 advantage（分散的 reward 被压平）。Dr.GRPO 跳过了除法，保持原始 reward 差距。
+**区别**：GRPO 除以 std → 当 std 很小时放大 advantage（稀有正确回复被大力强化），当 std 很大时缩小 advantage（分散的 reward 被压平）。
+Dr.GRPO 跳过了除法，保持原始 reward 差距。开销完全相同，Dr.GRPO 只跳过除法运算，不增加任何计算量。
 
-| 场景  | 推荐  | 原因  |
-| --- | --- | --- |
-| 短轨迹、n 大（≥4） | **GRPO** | std 估计可靠，放大稀有正确信号有助于冷启动 |
-| 长轨迹（>10K tokens） | **Dr.GRPO** | reward 方差大，GRPO 易梯度爆炸 |
-| 小 batch（1-2） | **Dr.GRPO** | std 在小样本上极不可靠 |
-| 冷启动（reward=0 为主） | **GRPO** | 少数高 reward 回复需要被放大 |
+可以推断：短轨迹、n 大（≥4）的时候还是适用 **GRPO** 的，std 估计可靠，放大稀有正确信号有助于冷启动（少数高 reward 回复需要被放大）。
 
-**开销**：完全一样——Dr.GRPO 只跳过除法运算，不增加任何计算量。
+在下面的场景都适用于 Dr.GRPO :
+
+- 长轨迹（>10K tokens）- reward 方差大，GRPO 易梯度爆炸 
+- 小 batch（1-2） - std 在小样本上极不可靠 
 
 **切换**：一行参数 `algorithm.norm_adv_by_std_in_grpo=False`。
 
@@ -1048,7 +1045,7 @@ vanilla GRPO 的两个已知偏置：
 Completed Version: DAPO's Four Components (+ Two "Implicit" Components)
 
 
-DAPO 的全称是 **D**ecoupled Clip and **D**ynamic s**A**mpling **P**olicy **O**ptimization（ByteDance Seed × 清华 AIR，arXiv 2503.14476）。它的四大组件不是四个独立 trick，而是同时体现在**一个目标函数**里的四处修改，所以最清晰的补全方式是先看完整式子，再逐项对应：
+DAPO 的全称是 **D**ecoupled Clip and **D**ynamic s**A**mpling **P**olicy **O**ptimization（ByteDance Seed × 清华 AIR，arXiv 2503.14476）。它的四大组件不是四个独立 trick，而是同时体现在**一个目标函数**里的四处修改：
 
 $$\mathcal{J}_{\text{DAPO}}(\theta)=\mathbb{E}_{(q,a)\sim\mathcal{D},\,\{o_i\}_{i=1}^{G}\sim\pi_{\theta_{\text{old}}}(\cdot\mid q)}\left[\underbrace{\frac{1}{\textstyle\sum_{i=1}^{G}|o_i|}\sum_{i=1}^{G}\sum_{t=1}^{|o_i|}}_{\text{③ token-level}}\min\Big(r_{i,t}(\theta)\hat{A}_{i,t},\ \operatorname{clip}\big(r_{i,t}(\theta),\,1-\underbrace{\epsilon_{\text{low}}}_{\text{① }0.2},\,1+\underbrace{\epsilon_{\text{high}}}_{\text{① }0.28}\big)\hat{A}_{i,t}\Big)\right]
 $$
@@ -1057,7 +1054,9 @@ $$
 \text{s.t.}\quad \underbrace{0<\big|\{o_i\mid \texttt{is\_equivalent}(a,o_i)\}\big|<G}_{\text{② dynamic sampling 约束 / constraint}},\qquad \hat{A}_{i,t}=\frac{R_i-\operatorname{mean}(\{R_j\}_{j=1}^{G})}{\operatorname{std}(\{R_j\}_{j=1}^{G})}
 $$
 
-其中 $r_{i,t}(\theta)=\dfrac{\pi_\theta(o_{i,t}\mid q,o_{i,<t})}{\pi_{\theta_{\text{old}}}(o_{i,t}\mid q,o_{i,<t})}$，而 $R_i$ 中包含了组件 ④ 的长度整形项。**注意：式子里没有 KL 项**——这是 DAPO 相对 GRPO 的另一个关键删除。
+其中 $r_{i,t}(\theta)=\dfrac{\pi_\theta(o_{i,t}\mid q,o_{i,<t})}{\pi_{\theta_{\text{old}}}(o_{i,t}\mid q,o_{i,<t})}$，而 $R_i$ 中包含了组件 ④ 的长度整形项。
+**注意：式子里没有 KL 项**，这也 DAPO 相对 GRPO 的另一个关键删除。
+实践中，我们用 GRPO 现在 KL 项的系数也是 0 了。直接省掉 reference model - 因为算一次 forward 也是很贵的。考虑到本身偏离如果不远就不需要了（Coding 任务来说，当然知道肯定很远也不需要）。
 
 Here $r_{i,t}(\theta)=\dfrac{\pi_\theta(o_{i,t}\mid q,o_{i,<t})}{\pi_{\theta_{\text{old}}}(o_{i,t}\mid q,o_{i,<t})}$, and $R_i$ absorbs the length-shaping term from component ④. **Note there is no KL term** — that is another key deletion of DAPO relative to GRPO.
 
@@ -1069,26 +1068,29 @@ $$
 R_{\text{length}}(y)=\begin{cases}0, & |y|\le L_{\max}-L_{\text{cache}}\\[4pt] \dfrac{(L_{\max}-L_{\text{cache}})-|y|}{L_{\text{cache}}}, & L_{\max}-L_{\text{cache}}<|y|\le L_{\max}\\[6pt] -1, & |y|>L_{\max}\end{cases}
 $$
 
-最终奖励 $R_i = R_{\text{correct}}(o_i, a) + R_{\text{length}}(o_i)$，其中 $R_{\text{correct}}\in\{+1,-1\}$ 由规则验证器（答案等价性判定）给出。这个设计的精神是：**长度约束应表达为"渐进变贵"而不是"悬崖式判死"**，避免在 $L_{\max}$ 处出现奖励函数的阶跃不连续。
+最终奖励 $R_i = R_{\text{correct}}(o_i, a) + R_{\text{length}}(o_i)$，其中 $R_{\text{correct}}\in\{+1,-1\}$ 由规则验证器（答案等价性判定）给出。
+这个设计的精神是：**长度约束应表达为"渐进变贵"而不是"突然杀死"**，避免在 $L_{\max}$ 处出现奖励函数的阶跃不连续。
 
 The final reward is $R_i = R_{\text{correct}}(o_i, a) + R_{\text{length}}(o_i)$, where $R_{\text{correct}}\in\{+1,-1\}$ comes from a rule-based verifier (answer-equivalence checking). The spirit of the design: **a length constraint should be expressed as "progressively more expensive," not as a cliff-edge death sentence**, avoiding a step discontinuity in the reward function at $L_{\max}$.
 
----
+### p.s. 会被漏掉的隐形组件  / Two Frequently Omitted "Implicit" Components
 
-### 2. 两个常被漏掉的"隐性"组件 / Two Frequently Omitted "Implicit" Components
+**⑤ 彻底移除 KL 惩罚项。** 这是 DAPO 与经典 RLHF 最哲学性的分歧。在 RLHF 中，KL 项的作用是"别偏离 SFT 模型太远，保住语言质量与安全性"；
+但在 long-CoT reasoning RL 中，模型**本来就要**从 base 模型的行为分布上大幅漂移（学会自我检查、回溯、超长推理），此时 KL 项就是纯粹的枷锁。
+DAPO 直接令 $\beta=0$。这与 Dr.GRPO / Open-Reasoner-Zero 等同期工作的结论一致，也是 2025 年"零 KL 训练"成为 reasoning RL 默认配置的关键一步。
 
-**⑤ 彻底移除 KL 惩罚项。** 这是 DAPO 与经典 RLHF 最哲学性的分歧。在 RLHF 中，KL 项的作用是"别偏离 SFT 模型太远，保住语言质量与安全性"；但在 long-CoT reasoning RL 中，模型**本来就要**从 base 模型的行为分布上大幅漂移（学会自我检查、回溯、超长推理），此时 KL 项就是纯粹的枷锁。DAPO 直接令 $\beta=0$。这与 Dr.GRPO / Open-Reasoner-Zero 等同期工作的结论一致，也是 2025 年"零 KL 训练"成为 reasoning RL 默认配置的关键一步。
+**⑥ 纯规则奖励 + 答案等价性验证器。** DAPO 不用任何神经奖励模型，只用可验证的最终答案匹配（AIME 类数学题转换为整数答案），从根上消除 reward hacking。
+这一点常被当作"实验设置"而非"算法组件"，但它其实是前四个 trick 能成立的前提：只有当奖励绝对可信时，才敢像 ② 那样激进地丢弃样本、像 ④ 那样直接给奖励做手术。
+
 
 **⑤ Complete removal of the KL penalty.** This is DAPO's most philosophical break with classical RLHF. In RLHF, the KL term says "don't drift too far from the SFT model; preserve language quality and safety." But in long-CoT reasoning RL, the model **is supposed to** drift massively from the base model's behavioral distribution (learning self-checking, backtracking, very long deliberation), so the KL term becomes pure shackles. DAPO simply sets $\beta=0$. This matches contemporaneous findings in Dr.GRPO / Open-Reasoner-Zero, and was a key step in making "zero-KL training" the default configuration for reasoning RL in 2025.
-
-**⑥ 纯规则奖励 + 答案等价性验证器。** DAPO 不用任何神经奖励模型，只用可验证的最终答案匹配（AIME 类数学题转换为整数答案），从根上消除 reward hacking。这一点常被当作"实验设置"而非"算法组件"，但它其实是前四个 trick 能成立的前提：只有当奖励绝对可信时，才敢像 ② 那样激进地丢弃样本、像 ④ 那样直接给奖励做手术。
 
 **⑥ Purely rule-based rewards + an answer-equivalence verifier.** DAPO uses no neural reward model at all, only verifiable final-answer matching (AIME-style problems converted to integer answers), eliminating reward hacking at the root. This is often filed under "experimental setup" rather than "algorithmic component," but it is really the precondition for the other four tricks: only when the reward is absolutely trustworthy can you afford to discard samples as aggressively as ② does, or perform surgery directly on the reward as ④ does.
 
 ---
 
 <details>
-<summary><b>消融实验与超参（点击展开）/ Ablations and Hyperparameters (click to expand)</b></summary>
+<summary><b>消融实验与超参 / Ablations and Hyperparameters (click to expand)</b></summary>
 
 论文 Table 1，Qwen2.5-32B **base** 模型起训，AIME 2024 avg@32：
 
@@ -1153,6 +1155,11 @@ Dr.GRPO 只改"组内已有差异的缩放"（`adv=(R-mean)/std` → `adv=R-mean
 
 两者在"删除 1/∣o_i∣ 长度偏置"上英雄所见略同，但在 std 归一化上分道扬镳。
 DAPO 保留它，说明在实际大规模训练中，std 归一化带来的方差缩减收益可能超过它引入的加权偏置代价。这个分歧至今没有被完全定论，也是后续工作（如 GSPO、CISPO、以及各类序列级重要性采样变体）继续争论的战场。
+
+> GSPO（阿里 Qwen）选择重构优化粒度，将重要性采样与截断由 Token 级提升至**序列级**（不过用长度平均过），使优化项与序列级奖励直接对齐，
+> 从根本上消除了 Token 级连乘导致的方差暴增，从而摆脱了对强行除以 σ  压方差的重度依赖；
+> 而 CISPO（MiniMax）则选择重构梯度截断机制，通过引入 stop-gradient 将重要性采样权重解耦为有界的标量系数（只截断权重上限而不中断 logπ  的梯度流），
+> 使得在保留 σ 归一化以维持异步分布式方差稳定的同时，彻底解决了大 Advantage 样本被硬截断导致“探索梯度归零”的副作用。
 
 ### 可以改进的多轮 credit assignment
 
