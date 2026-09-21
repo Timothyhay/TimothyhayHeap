@@ -39,6 +39,17 @@ The Evolution of Policy Optimization Algorithms from the Perspective of LLM RL D
 
 **背景**：PPO（Proximal Policy Optimization, Schulman et al.）原本是通用 RL 算法，被 OpenAI 在 InstructGPT 中用于 RLHF，成为 ChatGPT 的核心训练技术。
 
+PPO 产生的背景是 PG（所有直接对策略参数求导优化期望回报的算法统称 PG）步长极难选，策略易崩溃、TRPO 二阶优化太重、难以工程化： 
+> 1. 标准策略梯度（Policy Gradient / PG）的痛点：
+> - 样本利用率极低：严格的 On-policy，采样一次数据更新一次梯度后就必须丢弃。
+> - 步长极其脆弱（Policy Collapse）：在参数空间走了一大步，可能导致策略在概率分布空间发生剧烈突变，一旦策略变差，采出的数据更差，导致模型迅速崩溃且无法恢复。
+> 2. TRPO 的痛点：
+> - 为了限制更新幅度，TRPO 施加了硬性的平均 KL 散度约束 (总之 E[D_KL]≤δ)
+> - 计算代价极高：求解这个约束优化问题需要计算二阶海森矩阵（Fisher Information Matrix）并使用共轭梯度法（CG），无法与现代深度学习的一阶优化器（如 Adam）无缝结合，且极难拓展到超大模型。
+
+PPO 的诞生动机：
+保留 TRPO 的信赖域（Trust Region）思想，但完全丢弃二阶计算，仅用一阶梯度（Clip 机制）实现同等甚至更好的稳定性。
+
 **核心思想**：策略梯度方法容易因单步更新过大而崩溃。PPO 用**裁剪的重要性采样比率**限制每次更新幅度：
 
 PPO was originally a general-purpose RL algorithm. OpenAI applied it to RLHF in InstructGPT, and it became the core training technique behind ChatGPT.
@@ -416,6 +427,277 @@ From DJ：
 1. 训推不一致问题：推理时我们使用vLLM，但训练框架不同，计算方式也不同
 2. MoE模型专家随机路由
 3. tokenizer 分词结果也不一样
+
+
+
+# 公式推导与实现
+
+# PPO（Proximal Policy Optimization）详解
+
+下面按「问题 → 推导 → 设计动机 → 面试手推」的顺序来讲，核心是把每一步"为什么要这么做"说清楚。
+
+---
+
+## 一、PPO 要解决什么问题
+
+PPO 属于 **on-policy 的策略梯度方法**。它的前身是 REINFORCE / A2C 和 TRPO，这两条线各有痛点：
+
+| 方法 | 痛点 |
+|---|---|
+| 原始策略梯度（REINFORCE/A2C） | 每批数据只能做**一次**梯度更新（更新后策略变了，数据就 off-policy 了），样本效率低；步长很难调，步子大了策略崩掉（performance collapse）且难以恢复 |
+| TRPO | 用 KL 约束保证单调改进，理论漂亮，但需要二阶信息（Fisher 矩阵 + 共轭梯度 + 线搜索），实现复杂、计算贵、不易与 dropout / 参数共享等结合 |
+
+PPO 的目标：**用一阶方法，近似达到 TRPO "限制策略更新幅度" 的效果，同时允许一批数据被复用多个 epoch。**
+
+---
+
+## 二、从零手推（面试版）
+
+### 第 1 步：策略梯度定理（log-derivative trick）
+
+目标 $J(\theta)=\mathbb{E}_{\tau\sim\pi_\theta}[R(\tau)]$。关键技巧：
+
+$$
+\nabla_\theta \mathbb{E}_{x\sim p_\theta}[f(x)]
+=\int f(x)\nabla_\theta p_\theta(x)\,dx
+=\int f(x)\,p_\theta(x)\,\nabla_\theta\log p_\theta(x)\,dx
+=\mathbb{E}_{x\sim p_\theta}\big[f(x)\nabla_\theta\log p_\theta(x)\big]
+$$
+
+轨迹概率 $p_\theta(\tau)=\rho(s_0)\prod_t \pi_\theta(a_t|s_t)P(s_{t+1}|s_t,a_t)$，取 log 后环境转移项与 $\theta$ 无关，求导消失，得到：
+
+$$
+\nabla_\theta J(\theta)=\mathbb{E}_{\tau\sim\pi_\theta}\Big[\sum_t \nabla_\theta\log\pi_\theta(a_t|s_t)\,\Psi_t\Big]
+$$
+
+其中 $\Psi_t$ 可以是回报 $G_t$，也可以是优势 $A^{\pi}(s_t,a_t)$。
+
+**为什么可以减 baseline / 用优势？** 因为对任意只依赖状态的 $b(s)$：
+
+$$
+\mathbb{E}_{a\sim\pi_\theta(\cdot|s)}\big[\nabla_\theta\log\pi_\theta(a|s)\,b(s)\big]
+=b(s)\nabla_\theta\sum_a\pi_\theta(a|s)=b(s)\nabla_\theta 1=0
+$$
+
+期望不变，方差降低。取 $b(s)=V^\pi(s)$ 就得到优势 $A=Q-V$。
+
+> 面试要点：这一步说明策略梯度是**无偏但高方差**的，而且它是在 $\pi_\theta$ 自己采的数据上计算的期望——**数据一旦更新过一次就不再是 $\pi_\theta$ 的样本**，这就是 on-policy 的根源。
+
+### 第 2 步：性能差分引理（Performance Difference Lemma）
+
+我们真正想优化的是"新策略比旧策略好多少"：
+
+$$
+J(\pi')-J(\pi)=\mathbb{E}_{\tau\sim\pi'}\Big[\sum_{t}\gamma^t A^{\pi}(s_t,a_t)\Big]
+$$
+
+**推导**（telescoping）：注意 $A^\pi(s_t,a_t)=\mathbb{E}_{s_{t+1}}[r_t+\gamma V^\pi(s_{t+1})]-V^\pi(s_t)$，于是
+
+$$
+\mathbb{E}_{\tau\sim\pi'}\Big[\sum_t\gamma^t A^\pi(s_t,a_t)\Big]
+=\mathbb{E}_{\tau\sim\pi'}\Big[\sum_t\gamma^t r_t+\sum_t\big(\gamma^{t+1}V^\pi(s_{t+1})-\gamma^tV^\pi(s_t)\big)\Big]
+$$
+
+第二项裂项相消只剩 $-V^\pi(s_0)$，所以
+
+$$
+=\mathbb{E}_{\tau\sim\pi'}\Big[\sum_t\gamma^t r_t\Big]-\mathbb{E}_{s_0}[V^\pi(s_0)]=J(\pi')-J(\pi)\quad\blacksquare
+$$
+
+写成状态分布形式（$d^{\pi'}$ 为折扣状态访问分布）：
+
+$$
+J(\pi')-J(\pi)=\frac{1}{1-\gamma}\,\mathbb{E}_{s\sim d^{\pi'},\,a\sim\pi'}\big[A^{\pi}(s,a)\big]
+$$
+
+> 这个式子的含义：**用旧策略的优势函数评价新策略的动作**，只要新策略在自己到达的状态上平均优势为正，就一定改进。问题是 $d^{\pi'}$ 依赖新策略，没法在更新前采样。
+
+### 第 3 步：两个近似 → 替代目标（surrogate objective）
+
+**近似 1：状态分布用旧策略的。** 假设 $\pi'$ 与 $\pi$ 接近，则 $d^{\pi'}\approx d^{\pi}$。
+
+**近似 2：动作上做重要性采样。** 我们只有 $a\sim\pi$ 的样本，但要算 $a\sim\pi'$ 的期望：
+
+$$
+\mathbb{E}_{a\sim\pi'(\cdot|s)}[A^\pi(s,a)]
+=\sum_a \pi'(a|s)A^\pi(s,a)
+=\sum_a \pi(a|s)\frac{\pi'(a|s)}{\pi(a|s)}A^\pi(s,a)
+=\mathbb{E}_{a\sim\pi(\cdot|s)}\Big[\frac{\pi'(a|s)}{\pi(a|s)}A^\pi(s,a)\Big]
+$$
+
+于是得到 TRPO/PPO 共用的替代目标：
+
+$$
+L_{\pi_{\text{old}}}(\theta)=\mathbb{E}_{s\sim d^{\pi_{\text{old}}},\,a\sim\pi_{\text{old}}}\Big[\underbrace{\frac{\pi_\theta(a|s)}{\pi_{\text{old}}(a|s)}}_{r_t(\theta)}\,\hat A_t\Big]
+$$
+
+**为什么只对单步动作做重要性比，而不是整条轨迹？** 整条轨迹的比值 $\prod_t \frac{\pi_\theta}{\pi_{old}}$ 会指数级爆炸/消失，方差不可控；单步比值是把 $d^{\pi'}\approx d^{\pi}$ 这个偏差"吃掉"换来的方差可控——这是一个刻意的 bias-variance 取舍。
+
+**这个替代目标有两个关键性质**（面试常被追问）：
+
+1. $L_{\pi_{\text{old}}}(\theta_{\text{old}})=J(\theta_{\text{old}})$（此时比值恒为 1，优势期望为 0）。
+2. 一阶梯度匹配：
+
+$$
+\nabla_\theta r_t(\theta)\Big|_{\theta_{\text{old}}}
+=\frac{\nabla_\theta\pi_\theta(a|s)}{\pi_{\text{old}}(a|s)}\Big|_{\theta_{\text{old}}}
+=\nabla_\theta\log\pi_\theta(a|s)\Big|_{\theta_{\text{old}}}
+$$
+
+所以 $\nabla_\theta L_{\pi_{\text{old}}}(\theta)\big|_{\theta_{\text{old}}}=\nabla_\theta J(\theta)\big|_{\theta_{\text{old}}}$，**在旧策略处替代目标和真实目标切线相同**，即它是真实目标的局部一阶近似。
+
+### 第 4 步：为什么必须限制步长（TRPO 的下界）
+
+TRPO 证明了：
+
+$$
+J(\pi')\;\ge\;L_{\pi}(\pi')-C\cdot\max_s D_{\text{KL}}\big(\pi(\cdot|s)\,\|\,\pi'(\cdot|s)\big),\qquad C=\frac{4\epsilon\gamma}{(1-\gamma)^2}
+$$
+
+含义：替代目标只在 $\pi'$ 离 $\pi$ 不远时可信，走远了近似 1 就失效，替代目标上升不代表真实回报上升。所以 TRPO 做**信赖域优化**：
+
+$$
+\max_\theta L_{\pi_{\text{old}}}(\theta)\quad\text{s.t.}\quad \bar D_{\text{KL}}(\pi_{\text{old}}\|\pi_\theta)\le\delta
+$$
+
+这需要二阶方法求解——太重了。
+
+### 第 5 步：PPO 的解法——把约束"焊进"目标函数
+
+**PPO-Clip（主流）：**
+
+$$
+L^{\text{CLIP}}(\theta)=\hat{\mathbb{E}}_t\Big[\min\Big(r_t(\theta)\hat A_t,\;\text{clip}\big(r_t(\theta),1-\epsilon,1+\epsilon\big)\hat A_t\Big)\Big]
+$$
+
+**PPO-Penalty（自适应 KL）：**
+
+$$
+L^{\text{KL}}(\theta)=\hat{\mathbb{E}}_t\Big[r_t(\theta)\hat A_t-\beta\, D_{\text{KL}}(\pi_{\text{old}}\|\pi_\theta)\Big]
+$$
+
+$\beta$ 根据实际 KL 与目标值 $d_{\text{targ}}$ 的比较动态调大/调小（实测不如 clip 好用）。
+
+---
+
+## 三、Clip 目标为什么这样设计（逐项拆解）
+
+分四种情形看 $L^{\text{CLIP}}$ 对 $r_t$ 的行为：
+
+| 情形 | $\hat A_t$ | $r_t$ | $\min(\cdot)$ 取哪项 | 梯度 | 直觉 |
+|---|---|---|---|---|---|
+| ① | $>0$ | $\le 1+\epsilon$ | 未裁剪项 | 正常 | 好动作，提高概率 |
+| ② | $>0$ | $>1+\epsilon$ | 裁剪项（常数） | **0** | 好动作概率已经提高够多了，别再贪 |
+| ③ | $<0$ | $\ge 1-\epsilon$ | 未裁剪项 | 正常 | 坏动作，降低概率 |
+| ④ | $<0$ | $<1-\epsilon$ | 裁剪项（常数） | **0** | 坏动作概率已经压得够低了，停 |
+
+三个设计要点：
+
+1. **`clip` 的作用**：让比值超出 $[1-\epsilon,1+\epsilon]$ 后目标函数变平，梯度为零，策略在这些样本上就"不再有动力"继续偏离——用一阶方法软性地实现了信赖域。注意它**不是硬约束**，比值确实可能超出区间（因为多个 epoch 的 minibatch 更新），只是超出后不再被推得更远。
+
+2. **`min` 的作用（悲观下界）**：单纯 clip 是不够的。如果只用裁剪项，那么在情形"$\hat A_t<0$ 且 $r_t>1+\epsilon$"（坏动作概率反而变大了）时，裁剪项是常数、梯度为 0，**错误无法被纠正**。加了 `min` 后这种情况会选未裁剪项 $r_t\hat A_t$（更小），梯度恢复，把概率往回拉。所以 `min` 保证了 $L^{\text{CLIP}}\le L_{\pi_{\text{old}}}$，是替代目标的**下界**——"把改进的一面裁掉，把变坏的一面保留"，这正是 TRPO 下界思想的廉价版。
+
+3. **允许多 epoch 复用数据**：因为比值和 clip 天然处理了"数据来自 $\pi_{\text{old}}$，参数已是 $\pi_\theta$"这一 off-policy 偏移，同一批数据可以做 K 个 epoch 的 minibatch SGD，样本效率大幅高于 A2C。
+
+---
+
+## 四、完整算法与配套部件
+
+**优势估计：GAE（Generalized Advantage Estimation）**
+
+$$
+\delta_t=r_t+\gamma V_\phi(s_{t+1})-V_\phi(s_t),\qquad
+\hat A_t^{\text{GAE}(\gamma,\lambda)}=\sum_{l=0}^{\infty}(\gamma\lambda)^l\delta_{t+l}
+$$
+
+$\lambda=0$ 退化为一步 TD（低方差高偏差），$\lambda=1$ 退化为 MC 回报减 baseline（高方差无偏差）。$\lambda\approx0.95$ 是在两者间折中。实现上从后向前递推 $\hat A_t=\delta_t+\gamma\lambda\hat A_{t+1}$。
+
+**总损失**
+
+$$
+L(\theta,\phi)=-L^{\text{CLIP}}(\theta)+c_1\,\underbrace{\big(V_\phi(s_t)-\hat R_t\big)^2}_{\text{value loss}}-c_2\,\underbrace{\mathcal H[\pi_\theta](s_t)}_{\text{entropy bonus}}
+$$
+
+价值损失训练 critic（$\hat R_t=\hat A_t+V_{\text{old}}(s_t)$），熵项防止过早收敛到确定性策略。
+
+<details>
+<summary><b>算法流程与实现细节（点击展开）</b></summary>
+
+```text
+for iteration = 1, 2, ...:
+    用 π_old 与环境交互 N 步（或 N 条轨迹），记录 (s, a, logπ_old(a|s), r, done, V_old(s))
+    用 GAE 计算 Â_t，并得到 value target R̂_t = Â_t + V_old(s_t)
+    （常做优势标准化：Â ← (Â - mean)/std）
+    for epoch = 1..K:
+        将数据打乱切成 minibatch
+        for each minibatch:
+            r_t = exp(logπ_θ(a|s) - logπ_old(a|s))
+            L_clip = mean(min(r_t·Â, clip(r_t,1-ε,1+ε)·Â))
+            L_v    = mean((V_φ(s) - R̂)²)
+            L      = -L_clip + c1·L_v - c2·entropy
+            梯度下降（常配合梯度裁剪 max_norm=0.5）
+    π_old ← π_θ
+```
+
+常见的"隐性"实现细节（论文没写但对性能影响很大）：
+- 优势标准化（per-batch）
+- 价值函数 clipping（争议性，有时有害）
+- 学习率线性衰减、Adam $\epsilon=10^{-5}$
+- 观测/回报归一化
+- 正交初始化，策略头输出层小增益
+- 用 `exp(logp_new - logp_old)` 而非直接比值，数值稳定
+- 监控 approx KL 和 clip fraction 作为早停信号（比值超出区间的样本比例正常在 0.1–0.3）
+
+典型超参：$\epsilon=0.2$，$K=3\sim10$，$\gamma=0.99$，$\lambda=0.95$，$c_1=0.5$，$c_2=0.01$。
+</details>
+
+<details>
+<summary><b>PPO 在 LLM / RLHF 中的变体（点击展开）</b></summary>
+
+在 RLHF 里，PPO 的公式形式不变，但语义映射为：
+- 状态 = prompt + 已生成 token，动作 = 下一个 token，一条 response 是一条轨迹
+- 奖励通常只在序列末尾由 reward model 给出，中间步骤为 0
+- 额外加一项对参考模型的 KL 惩罚 $r_t \leftarrow r_t-\beta\log\frac{\pi_\theta(a_t|s_t)}{\pi_{\text{ref}}(a_t|s_t)}$，防止 reward hacking 和分布漂移（注意这个 KL 是相对 **ref 模型**，与 clip 中相对 **old 策略**的比值是两个不同的东西）
+- 需要同时维护 actor、critic、reward model、reference model 四个模型，显存和工程开销大，这也是后来 GRPO、DPO 等方法出现的动机——GRPO 去掉了 critic，用同一 prompt 下多个采样的组内标准化奖励作为优势估计，其他部分（比值、clip、KL）与 PPO 基本一致。
+</details>
+
+---
+
+## 五、面试高频追问
+
+<details>
+<summary><b>点击展开常见问题与要点回答</b></summary>
+
+**Q1：PPO 是 on-policy 还是 off-policy？**
+本质是 on-policy：数据必须来自当前（或非常接近当前）的策略，多 epoch 复用靴带在"$\pi_\theta$ 与 $\pi_{\text{old}}$ 差距很小"这个前提上，靠 clip 保证。它不能像 DQN/SAC 那样用很旧的 replay buffer。
+
+**Q2：clip 是硬约束吗？比值一定在 $[1-\epsilon,1+\epsilon]$ 里吗？**
+不是。clip 只是让越界样本梯度为零，但其他样本的更新仍会顺带改变这些样本的比值，所以实际比值经常越界，KL 也可能持续增长。这也是为什么工程上会监控 KL 做早停。
+
+**Q3：为什么用 $\min$ 而不是直接 clip？**
+见第三节：没有 $\min$ 就无法纠正"往错的方向走过头"的情况；有 $\min$ 才构成替代目标的下界，继承 TRPO 的悲观改进思想。
+
+**Q4：为什么重要性采样只做在动作级别？**
+轨迹级比值方差指数爆炸；动作级比值配合"状态分布近似不变"假设，用少量偏差换来可控方差。这个偏差正是要靠信赖域/clip 限制步长来控制的。
+
+**Q5：$\hat A_t$ 的梯度要不要传回去？**
+不传，优势是常数（`detach`）。critic 单独用 value loss 训练。
+
+**Q6：PPO vs TRPO？**
+TRPO：硬 KL 约束、二阶（Fisher-vector product + CG + line search）、有单调改进保证；PPO：一阶、clip 软约束、无理论保证但实测更好、更易实现、可与参数共享/dropout/大 batch 结合。
+
+**Q7：如果去掉 clip，多 epoch 更新会怎样？**
+比值无限制，前几个 minibatch 就可能把策略推得很远，后续样本严重 off-policy，替代目标和真实目标脱钩，常见现象是策略熵瞬间坍缩、性能崩溃且难以恢复。
+
+**Q8：$\epsilon$ 大小的影响？**
+$\epsilon$ 越大，更新越激进、样本利用越充分但越容易不稳定；越小越保守，需要更多迭代。常配合 KL 早停一起用。
+</details>
+
+---
+
+## 一句话总结
+
+PPO 的逻辑链是：**策略梯度只能用一次数据 → 用性能差分引理写出"新旧策略的差" → 用旧状态分布 + 动作级重要性采样得到可以在旧数据上估计的替代目标 → 这个替代目标只在局部可信，所以要限制步长 → TRPO 用硬 KL 约束（贵），PPO 用 $\min$ + $\text{clip}$ 构造替代目标的悲观下界，让越界样本梯度归零（便宜）→ 于是可以安全地对同一批数据做多轮一阶优化。**
 
 # 说明
 
