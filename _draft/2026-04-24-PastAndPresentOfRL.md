@@ -41,7 +41,7 @@ The Evolution of Policy Optimization Algorithms from the Perspective of LLM RL D
 
 PPO 产生的背景是 PG（所有直接对策略参数求导优化期望回报的算法统称 PG）步长极难选，策略易崩溃、TRPO 二阶优化太重、难以工程化： 
 > 1. 标准策略梯度（Policy Gradient / PG）的痛点：
-> - 样本利用率极低：严格的 On-policy，采样一次数据更新一次梯度后就必须丢弃。
+> - 样本利用率极低：严格的 On-policy，采样一次数据更新一次梯度后就必须丢弃。（更新后策略变了，数据就 off-policy 了）
 > - 步长极其脆弱（Policy Collapse）：在参数空间走了一大步，可能导致策略在概率分布空间发生剧烈突变，一旦策略变差，采出的数据更差，导致模型迅速崩溃且无法恢复。
 > 2. TRPO 的痛点：
 > - 为了限制更新幅度，TRPO 施加了硬性的平均 KL 散度约束 (总之 E[D_KL]≤δ)
