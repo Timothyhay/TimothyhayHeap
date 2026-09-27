@@ -10,7 +10,7 @@
   title: "📅 更新计划"
   width: "320px"
   content: "<p>计划在6月重构旧网站代码。因为写得真的太乱太乱了。</p><p>现在就要看看到底有多乱吗？</p>"
-  yesLink: "https://world.tangerinesoda.fun/"
+  yesLink: "/2026/04/22/PixelStyleRefactorLog.html"
 - id: 3
   title: "📢 News 2025.05.25"
   width: "300px"

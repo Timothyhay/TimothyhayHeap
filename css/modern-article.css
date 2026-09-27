@@ -113,6 +113,21 @@ body {
     padding: 0;
 }
 
+.toc-sidebar ul ul {
+    padding-left: 0px;
+    margin-top: 6px;
+}
+
+.toc-sidebar li.toc-h1 > a {
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.toc-sidebar li.toc-h3 > a {
+    color: #91acc0;
+    font-size: 11px;
+}
+
 .toc-sidebar li {
     margin-bottom: 10px;
     font-size: 11px;
@@ -193,6 +208,18 @@ body {
 
 .article-content p {
     margin-bottom: 30px;
+}
+
+.article-content a {
+    color: #2b9e99;
+    text-decoration: underline;
+    text-decoration-color: rgba(43, 158, 153, 0.35);
+    transition: color 0.2s, text-decoration-color 0.2s;
+}
+
+.article-content a:hover {
+    color: #1f7d78;
+    text-decoration-color: rgba(31, 125, 120, 0.6);
 }
 
 .article-content h2, .article-content h3 {
@@ -438,6 +465,94 @@ mjx-container[display="true"] {
 body.chocolat-open .modern-header {
     transform: translateY(-100%);
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- Citations & Reference Footnotes --- */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Inline citation marker, e.g. [1] */
+.article-content sup[id^="fnref"] {
+    margin-left: 2px;
+    scroll-margin-top: 90px; /* offset for the sticky header */
+}
+
+.article-content sup[id^="fnref"] a.footnote {
+    text-decoration: none;
+    color: #2b9e99;
+    font-size: 0.72em;
+    font-weight: 600;
+    padding: 1px 4px;
+    border-radius: 4px;
+    transition: color 0.2s, background-color 0.2s;
+}
+
+.article-content sup[id^="fnref"] a.footnote::before { content: "["; }
+.article-content sup[id^="fnref"] a.footnote::after  { content: "]"; }
+
+.article-content sup[id^="fnref"] a.footnote:hover {
+    color: #ffffff;
+    background-color: #2b9e99;
+}
+
+/* References section rendered by kramdown footnotes */
+.article-content .footnotes {
+    margin-top: 50px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-light);
+}
+
+.article-content .footnotes hr {
+    border: none;
+    border-top: 1px dashed var(--border-color);
+    margin-bottom: 25px;
+}
+
+.article-content .footnotes ol {
+    padding-left: 22px;
+}
+
+.article-content .footnotes li {
+    margin-bottom: 12px;
+    scroll-margin-top: 90px;
+}
+
+.article-content .footnotes li::marker {
+    color: #2b9e99;
+    font-weight: 600;
+}
+
+.article-content .footnotes li p {
+    margin-bottom: 0;
+}
+
+/* Back-reference arrow ↩ */
+.article-content a.reversefootnote {
+    text-decoration: none;
+    color: #2b9e99;
+    opacity: 0.6;
+    margin-left: 4px;
+    display: inline-block;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.article-content a.reversefootnote:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+/* Brief flash on the entry you jumped to */
+@keyframes ref-flash {
+    0%   { background-color: rgba(173, 231, 230, 0.8); }
+    100% { background-color: transparent; }
+}
+
+.article-content li:target,
+.article-content sup:target {
+    animation: ref-flash 1.5s ease-out;
+    border-radius: 4px;
 }
 
 /* --- Footer --- */

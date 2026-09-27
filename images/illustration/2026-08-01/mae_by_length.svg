@@ -1,0 +1,26 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='720' height='330' viewBox='0 0 720 330'>
+<rect width='720' height='330' fill='#fdfdfc'/>
+<text x='360.0' y='26' text-anchor='middle' fill='#111' font-size='15' font-weight='600' font-family='ui-monospace,Menlo,Consolas,monospace'>Offline prediction vs server: mean absolute error</text>
+<text x='360.0' y='44' text-anchor='middle' fill='#666' font-size='12' font-family='ui-monospace,Menlo,Consolas,monospace'>tokenizer/encoder bias is a fixed byte-level offset, so it looms largest in the shortest session (n=5 / 22 / 3)</text>
+<line x1='80' y1='268' x2='692' y2='268' stroke='#bbb'/>
+<line x1='80' y1='268.0' x2='692' y2='268.0' stroke='#eee'/>
+<text x='72' y='272.0' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>0.0 pts</text>
+<line x1='80' y1='216.5' x2='692' y2='216.5' stroke='#eee'/>
+<text x='72' y='220.5' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>2.3 pts</text>
+<line x1='80' y1='165.0' x2='692' y2='165.0' stroke='#eee'/>
+<text x='72' y='169.0' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>4.5 pts</text>
+<line x1='80' y1='113.5' x2='692' y2='113.5' stroke='#eee'/>
+<text x='72' y='117.5' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>6.8 pts</text>
+<line x1='80' y1='62.0' x2='692' y2='62.0' stroke='#eee'/>
+<text x='72' y='66.0' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>9.1 pts</text>
+<rect x='118.8' y='62.0' width='126.5' height='206.0' fill='#1f6f8b' rx='2'/>
+<text x='182.0' y='56.0' text-anchor='middle' fill='#333' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>9.1 pts</text>
+<text x='182.0' y='284.0' text-anchor='middle' fill='#444' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>6 turns</text>
+<rect x='322.8' y='143.5' width='126.5' height='124.5' fill='#a4485f' rx='2'/>
+<text x='386.0' y='137.5' text-anchor='middle' fill='#333' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>5.5 pts</text>
+<text x='386.0' y='284.0' text-anchor='middle' fill='#444' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>12 turns</text>
+<rect x='526.8' y='134.4' width='126.5' height='133.6' fill='#4e9a51' rx='2'/>
+<text x='590.0' y='128.4' text-anchor='middle' fill='#333' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>5.9 pts</text>
+<text x='590.0' y='284.0' text-anchor='middle' fill='#444' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>18 turns</text>
+<text x='16' y='165.0' fill='#333' font-size='12' transform='rotate(-90 16 165.0)' text-anchor='middle' font-family='ui-monospace,Menlo,Consolas,monospace'>MAE (percentage points)</text>
+</svg>

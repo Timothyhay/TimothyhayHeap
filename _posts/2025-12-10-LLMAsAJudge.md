@@ -2,7 +2,7 @@
 layout: modern-article
 title: LLM-as-a-judge .. reliable or not?
 comments: true
-tags: Deep-Learning
+tags: LLM
 ---
 
 # Work in progress
@@ -15,13 +15,13 @@ In contrast, LLM-as-a-judge is a general technique where you use LLM to approxim
 
 LLM evaluators in several scenarios:
 
-Pairwise comparison: give LLM two responses and ask to choose the better one. This lets you compare models, prompts, or configurations to see which performs best.
+- Pairwise comparison: give LLM two responses and ask to choose the better one. This lets you compare models, prompts, or configurations to see which performs best.
 成对比较 ：给学习模型 (LLM) 两个答案，并要求其选择更优的答案。这样可以比较不同的模型、提示或配置，从而确定哪个性能最佳。
 
-Evaluation by criteria (reference-free): ask the LLM to assess a response or conversation based on tone, clarity, correctness, or other dimensions.
+- Evaluation by criteria (reference-free): ask the LLM to assess a response or conversation based on tone, clarity, correctness, or other dimensions.
 按标准评估（无参考） ：让 LLM 根据语气、清晰度、正确性或其他维度评估回复或对话。
 
-Evaluation by criteria (reference-based): provide extra context, like a source document or reference, and ask the LLM to score the response.
+- Evaluation by criteria (reference-based): provide extra context, like a source document or reference, and ask the LLM to score the response.
 按标准（参考资料）进行评估 ：提供额外的背景信息，例如来源文件或参考资料，并让 LLM 对回复进行评分。
 
 prompting techniques:

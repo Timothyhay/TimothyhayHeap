@@ -1,0 +1,60 @@
+<style>
+.wip-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 420px;
+    margin: 28px auto;
+    gap: 16px;
+    text-indent: 0;
+    font-family: 'Press Start 2P', 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    color: rgba(55, 165, 160, 0.85);
+}
+.wip-badge::before,
+.wip-badge::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(112, 205, 199, 0.5), transparent);
+}
+</style>
+<script>
+(function () {
+    function renderWip(root) {
+        if (!root) return;
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        var targets = [];
+        while (walker.nextNode()) {
+            var node = walker.currentNode;
+            if (node.nodeValue.indexOf('[WIP]') !== -1) targets.push(node);
+        }
+        targets.forEach(function (node) {
+            var frag = document.createDocumentFragment();
+            var parts = node.nodeValue.split('[WIP]');
+            parts.forEach(function (text, i) {
+                if (text) frag.appendChild(document.createTextNode(text));
+                if (i < parts.length - 1) {
+                    var badge = document.createElement('span');
+                    badge.className = 'wip-badge';
+                    badge.textContent = 'WIP';
+                    frag.appendChild(badge);
+                }
+            });
+            node.parentNode.replaceChild(frag, node);
+        });
+    }
+    function init() {
+        renderWip(document.querySelector('.article-content'));
+        renderWip(document.getElementById('blogpage'));
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    window.addEventListener('load', init);
+})();
+</script>

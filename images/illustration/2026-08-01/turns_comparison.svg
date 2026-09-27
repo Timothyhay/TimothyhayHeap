@@ -1,0 +1,39 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='720' height='360' viewBox='0 0 720 360'>
+<rect width='720' height='360' fill='#fdfdfc'/>
+<text x='360.0' y='26' text-anchor='middle' fill='#111' font-size='15' font-weight='600' font-family='ui-monospace,Menlo,Consolas,monospace'>Session cache hit rate by conversation length</text>
+<text x='360.0' y='44' text-anchor='middle' fill='#666' font-size='12' font-family='ui-monospace,Menlo,Consolas,monospace'>the 12-turn and 18-turn runs agree within a point; 6 turns lags because the prefix never fully accumulates</text>
+<rect x='74' y='62' width='496' height='246' fill='#fff' stroke='#ddd'/>
+<line x1='74' y1='308.0' x2='570' y2='308.0' stroke='#eee'/>
+<text x='66' y='312.0' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>88%</text>
+<line x1='74' y1='246.5' x2='570' y2='246.5' stroke='#eee'/>
+<text x='66' y='250.5' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>91%</text>
+<line x1='74' y1='185.0' x2='570' y2='185.0' stroke='#eee'/>
+<text x='66' y='189.0' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>94%</text>
+<line x1='74' y1='123.5' x2='570' y2='123.5' stroke='#eee'/>
+<text x='66' y='127.5' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>97%</text>
+<line x1='74' y1='62.0' x2='570' y2='62.0' stroke='#eee'/>
+<text x='66' y='66.0' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>100%</text>
+<polyline points='74.0,232.1 322.0,170.4 570.0,165.5' fill='none' stroke='#1f6f8b' stroke-width='2'/>
+<circle cx='74.0' cy='232.1' r='2.5' fill='#1f6f8b'/>
+<circle cx='322.0' cy='170.4' r='2.5' fill='#1f6f8b'/>
+<circle cx='570.0' cy='165.5' r='2.5' fill='#1f6f8b'/>
+<line x1='586' y1='80' x2='606' y2='80' stroke='#1f6f8b' stroke-width='2'/>
+<text x='612' y='84' fill='#333' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>median</text>
+<polyline points='74.0,250.6 322.0,190.3 570.0,170.0' fill='none' stroke='#e07a3f' stroke-width='2'/>
+<circle cx='74.0' cy='250.6' r='2.5' fill='#e07a3f'/>
+<circle cx='322.0' cy='190.3' r='2.5' fill='#e07a3f'/>
+<circle cx='570.0' cy='170.0' r='2.5' fill='#e07a3f'/>
+<line x1='586' y1='100' x2='606' y2='100' stroke='#e07a3f' stroke-width='2'/>
+<text x='612' y='104' fill='#333' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>P10</text>
+<polyline points='74.0,222.9 322.0,159.2 570.0,157.7' fill='none' stroke='#4e9a51' stroke-width='2'/>
+<circle cx='74.0' cy='222.9' r='2.5' fill='#4e9a51'/>
+<circle cx='322.0' cy='159.2' r='2.5' fill='#4e9a51'/>
+<circle cx='570.0' cy='157.7' r='2.5' fill='#4e9a51'/>
+<line x1='586' y1='120' x2='606' y2='120' stroke='#4e9a51' stroke-width='2'/>
+<text x='612' y='124' fill='#333' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>P90</text>
+<text x='74.0' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>6 turns</text>
+<text x='322.0' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>12 turns</text>
+<text x='570.0' y='324' text-anchor='middle' fill='#666' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>18 turns</text>
+<text x='322.0' y='348' text-anchor='middle' fill='#333' font-size='12' font-family='ui-monospace,Menlo,Consolas,monospace'>conversation length (same 12-turn session script, truncated)</text>
+<text x='16' y='185.0' fill='#333' font-size='12' transform='rotate(-90 16 185.0)' text-anchor='middle' font-family='ui-monospace,Menlo,Consolas,monospace'>session hit rate (%)</text>
+</svg>

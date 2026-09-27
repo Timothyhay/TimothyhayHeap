@@ -1,23 +1,23 @@
 ---
 layout: modern-article
-title: Long Sequence
+title: Experience of Long Sequence SFT 
 date: 2026-04-24
 tags: LLM
 comments: true
 ---
 
+[WIP]
 
-使用长序列 Agent Trajectory Data 训练 LLM，来赋予其复杂任务规划、工具调用/Agentic能力短
+本文介绍使用长序列 Agent Trajectory Data 训练 LLM，来赋予其复杂任务规划、工具调用/Agentic能力的流程、经验与注意点。
 
-Agent 轨迹通常包含交替出现的序列：**状态 (State) -> 思考 (Thought) -> 动作 (Action) -> 观察/环境反馈 (Observation) -> ...**
+这里的 Agent 轨迹指交替出现的序列：**状态 (State) -> 思考 (Thought) -> 动作 (Action) -> 观察/环境反馈 (Observation) -> ...**
 
 由于序列极长且具有强烈的时序因果关系，训练过程与普通的文本对话微调有显著不同。以下是具体的训练方法和核心注意事项：
 
 ---
 
-### 一、总统流程
+### 一、总体流程
 
-### 一、 核心训练流程与方法
 
 #### 1. 数据重构与格式化 (Data Formatting)
 在训练前，必须将复杂的轨迹数据标准化。通常采用类似 **ReAct (Reasoning and Acting)** 的框架：
@@ -71,5 +71,23 @@ Agent 轨迹通常包含交替出现的序列：**状态 (State) -> 思考 (Thou
     *   开启**梯度检查点（Gradient Checkpointing）**，用计算时间换取显存空间。
     *   丢弃历史不重要的环境反馈，采用滑动窗口（Sliding Window）阶段性截断不再使用的极早期 Observation。
 
+
+
+## 二、参数选择
+
+
+## 三、环境与实际问题
+
 ### 总结
 用长序列 Agent 轨迹训练 LLM，本质上不仅是在教模型“说话”，而是在教它“做事”。**高质量的轨迹数据（尤其是包含试错与反思的轨迹）、精准的 Loss Masking 策略、以及对长序列上下文能力的底层优化**，是决定最终 Agent 智商高低的关键三要素。
+
+
+https://arxiv.org/pdf/2608.24949
+
+
+
+# DJ老师：相关技术
+
+R3
+
+vllm 有一个参数可以开起来，会返回一个 routed expert 值。这是一个包含类似 [batch_size, seq_len, num_layers, top_k] 的索引张量。详细记录了moe的时候怎么走的通路。在训练的时候吧这个 routed expert 经过后处理后输入给训练框架来激活对应专家。

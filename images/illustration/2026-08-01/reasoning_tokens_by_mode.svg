@@ -1,0 +1,28 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='720' height='330' viewBox='0 0 720 330'>
+<rect width='720' height='330' fill='#fdfdfc'/>
+<text x='360.0' y='26' text-anchor='middle' fill='#111' font-size='15' font-weight='600' font-family='ui-monospace,Menlo,Consolas,monospace'>Reasoning tokens echoed back per session, by policy</text>
+<text x='360.0' y='44' text-anchor='middle' fill='#666' font-size='12' font-family='ui-monospace,Menlo,Consolas,monospace'>never strips them from the wire entirely; always re-ships every turn — the 3.3x growth buys only +2.8 points of hit rate</text>
+<line x1='80' y1='268' x2='692' y2='268' stroke='#bbb'/>
+<line x1='80' y1='268.0' x2='692' y2='268.0' stroke='#eee'/>
+<text x='72' y='272.0' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>0.0k</text>
+<line x1='80' y1='216.5' x2='692' y2='216.5' stroke='#eee'/>
+<text x='72' y='220.5' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>2.5k</text>
+<line x1='80' y1='165.0' x2='692' y2='165.0' stroke='#eee'/>
+<text x='72' y='169.0' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>4.9k</text>
+<line x1='80' y1='113.5' x2='692' y2='113.5' stroke='#eee'/>
+<text x='72' y='117.5' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>7.4k</text>
+<line x1='80' y1='62.0' x2='692' y2='62.0' stroke='#eee'/>
+<text x='72' y='66.0' text-anchor='end' fill='#666' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>9.8k</text>
+<rect x='118.8' y='204.8' width='126.5' height='63.2' fill='#a4485f' rx='2'/>
+<text x='182.0' y='198.8' text-anchor='middle' fill='#333' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>3.0k</text>
+<text x='182.0' y='284.0' text-anchor='middle' fill='#444' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>never</text>
+<text x='182.0' y='297.0' text-anchor='middle' fill='#444' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>(strip)</text>
+<rect x='322.8' y='175.6' width='126.5' height='92.4' fill='#e07a3f' rx='2'/>
+<text x='386.0' y='169.6' text-anchor='middle' fill='#333' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>4.4k</text>
+<text x='386.0' y='284.0' text-anchor='middle' fill='#444' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>tool</text>
+<rect x='526.8' y='62.0' width='126.5' height='206.0' fill='#4e9a51' rx='2'/>
+<text x='590.0' y='56.0' text-anchor='middle' fill='#333' font-size='11' font-family='ui-monospace,Menlo,Consolas,monospace'>9.8k</text>
+<text x='590.0' y='284.0' text-anchor='middle' fill='#444' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>always</text>
+<text x='590.0' y='297.0' text-anchor='middle' fill='#444' font-size='10' font-family='ui-monospace,Menlo,Consolas,monospace'>(echo)</text>
+<text x='16' y='165.0' fill='#333' font-size='12' transform='rotate(-90 16 165.0)' text-anchor='middle' font-family='ui-monospace,Menlo,Consolas,monospace'>reasoning tokens (one 12-turn session)</text>
+</svg>
