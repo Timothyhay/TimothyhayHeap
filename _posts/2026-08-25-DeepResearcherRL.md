@@ -1130,6 +1130,9 @@ Two things worth noting: **(a)** Token-level Loss gives the smallest score gain 
 
 </details>
 
+
+ $A_i=(r_i-\mu)/\sigma$ 并把 NaN 归因于"σ=0 除零、加 ε 解决"。这只对了一半。真正的学术批评是：用 std(r) 归一化会给标准差低的题目（极易或极难）不成比例的权重，Dr. GRPO 取消这个缩放以平等对待所有题目。同时 GRPO 的长度归一化会带来长度偏置，Dr.GRPO 改用全局常数归一化来消除它。而 σ=0 的真正工程解法不是加 ε，而是 **DAPO 的 Dynamic Sampling**（见 ③）。
+
 ---
 
 ### 3. 与 GRPO / Dr.GRPO 的精确对位 / Precise Alignment with GRPO / Dr.GRPO
@@ -1249,7 +1252,7 @@ Reward Manager 计算得分
 - `action_stop_tokens="</search>,</answer>"` → vLLM 遇到这些 token 时暂停生成
 - Agent Loop 最多 `max_turns=7` 轮交互
 
-## Q6: multi-turn Agent 的数据流是怎样的？
+## Q4: multi-turn Agent 的数据流是怎样的？
 
 ```
 Step 1: [system prompt + "Question: ..."] → vLLM →
@@ -1265,7 +1268,7 @@ Episode end → Reward Manager:
 
 Loss 只计算生成 token（不包括 prompt 和 observation token），由 `mask_observations=True` 控制。
 
-## Q7: 怎么判断训练是否在"真的学习"？
+## Q5: 怎么判断训练是否在"真的学习"？
 
 **关键信号**：
 
@@ -1280,7 +1283,7 @@ Loss 只计算生成 token（不包括 prompt 和 observation token），由 `ma
 - PG loss = 0.0 持续 99 步 → 空转训练
 - score = 0.1 不变 → 所有回复格式分相同，无区分度 → 说明模型没有真正学习，需要检查 reward 设计或模型能力
 
-## Q10: pg_loss 是什么？为什么有时是负的、有时是正的、有时是零？
+## Q6: pg_loss 是什么？为什么有时是负的、有时是正的、有时是零？
 
 `pg_loss = -Σ(advantage_i × log_prob_i) / N`
 
@@ -1307,66 +1310,7 @@ Loss 只计算生成 token（不包括 prompt 和 observation token），由 `ma
 - 假学习：pg_loss ≠ 0 但 score 始终不涨 → 模型在过拟合噪声
 - 真学习：pg_loss 波动 + score 趋势上升 → 我们在 Docker 训练中看到的
 
-## Q13: 训练 43 步后 Score 从 0.10 涨到 0.72，这意味着什么？
-
-**实际数据（Docker vLLM 0.11 + Instruct）**：
-
-
-| 阶段   | Steps | Score 均值 | 含义                         |
-| ------ | ----- | ---------- | ---------------------------- |
-| 探索期 | 1-11  | 0.148      | 模型偶尔答对，大部分是格式分 |
-| 学习期 | 12-25 | 0.35       | 搜索+答案正确率上升          |
-| 稳定期 | 26-43 | 0.44       | 持续超过 0.4，峰值 0.72      |
-
-**Score 0.72 的分解**（n=4, format_score=0.1）：
-
-- 3 条回复答对 (1.0×3) + 1 条格式分 (0.1) → (3.1/4) = 0.775
-- 或 2 条答对 + 1 条格式分 + 1 条无标签 → (2.1/4) = 0.525
-- Score 0.72 ≈ 平均每个 prompt 有 2-3 条回复答对
-
-**num_turns 的阶段性变化**：
-
-- Step 1: 2.28（多轮搜索）
-- Step 43: 1.0（直接回答）
-- 解读：模型学会了判断问题难度——简单问题直接答，复杂问题才搜索
-
-## Q17: 训练数据分布不均会有什么后果？你是怎么发现的？
-
-**现象回顾**：训练 123 步后 Score 从 0.10 升到 0.44 但随后停涨，num_turns 从 2.28 降到 1.0。
-
-**排查过程**：逐一排除可能性（reward 设计、模型能力、vLLM 兼容性）后，检查数据分布 → 发现训练集的前 79,168 条全是 NQ 单跳问题，后 73,485 条全是 HotpotQA 多跳问题——中间只有一条分界线，没有任何混合。
-
-**后果**：
-
-- 200 步 × batch_size=8 = 1,600 条全部是 NQ → 模型从未见过 HotpotQA
-- num_turns=1.0 是对的——NQ 单跳不需要多轮搜索
-- Score ≈ 0.44 是 NQ 的天花板——太简单，没有提升空间
-- 多跳能力完全未训练
-
-**教训**：**先检查数据分布再开始 RL 训练**——否则可能花几天时间在一个"假"任务上。
-
-## Q18: RL 训练需要多少 epoch？和 SFT 有什么不同？
-
-**SFT 需要完整 epoch**——模型在标注数据上做教师强制学习，每个样本通常被看到 1-3 次。
-
-**RL 完全不同**——模型通过"尝试→观察 reward→比较"来学习，数据只提供问题和 ground truth。
-
-
-| 维度          | SFT            | RL (GRPO/DAPO)                |
-| ------------- | -------------- | ----------------------------- |
-| 学习方式      | 模仿正确回答   | 从 reward 中试错              |
-| 数据作用      | 直接监督       | 只提供问题，答案用于 reward   |
-| 过拟合风险    | 大（死记硬背） | 小（模型在探索）              |
-| epoch 必要性  | 必须           | 非必须                        |
-| 多 epoch 风险 | 中等           | 背答案会降低探索→reward 虚高 |
-
-**RL 的 epoch 设计原则**：不是"学多少遍"，而是"每个问题给几次尝试机会"。
-
-实验 2 的设计：
-`1526 条 × 2 epochs = 382 步 × 8 batch = 每个问题被看到 2 次`
-
-- NQ 单跳：1 次学会格式，1 次学会搜索
-- HotpotQA 多跳：1 次发现需要多轮搜索，1 次学会搜索链
+## 
 
 ### 当前数据集（短轨迹 ~700 tok、n=4、reward∈）
 
@@ -1506,23 +1450,6 @@ veRL 官方在底层将训练后端抽象成了通用的 Engine/Worker 接口，
 3. **异步打分**：轨迹生成完毕后，异步发送至打分服务（`agent_reward.py`），进行**奖励塑造（Reward Shaping）**计算。
 4. **模型更新**：Learner 收集一个 Batch 的轨迹和奖励值，利用 FSDP 引擎对 Policy（Actor）模型进行梯度更新。
 
----
-
-## 3. 算法选择与技术细节
-
-本方案没有使用 PPO，而是尝试了 GRPO 后选择了改良的 Dr. GRPO。
-
-### 3.1 Why GRPO?
-
-1. **极大地节省显存**：PPO 需要维护一个与 Actor 相同规模的 **Critic（评论员）模型** 来预测状态价值（State Value），这在 8 卡节点上微调 7B+ 模型时极易造成 OOM。GRPO 取消了 Critic 模型，将显存和计算资源全部释放给 Actor。
-2. **相对优势估算**：对每一个输入 $Prompt$，让模型并行 Rollout 产生一组成员（采样数 $G = 5$）。通过这组轨迹的奖励均值和标准差，计算组内的相对优势（Advantage）：
-
-   $$
-   A_i = \frac{r_i - \text{mean}(R)}{\text{std}(R)}
-   $$
-
-   这自然地建立了一个基线（Baseline），极大地稳定了强化学习的梯度更新。
-
 ### 3.2 现代改良：从 vanilla GRPO → Dr.GRPO / DAPO
 
 vanilla GRPO 的两个已知偏置，务必知道：
@@ -1634,14 +1561,6 @@ Overlong Reward Shaping（惩罚过长回答）。其中：
 
 ---
 
-### 四、 快速部署前自检 Checklist
-
-- [ ]  **拓扑**：训练与推理均设置为单机内 `TP=8`，跨机纯走 `DP/FSDP`？
-- [ ]  **掩码**：Agent 轨迹中的外部搜索结果（Observation）是否已在 Loss 计算中被完全 Mask？
-- [ ]  **学习率**：是否已从 14B 的 $5\times 10^{-6}$ 安全下调至 72B 的 $1.5\times 10^{-6}$ 附近？
-- [ ]  **更新轮数**：`update_epochs / ppo_epochs` 是否设为 1？
-- [ ]  **检索支撑**：本地知识库/检索集群是否能抗住 64 卡带来的高并发查询冲击？
-- [ ]  **显存防爆**：`micro_batch_size=1` 且已开启 `Activation Checkpointing`（选择性重计算）？
 
 ---
 

@@ -39,11 +39,15 @@ The Evolution of Policy Optimization Algorithms from the Perspective of LLM RL D
 
 **背景**：PPO（Proximal Policy Optimization, Schulman et al.）原本是通用 RL 算法，被 OpenAI 在 InstructGPT 中用于 RLHF，成为 ChatGPT 的核心训练技术。
 
-PPO 产生的背景是 PG（所有直接对策略参数求导优化期望回报的算法统称 PG）步长极难选，策略易崩溃、TRPO 二阶优化太重、难以工程化： 
+PPO 产生的背景是 PG（所有直接对策略参数求导优化期望回报的算法统称 PG）步长极难选，策略易崩溃、TRPO 二阶优化太重、难以工程化：
+
 > 1. 标准策略梯度（Policy Gradient / PG）的痛点：
+>
 > - 样本利用率极低：严格的 On-policy，采样一次数据更新一次梯度后就必须丢弃。（更新后策略变了，数据就 off-policy 了）
 > - 步长极其脆弱（Policy Collapse）：在参数空间走了一大步，可能导致策略在概率分布空间发生剧烈突变，一旦策略变差，采出的数据更差，导致模型迅速崩溃且无法恢复。
+>
 > 2. TRPO 的痛点：
+>
 > - 为了限制更新幅度，TRPO 施加了硬性的平均 KL 散度约束 (总之 E[D_KL]≤δ)
 > - 计算代价极高：求解这个约束优化问题需要计算二阶海森矩阵（Fisher Information Matrix）并使用共轭梯度法（CG），无法与现代深度学习的一阶优化器（如 Adam）无缝结合，且极难拓展到超大模型。
 
@@ -120,6 +124,46 @@ $$
 $$
 
 
+损失计算伪代码：
+```python
+def dpo_loss(
+    pi_logps_w, ref_logps_w, mask_w,   # chosen (正例/获胜样本)
+    pi_logps_l, ref_logps_l, mask_l,   # rejected (负例/失败样本)
+    beta=0.1
+):
+    # pi_logps_*: [B, T]，当前 Policy 模型在每个 Token 上的 log 概率
+    # ref_logps_*: [B, T]，冻结的 Reference 模型在每个 Token 上的 log 概率
+    # mask_*: [B, T]，只关注 response 部分的有效 token mask（0/1）
+
+    # 1. 序列级累加：计算整条回答的 log 概率 log π(y|x) = sum(log π(y_t|x, y_<t))
+    # [B, T] -> [B]
+    pi_sum_w = (pi_logps_w * mask_w).sum(dim=-1)
+    ref_sum_w = (ref_logps_w * mask_w).sum(dim=-1)
+
+    pi_sum_l = (pi_logps_l * mask_l).sum(dim=-1)
+    ref_sum_l = (ref_logps_l * mask_l).sum(dim=-1)
+
+    # 2. 计算当前模型相对参考模型的 Log Ratio: log(π / π_ref)
+    # [B]
+    log_ratio_w = pi_sum_w - ref_sum_w
+    log_ratio_l = pi_sum_l - ref_sum_l
+
+    # 3. 计算 Logit：即 DPO 的隐式奖励差值（Implicit Reward Margin）
+    # logits = beta * [ log(π(y_w)/π_ref(y_w)) - log(π(y_l)/π_ref(y_l)) ]
+    # [B]
+    logits = beta * (log_ratio_w - log_ratio_l)
+
+    # 4. 计算损失：-log(σ(logits))
+    # 为保证数值稳定性，工业界直接使用 log_sigmoid(x) 而不是 log(sigmoid(x))
+    loss = -log_sigmoid(logits)
+
+    # 5. (可选) 计算隐式 Rewards 用于监控训练指标（Accuracy、Reward Margin 等）
+    # chosen_rewards = beta * log_ratio_w.detach()
+    # rejected_rewards = beta * log_ratio_l.detach()
+
+    return loss.mean()
+
+```
 
 DPO 能够跳过显式奖励模型，核心在于它将 **KL 约束下的 RLHF 最优解** 与 **Bradley-Terry 偏好模型** 进行了巧妙的数学结合：首先，带有 KL 正则的传统 RLHF 目标存在一个闭式解（Closed-form solution），将该解反向推导即可得到一个**隐式奖励函数**——它等于策略模型与参考模型的对数概率比，加上一个难以计算的配分函数（归一化因子）$Z(x)$；然而关键的一步是，当把这个隐式奖励代入 Bradley-Terry 偏好概率模型时，胜出项与失败项做差使得**配分函数 $Z(x)$ 被精确抵消**。这就直接建立了人类偏好概率与模型自身生成概率的等价映射，从而将复杂的强化学习与奖励建模，彻底简化为一个无需采样的二分类交叉熵优化任务。
 
@@ -131,10 +175,6 @@ keywords：
 * **Implicit reward / 隐式奖励**（体现对 DPO 核心概念的理解）
 * **Partition function cancels out / 配分函数对消**（最核心的技术巧思）
 * **Binary cross-entropy / 二分类交叉熵**（点出工程落地的最终形态）
-
-
-
-
 
 **意义与局限**：
 
@@ -209,6 +249,39 @@ $$
 \mathcal{J}_{\text{GRPO}} = \mathbb{E}\left[\frac{1}{G}\sum_{i=1}^{G} \frac{1}{|o_i|} \sum_{t=1}^{|o_i|} \Big(\min\big(\rho_{i,t}\hat{A}_i,\ \text{clip}(\rho_{i,t}, 1-\epsilon, 1+\epsilon)\hat{A}_i\big) - \beta\, \mathbb{D}_{\text{KL}}[\pi_\theta \| \pi_{\text{ref}}]\Big)\right]
 $$
 
+损失计算的伪代码：
+```python
+def grpo_loss(logps, old_logps, ref_logps, rewards):
+
+    # rewards: [B, G]
+    A = (rewards - rewards.mean(-1, keepdim=True)) \
+        / (rewards.std(-1, keepdim=True) + 1e-8)
+
+    # A: [B, G, 1]
+    A = A.unsqueeze(-1)
+
+    # [B, G, T]
+    ratio = exp(logps - old_logps)
+
+    pg_loss = -min(
+        ratio * A,
+        clip(ratio, 1-eps, 1+eps) * A
+    )
+
+    # KL(pi || pi_ref)
+    kl = exp(ref_logps - logps) \
+         - (ref_logps - logps) - 1
+
+    loss = pg_loss + beta * kl
+
+    return masked_mean(loss)
+
+```
+
+
+
+
+
 **为什么它成了 2025 年的默认算法**：
 
 - 去掉 Critic → 显存减半、无价值估计误差问题；
@@ -240,7 +313,6 @@ mathematically analyzed GRPO's gradient estimator and found **two systematic bia
 **Difficulty bias**: dividing by the within-group $\text{std}(r)$ amplifies the weight of questions that are nearly all-correct or all-wrong (low variance), giving questions of different difficulty distorted gradient weights.
 
 **修正**极其简单：**删掉这两个归一化项** remove both normalization terms
-
 
 $$
 \hat{A}_i = r_i - \text{mean}(r_1, \dots, r_G) \quad (\text{不再除以 std / no longer divided by std}), \qquad \text{损失聚合去掉 / loss aggregation drops } \tfrac{1}{|o_i|}
@@ -428,8 +500,6 @@ From DJ：
 2. MoE模型专家随机路由
 3. tokenizer 分词结果也不一样
 
-
-
 # 公式推导与实现
 
 # PPO（Proximal Policy Optimization）详解
@@ -442,10 +512,11 @@ From DJ：
 
 PPO 属于 **on-policy 的策略梯度方法**。它的前身是 REINFORCE / A2C 和 TRPO，这两条线各有痛点：
 
-| 方法 | 痛点 |
-|---|---|
+
+| 方法                          | 痛点                                                                                                                                               |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 原始策略梯度（REINFORCE/A2C） | 每批数据只能做**一次**梯度更新（更新后策略变了，数据就 off-policy 了），样本效率低；步长很难调，步子大了策略崩掉（performance collapse）且难以恢复 |
-| TRPO | 用 KL 约束保证单调改进，理论漂亮，但需要二阶信息（Fisher 矩阵 + 共轭梯度 + 线搜索），实现复杂、计算贵、不易与 dropout / 参数共享等结合 |
+| TRPO                          | 用 KL 约束保证单调改进，理论漂亮，但需要二阶信息（Fisher 矩阵 + 共轭梯度 + 线搜索），实现复杂、计算贵、不易与 dropout / 参数共享等结合             |
 
 PPO 的目标：**用一阶方法，近似达到 TRPO "限制策略更新幅度" 的效果，同时允许一批数据被复用多个 epoch。**
 
@@ -584,19 +655,18 @@ $\beta$ 根据实际 KL 与目标值 $d_{\text{targ}}$ 的比较动态调大/调
 
 分四种情形看 $L^{\text{CLIP}}$ 对 $r_t$ 的行为：
 
-| 情形 | $\hat A_t$ | $r_t$ | $\min(\cdot)$ 取哪项 | 梯度 | 直觉 |
-|---|---|---|---|---|---|
-| ① | $>0$ | $\le 1+\epsilon$ | 未裁剪项 | 正常 | 好动作，提高概率 |
-| ② | $>0$ | $>1+\epsilon$ | 裁剪项（常数） | **0** | 好动作概率已经提高够多了，别再贪 |
-| ③ | $<0$ | $\ge 1-\epsilon$ | 未裁剪项 | 正常 | 坏动作，降低概率 |
-| ④ | $<0$ | $<1-\epsilon$ | 裁剪项（常数） | **0** | 坏动作概率已经压得够低了，停 |
+
+| 情形 | $\hat A_t$ | $r_t$            | $\min(\cdot)$ 取哪项 | 梯度  | 直觉                             |
+| ---- | ---------- | ---------------- | -------------------- | ----- | -------------------------------- |
+| ①   | $>0$       | $\le 1+\epsilon$ | 未裁剪项             | 正常  | 好动作，提高概率                 |
+| ②   | $>0$       | $>1+\epsilon$    | 裁剪项（常数）       | **0** | 好动作概率已经提高够多了，别再贪 |
+| ③   | $<0$       | $\ge 1-\epsilon$ | 未裁剪项             | 正常  | 坏动作，降低概率                 |
+| ④   | $<0$       | $<1-\epsilon$    | 裁剪项（常数）       | **0** | 坏动作概率已经压得够低了，停     |
 
 三个设计要点：
 
 1. **`clip` 的作用**：让比值超出 $[1-\epsilon,1+\epsilon]$ 后目标函数变平，梯度为零，策略在这些样本上就"不再有动力"继续偏离——用一阶方法软性地实现了信赖域。注意它**不是硬约束**，比值确实可能超出区间（因为多个 epoch 的 minibatch 更新），只是超出后不再被推得更远。
-
 2. **`min` 的作用（悲观下界）**：单纯 clip 是不够的。如果只用裁剪项，那么在情形"$\hat A_t<0$ 且 $r_t>1+\epsilon$"（坏动作概率反而变大了）时，裁剪项是常数、梯度为 0，**错误无法被纠正**。加了 `min` 后这种情况会选未裁剪项 $r_t\hat A_t$（更小），梯度恢复，把概率往回拉。所以 `min` 保证了 $L^{\text{CLIP}}\le L_{\pi_{\text{old}}}$，是替代目标的**下界**——"把改进的一面裁掉，把变坏的一面保留"，这正是 TRPO 下界思想的廉价版。
-
 3. **允许多 epoch 复用数据**：因为比值和 clip 天然处理了"数据来自 $\pi_{\text{old}}$，参数已是 $\pi_\theta$"这一 off-policy 偏移，同一批数据可以做 K 个 epoch 的 minibatch SGD，样本效率大幅高于 A2C。
 
 ---
@@ -640,6 +710,7 @@ for iteration = 1, 2, ...:
 ```
 
 常见的"隐性"实现细节（论文没写但对性能影响很大）：
+
 - 优势标准化（per-batch）
 - 价值函数 clipping（争议性，有时有害）
 - 学习率线性衰减、Adam $\epsilon=10^{-5}$
@@ -649,16 +720,19 @@ for iteration = 1, 2, ...:
 - 监控 approx KL 和 clip fraction 作为早停信号（比值超出区间的样本比例正常在 0.1–0.3）
 
 典型超参：$\epsilon=0.2$，$K=3\sim10$，$\gamma=0.99$，$\lambda=0.95$，$c_1=0.5$，$c_2=0.01$。
+
 </details>
 
 <details>
 <summary><b>PPO 在 LLM / RLHF 中的变体（点击展开）</b></summary>
 
 在 RLHF 里，PPO 的公式形式不变，但语义映射为：
+
 - 状态 = prompt + 已生成 token，动作 = 下一个 token，一条 response 是一条轨迹
 - 奖励通常只在序列末尾由 reward model 给出，中间步骤为 0
 - 额外加一项对参考模型的 KL 惩罚 $r_t \leftarrow r_t-\beta\log\frac{\pi_\theta(a_t|s_t)}{\pi_{\text{ref}}(a_t|s_t)}$，防止 reward hacking 和分布漂移（注意这个 KL 是相对 **ref 模型**，与 clip 中相对 **old 策略**的比值是两个不同的东西）
 - 需要同时维护 actor、critic、reward model、reference model 四个模型，显存和工程开销大，这也是后来 GRPO、DPO 等方法出现的动机——GRPO 去掉了 critic，用同一 prompt 下多个采样的组内标准化奖励作为优势估计，其他部分（比值、clip、KL）与 PPO 基本一致。
+
 </details>
 
 ---
@@ -691,6 +765,7 @@ TRPO：硬 KL 约束、二阶（Fisher-vector product + CG + line search）、�
 
 **Q8：$\epsilon$ 大小的影响？**
 $\epsilon$ 越大，更新越激进、样本利用越充分但越容易不稳定；越小越保守，需要更多迭代。常配合 KL 早停一起用。
+
 </details>
 
 ---
