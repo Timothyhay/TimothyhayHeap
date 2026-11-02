@@ -115,13 +115,16 @@ $$
 \pi^*(y \mid x) \propto \pi_{\text{ref}}(y \mid x)\exp\left(\frac{1}{\beta} r(x, y)\right)
 $$
 
-可以反解出 reward $r(x,y) = \beta \log \frac{\pi^*(y|x)}{\pi_{\text{ref}}(y|x)} + \text{const}$，代入 Bradley–Terry 偏好模型，（配分函数 $Z(x)$ 相消）奖励函数被**隐式地重参数化为策略本身**，得到纯监督损失：
+可以反解出 reward （定义的隐式奖励函数）$r(x,y) = \beta \log \frac{\pi^*(y|x)}{\pi_{\text{ref}}(y|x)} + \text{const}$，代入 Bradley–Terry 偏好模型，（配分函数 $Z(x)$ 相消）奖励函数被**隐式地重参数化为策略本身**，得到纯监督损失：
 
 Inverting this gives $r(x,y) = \beta \log \frac{\pi^*(y|x)}{\pi_{\text{ref}}(y|x)} + \text{const}$. Substituting into the Bradley–Terry preference model, the reward function is **implicitly reparameterized as the policy itself**, yielding a purely supervised loss:
 
 $$
 \mathcal{L}_{\text{DPO}} = -\mathbb{E}_{(x, y_w, y_l)}\left[\log \sigma\left(\beta \log \frac{\pi_\theta(y_w \mid x)}{\pi_{\text{ref}}(y_w \mid x)} - \beta \log \frac{\pi_\theta(y_l \mid x)}{\pi_{\text{ref}}(y_l \mid x)}\right)\right]
 $$
+
+sigmoid σ(⋅) 括号内的核心部分实际上是偏好回复与不偏好回复的隐式奖励差值。
+
 
 
 损失计算伪代码：

@@ -30,7 +30,6 @@ $$
 
 $$
 Agent = LLM + Planning + Memory + Tool Use + Collaboration
-
 $$
 
 这样的设计。
@@ -172,11 +171,9 @@ Codex 最近在做实验性的上下文压缩方案：
 pi 的文档[2]提到 pi 有意跳过了 sub agents 和 plan mode 这类功能。pi 的核心因此只是一个持续的简单 agent loop：
 
 user query → 输出（可能带工具调用的）assistant message → 执行工具 → observation 给 LLM → 继续下一轮，直到没有工具调用为止。
-这套 loop 没规划步骤，只是逐轮响应式地根据 LLM 的工具调用推进，而不是提前生成一个多步计划再执行。
+这套 loop 没规划步骤，只是逐轮响应式地根据 LLM 的工具调用推进，而非提前生成一个多步计划再执行。
 
 p.s. 这个流程中有钩子（beforeToolCall/afterToolCall/shouldStopAfterTurn）可以介入执行流程。
-
-[WIP]
 
 # 3. Tool Use
 
@@ -187,7 +184,7 @@ p.s. 这个流程中有钩子（beforeToolCall/afterToolCall/shouldStopAfterTurn
 
 > Remote Procedure Call（远程过程调用）RPC 的核心思想是：“让你像调用本地函数一样，去调用运行在另一台机器或另一个进程中的函数”。底层的网络连接、数据打包（序列化）、发送、等待响应、解包等复杂过程，都被 RPC 框架屏蔽了。
 而 API 是一个顶层的大概念，而 RPC 是实现 API 的一种具体模式或技术手段。
-一句话总结关系：所有的 RPC 都是一种 API，但并非所有 API 都是 RPC。
+> 所有的 RPC 都是一种 API，但并非所有 API 都是 RPC。
 # 4. Collaboration
 
 
