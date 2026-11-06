@@ -1,0 +1,1552 @@
+---
+layout: pixel-app
+title: Flora Personality Scanner
+---
+
+        <svg class="sprite-defs" aria-hidden="true" focusable="false">
+    <defs>
+        <g id="form-flower">
+            <rect x="30" y="34" width="4" height="24" fill="var(--leaf)" />
+            <rect x="18" y="44" width="12" height="4" fill="var(--leaf)" />
+            <rect x="34" y="50" width="12" height="4" fill="var(--leaf)" />
+            <rect x="28" y="6" width="8" height="12" fill="var(--petal)" />
+            <rect x="16" y="16" width="12" height="8" fill="var(--petal)" />
+            <rect x="36" y="16" width="12" height="8" fill="var(--petal)" />
+            <rect x="20" y="26" width="8" height="10" fill="var(--petal)" />
+            <rect x="36" y="26" width="8" height="10" fill="var(--petal)" />
+            <rect x="28" y="20" width="8" height="8" fill="var(--center)" />
+        </g>
+        <g id="form-tree">
+            <rect x="29" y="34" width="6" height="24" fill="var(--trunk)" />
+            <rect x="22" y="26" width="20" height="10" fill="var(--leaf)" />
+            <rect x="16" y="18" width="32" height="10" fill="var(--leaf)" />
+            <rect x="22" y="10" width="20" height="10" fill="var(--leaf)" />
+            <rect x="28" y="4" width="8" height="8" fill="var(--leaf)" />
+            <rect x="24" y="18" width="6" height="4" fill="var(--center)" opacity="0.55" />
+            <rect x="36" y="26" width="6" height="4" fill="var(--center)" opacity="0.45" />
+        </g>
+        <g id="form-bamboo">
+            <rect x="20" y="8" width="5" height="48" fill="var(--leaf)" />
+            <rect x="34" y="14" width="5" height="42" fill="var(--leaf)" />
+            <rect x="48" y="10" width="5" height="46" fill="var(--leaf)" />
+            <rect x="20" y="20" width="5" height="3" fill="var(--trunk)" opacity="0.55" />
+            <rect x="20" y="34" width="5" height="3" fill="var(--trunk)" opacity="0.55" />
+            <rect x="20" y="48" width="5" height="3" fill="var(--trunk)" opacity="0.55" />
+            <rect x="34" y="26" width="5" height="3" fill="var(--trunk)" opacity="0.55" />
+            <rect x="34" y="40" width="5" height="3" fill="var(--trunk)" opacity="0.55" />
+            <rect x="48" y="22" width="5" height="3" fill="var(--trunk)" opacity="0.55" />
+            <rect x="48" y="36" width="5" height="3" fill="var(--trunk)" opacity="0.55" />
+            <rect x="25" y="16" width="12" height="4" fill="var(--center)" />
+            <rect x="39" y="22" width="12" height="4" fill="var(--center)" />
+            <rect x="8" y="28" width="12" height="4" fill="var(--center)" />
+        </g>
+        <g id="form-cactus">
+            <rect x="26" y="18" width="12" height="38" fill="var(--leaf)" />
+            <rect x="16" y="28" width="10" height="6" fill="var(--leaf)" />
+            <rect x="16" y="20" width="6" height="14" fill="var(--leaf)" />
+            <rect x="38" y="36" width="10" height="6" fill="var(--leaf)" />
+            <rect x="42" y="26" width="6" height="16" fill="var(--leaf)" />
+            <rect x="26" y="10" width="12" height="8" fill="var(--petal)" />
+            <rect x="30" y="6" width="4" height="4" fill="var(--center)" />
+            <rect x="20" y="34" width="3" height="3" fill="var(--center)" opacity="0.65" />
+            <rect x="41" y="30" width="3" height="3" fill="var(--center)" opacity="0.65" />
+            <rect x="34" y="46" width="3" height="3" fill="var(--center)" opacity="0.65" />
+        </g>
+        <g id="form-moss">
+            <rect x="14" y="44" width="36" height="12" fill="var(--leaf)" />
+            <rect x="18" y="38" width="8" height="6" fill="var(--leaf)" />
+            <rect x="28" y="34" width="8" height="10" fill="var(--leaf)" />
+            <rect x="38" y="40" width="8" height="4" fill="var(--leaf)" />
+            <rect x="24" y="30" width="4" height="4" fill="var(--petal)" />
+            <rect x="36" y="26" width="4" height="4" fill="var(--petal)" />
+            <rect x="16" y="34" width="4" height="4" fill="var(--center)" />
+            <rect x="42" y="34" width="4" height="4" fill="var(--center)" />
+            <rect x="22" y="48" width="4" height="4" fill="var(--center)" opacity="0.5" />
+            <rect x="38" y="48" width="4" height="4" fill="var(--center)" opacity="0.5" />
+        </g>
+        <g id="form-trap">
+            <rect x="30" y="36" width="4" height="22" fill="var(--leaf)" />
+            <rect x="18" y="50" width="12" height="4" fill="var(--leaf)" />
+            <rect x="34" y="52" width="12" height="4" fill="var(--leaf)" />
+            <polygon points="18,24 24,12 40,12 46,24" fill="var(--petal)" />
+            <polygon points="18,26 24,38 40,38 46,26" fill="var(--petal)" />
+            <rect x="22" y="22" width="4" height="4" fill="#ffffff" opacity="0.85" />
+            <rect x="30" y="22" width="4" height="4" fill="#ffffff" opacity="0.85" />
+            <rect x="38" y="22" width="4" height="4" fill="#ffffff" opacity="0.85" />
+            <rect x="26" y="30" width="4" height="4" fill="#ffffff" opacity="0.85" />
+            <rect x="34" y="30" width="4" height="4" fill="#ffffff" opacity="0.85" />
+            <rect x="30" y="24" width="4" height="4" fill="var(--center)" />
+        </g>
+    </defs>
+</svg>
+
+<div class="dialog-box flora-window" id="floraWindow">
+    <div class="dialog-title-bar">
+        <span class="dialog-title">FLORA.EXE - [PERSONALITY SCANNER v2.6]</span>
+        <div class="dialog-title-controls">
+            <button class="dialog-close-button" onclick="location.href='/'">X</button>
+        </div>
+    </div>
+
+    <div class="flora-screen" id="floraScreen">
+        <div class="scan-strip">
+            <span>SYS: HERBARIUM OS / SCAN_MODULE: ONLINE</span>
+            <span id="progressText">ANSWERED 00/12</span>
+        </div>
+        <div class="progress-track" id="progressTrack" aria-hidden="true"></div>
+
+        <section class="flora-panel" id="startPanel">
+            <div class="start-layout">
+                <div class="start-copy">
+                    <div class="eyebrow">FLORA PERSONALITY SCAN // NO. 2026</div>
+                    <h2>你在植物图鉴里，<br>会是哪一株？</h2>
+                    <p>12 道轻量选择题，扫描你的感知、理解、共情与行动方式。没有标准答案，请选择更接近直觉的那一项。</p>
+
+                    <div class="axis-chips">
+                        <span class="axis-chip">PERCEPTION</span>
+                        <span class="axis-chip">UNDERSTANDING</span>
+                        <span class="axis-chip">EMPATHY</span>
+                        <span class="axis-chip">ACTION</span>
+                    </div>
+
+                    <button class="btn98 primary" id="startBtn">开始鉴定 [START]</button>
+                    <p class="disclaimer">* 这是一个关于感知与理解方式的趣味植物人格测试，不是专业心理评估。结果仅保存在当前页面。</p>
+                </div>
+
+                <div class="start-visual">
+                    <div class="specimen-top">
+                        <span>SPECIMEN // UNKNOWN</span>
+                        <span>WAITING</span>
+                    </div>
+                    <div class="specimen-frame">
+                        <svg class="plant-sprite placeholder-sprite" viewBox="0 0 64 64" aria-hidden="true">
+                            <use href="#form-flower"></use>
+                        </svg>
+                        <div class="scan-line"></div>
+                    </div>
+                    <div class="visual-caption">AWAITING SAMPLE DATA...</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="flora-panel" id="quizPanel" hidden>
+            <div class="question-panel">
+                <div class="question-meta">
+                    <span id="qIndex">Q01 / 12</span>
+                    <span id="qDimension">SCAN_STEP // INPUT_REQUIRED</span>
+                </div>
+                <h2 class="question-text" id="qText" aria-live="polite"></h2>
+
+                <div class="option-list" id="optionList">
+                    <button class="option-btn" data-choice="a">
+                        <span class="option-key">A</span>
+                        <span id="optA"></span>
+                    </button>
+                    <button class="option-btn" data-choice="b">
+                        <span class="option-key">B</span>
+                        <span id="optB"></span>
+                    </button>
+                </div>
+
+                <div class="quiz-footer">
+                    <button class="btn98 small" id="backBtn">← 上一题</button>
+                    <span class="keyboard-hint">键盘 1 / 2 选择</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="flora-panel" id="resultPanel" hidden>
+            <div class="result-grid">
+                <aside class="specimen-card" id="specimenCard">
+                    <div class="specimen-top">
+                        <span>SPECIMEN // <span id="resultCode">????</span></span>
+                        <span>MATCHED</span>
+                    </div>
+                    <div class="specimen-frame">
+                        <svg class="plant-sprite" viewBox="0 0 64 64" aria-hidden="true">
+                            <use id="plantUse" href="#form-flower"></use>
+                        </svg>
+                    </div>
+                    <div class="specimen-name" id="plantName">未知植物</div>
+                    <div class="specimen-latin" id="plantLatin">Species incognita</div>
+                    <div class="specimen-kind" id="plantKind">UNCLASSIFIED</div>
+                </aside>
+
+                <div class="result-info">
+                    <div class="result-type" id="resultTypeLine">TYPE: ????</div>
+                    <h2 id="plantTagline"></h2>
+                    <p id="plantDescription"></p>
+
+                    <div class="trait-tags" id="traitTags"></div>
+
+                    <div class="radar-box">
+                        <div class="radar-title"><span class="label-en">PERCEPTION MAP //</span> <span class="label-zh">感知图谱</span></div>
+                        <div class="radar-chart" id="radarChart" role="img" aria-label="四维感知倾向雷达图，不显示具体数值"></div>
+                    </div>
+
+                    <div class="care-box">
+                        <div class="care-title"><span class="label-en">CARE MANUAL //</span> <span class="label-zh">养护指南</span></div>
+                        <p id="careText"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="result-actions">
+                <button class="btn98" id="restartBtn">RETEST</button>
+                <button class="btn98" id="copyBtn">COPY RESULT</button>
+                <button class="btn98" onclick="location.href='/'">HOME</button>
+            </div>
+        </section>
+    </div>
+
+    <div class="flora-statusbar">
+        <span class="status-pane" id="statusText">READY</span>
+        <span class="status-pane">LOCAL_MODE</span>
+        <span class="status-pane">12 QUESTIONS</span>
+    </div>
+</div>
+
+<style>
+    .sprite-defs {
+        position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+    }
+
+    .label-en {
+        font-family: var(--pixel-font-latin);
+    }
+
+    .label-zh {
+        font-family: var(--pixel-font-cjk);
+        font-size: 1.35em;
+        letter-spacing: 0;
+    }
+
+    .flora-window {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.96);
+        width: 820px;
+        max-width: 95%;
+        height: 640px;
+        max-height: 86vh;
+        background-color: var(--win98-bg) !important;
+        display: flex;
+        flex-direction: column;
+        opacity: 0;
+        transition: opacity 0.35s ease-out, transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        z-index: 1000;
+        overflow: hidden;
+        animation: none !important;
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+        --petal: #e88aa0;
+        --center: #f2c14e;
+        --leaf: #4f7d4a;
+        --trunk: #6b4b2a;
+    }
+
+    .flora-screen {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 16px;
+        color: var(--dark-text);
+        background-color: var(--pale-green);
+        background-image:
+            repeating-linear-gradient(0deg, rgba(31, 92, 58, 0.045) 0px, rgba(31, 92, 58, 0.045) 1px, transparent 1px, transparent 4px),
+            linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0));
+        border-top: 1px solid var(--win98-border-light);
+        border-left: 1px solid var(--win98-border-light);
+        border-right: 1px solid var(--win98-border-dark);
+        border-bottom: 1px solid var(--win98-border-dark);
+        margin: 4px;
+    }
+
+    .flora-screen::-webkit-scrollbar { width: 10px; }
+    .flora-screen::-webkit-scrollbar-track { background: rgba(47, 93, 67, 0.08); }
+    .flora-screen::-webkit-scrollbar-thumb {
+        background: var(--win98-bg);
+        border-top: 1px solid var(--win98-border-light);
+        border-left: 1px solid var(--win98-border-light);
+        border-right: 1px solid var(--win98-border-dark);
+        border-bottom: 1px solid var(--win98-border-dark);
+    }
+
+    .flora-panel { animation: floraFadeIn 0.25s ease-out; }
+    .flora-panel[hidden] { display: none !important; }
+
+    #startPanel:not([hidden]) {
+        min-height: 100%;
+        display: flex;
+        align-items: center;
+    }
+
+    #startPanel .start-layout { width: 100%; }
+
+    @keyframes floraFadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .scan-strip {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 7px;
+        font-family: var(--pixel-font-latin);
+        font-size: 8px;
+        letter-spacing: 0.5px;
+        color: #2f5d43;
+    }
+
+    .progress-track {
+        display: flex;
+        gap: 3px;
+        margin-bottom: 18px;
+    }
+
+    .progress-seg {
+        flex: 1;
+        height: 8px;
+        background: rgba(47, 93, 67, 0.12);
+        border: 1px solid rgba(47, 93, 67, 0.25);
+        transition: background-color 0.2s, border-color 0.2s;
+    }
+
+    .progress-seg.done {
+        background: #4f8f68;
+        border-color: #2f5d43;
+    }
+
+    .progress-seg.current {
+        background: #f2c14e;
+        border-color: #a5821f;
+        animation: floraBlink 1s steps(2, end) infinite;
+    }
+
+    @keyframes floraBlink {
+        50% { opacity: 0.45; }
+    }
+
+    .start-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(220px, 0.7fr);
+        gap: 26px;
+        align-items: center;
+        min-height: 100%;
+        padding: 10px 4px;
+    }
+
+    .eyebrow {
+        margin-bottom: 14px;
+        font-family: var(--pixel-font-latin);
+        font-size: 9px;
+        letter-spacing: 0.6px;
+        color: #2f5d43;
+    }
+
+    .start-copy h2 {
+        margin: 0 0 14px;
+        font-family: var(--pixel-font-cjk);
+        font-size: 25px;
+        line-height: 1.5;
+        color: #173d2a;
+        font-weight: bold;
+    }
+
+    .start-copy p {
+        margin: 0 0 16px;
+        font-size: 14px;
+        line-height: 1.85;
+        color: #355244;
+    }
+
+    .axis-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 20px;
+    }
+
+    .axis-chip {
+        padding: 4px 7px;
+        font-family: var(--pixel-font-latin);
+        font-size: 8px;
+        line-height: 1.5;
+        color: #2f5d43;
+        background: rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(47, 93, 67, 0.28);
+    }
+
+    .btn98 {
+        padding: 8px 14px;
+        font-family: var(--pixel-font-cjk);
+        font-size: 12px;
+        color: #111;
+        background-color: var(--win98-bg);
+        border-top: 2px solid var(--win98-border-light);
+        border-left: 2px solid var(--win98-border-light);
+        border-right: 2px solid var(--win98-border-dark);
+        border-bottom: 2px solid var(--win98-border-dark);
+        cursor: pointer;
+        transition: background-color 0.15s, transform 0.05s;
+    }
+
+    .btn98:hover { background-color: #d4d0c8; }
+
+    .btn98:active {
+        border-top-color: var(--win98-border-dark);
+        border-left-color: var(--win98-border-dark);
+        border-right-color: var(--win98-border-light);
+        border-bottom-color: var(--win98-border-light);
+        transform: translate(1px, 1px);
+    }
+
+    .btn98:focus-visible {
+        outline: 2px dotted #173d2a;
+        outline-offset: 2px;
+    }
+
+    .btn98:disabled {
+        color: #777;
+        cursor: not-allowed;
+        opacity: 0.55;
+    }
+
+    .btn98.primary {
+        background-color: var(--pale-pink);
+        font-weight: bold;
+        padding: 10px 16px;
+    }
+
+    .btn98.small {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .disclaimer {
+        margin-top: 14px !important;
+        font-size: 11px !important;
+        line-height: 1.7 !important;
+        color: #6b8174 !important;
+    }
+
+    .start-visual,
+    .specimen-card {
+        background: #f7fbf4;
+        border: 2px solid #2f5d43;
+        box-shadow: 4px 4px 0 rgba(47, 93, 67, 0.2);
+    }
+
+    .start-visual {
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+    }
+
+    .specimen-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        font-family: var(--pixel-font-latin);
+        font-size: 7px;
+        line-height: 1.5;
+        color: #2f5d43;
+    }
+
+    .specimen-frame {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 1px solid rgba(47, 93, 67, 0.45);
+        background-image:
+            linear-gradient(rgba(47, 93, 67, 0.09) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(47, 93, 67, 0.09) 1px, transparent 1px);
+        background-size: 12px 12px;
+        background-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .placeholder-sprite {
+        opacity: 0.32;
+        filter: grayscale(0.7);
+    }
+
+    .scan-line {
+        position: absolute;
+        left: -5%;
+        width: 110%;
+        height: 2px;
+        background: #2f5d43;
+        opacity: 0.5;
+        box-shadow: 0 0 8px rgba(47, 93, 67, 0.5);
+        animation: floraScan 3.2s linear infinite;
+    }
+
+    @keyframes floraScan {
+        from { top: -5%; }
+        to { top: 105%; }
+    }
+
+    .plant-sprite {
+        width: 100%;
+        height: 100%;
+        max-width: 190px;
+        max-height: 190px;
+        image-rendering: pixelated;
+        shape-rendering: crispEdges;
+        filter: drop-shadow(3px 3px 0 rgba(47, 93, 67, 0.16));
+    }
+
+    .visual-caption {
+        font-family: var(--pixel-font-latin);
+        font-size: 7px;
+        color: #5f7a6b;
+        text-align: center;
+        letter-spacing: 0.5px;
+    }
+
+    .question-panel {
+        max-width: 690px;
+        margin: 0 auto;
+        padding: 10px 4px 6px;
+    }
+
+    .question-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(47, 93, 67, 0.28);
+        font-family: var(--pixel-font-latin);
+        font-size: 8px;
+        line-height: 1.5;
+        color: #2f5d43;
+    }
+
+    .question-text {
+        min-height: 92px;
+        margin: 22px 0 24px;
+        font-family: var(--pixel-font-cjk);
+        font-size: 18px;
+        line-height: 1.7;
+        color: #173d2a;
+        font-weight: bold;
+    }
+
+    .option-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .option-btn {
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 14px;
+        text-align: left;
+        font-family: var(--pixel-font-cjk);
+        font-size: 14px;
+        line-height: 1.55;
+        color: #1c3327;
+        background: rgba(255, 255, 255, 0.58);
+        border: 2px solid #2f5d43;
+        box-shadow: 3px 3px 0 rgba(47, 93, 67, 0.22);
+        cursor: pointer;
+        transition: background-color 0.15s, transform 0.08s, box-shadow 0.08s;
+    }
+
+    .option-btn:hover {
+        background: #ffffff;
+        transform: translate(-1px, -1px);
+        box-shadow: 4px 4px 0 rgba(47, 93, 67, 0.24);
+    }
+
+    .option-btn:active,
+    .option-btn.selected {
+        background: #e9f8ed;
+        transform: translate(2px, 2px);
+        box-shadow: 1px 1px 0 rgba(47, 93, 67, 0.25);
+    }
+
+    .option-btn:focus-visible {
+        outline: 2px dotted #173d2a;
+        outline-offset: 2px;
+    }
+
+    .option-key {
+        flex: 0 0 auto;
+        min-width: 22px;
+        padding: 3px 5px;
+        font-family: var(--pixel-font-latin);
+        font-size: 9px;
+        line-height: 1.5;
+        text-align: center;
+        color: #eafff1;
+        background: #2f5d43;
+    }
+
+    .quiz-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-top: 24px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(47, 93, 67, 0.22);
+    }
+
+    .keyboard-hint {
+        font-family: var(--pixel-font-cjk);
+        font-size: 11px;
+        color: #6b8174;
+    }
+
+    .result-grid {
+        display: grid;
+        grid-template-columns: 250px minmax(0, 1fr);
+        gap: 22px;
+        align-items: start;
+        padding: 4px;
+    }
+
+    .specimen-card {
+        padding: 11px;
+        margin-top: 4px;
+    }
+
+    .specimen-card .specimen-frame {
+        margin: 8px 0;
+    }
+
+    .specimen-name {
+        margin-top: 9px;
+        font-family: var(--pixel-font-cjk);
+        font-size: 27px;
+        line-height: 1.25;
+        color: #173d2a;
+        font-weight: bold;
+    }
+
+    .specimen-latin {
+        margin-top: 3px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 12px;
+        font-style: italic;
+        color: #5f7a6b;
+    }
+
+    .specimen-kind {
+        margin-top: 9px;
+        padding-top: 7px;
+        border-top: 1px dashed rgba(47, 93, 67, 0.35);
+        font-family: var(--pixel-font-latin);
+        font-size: 7px;
+        line-height: 1.5;
+        color: #2f5d43;
+    }
+
+    .result-type {
+        margin-bottom: 7px;
+        font-family: var(--pixel-font-latin);
+        font-size: 9px;
+        line-height: 1.9;
+        letter-spacing: 0.4px;
+        color: #2f5d43;
+    }
+
+    .type-word {
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+    .type-sep { color: #5f7a6b; }
+
+    .result-info h2 {
+        margin: 0 0 11px;
+        font-family: var(--pixel-font-cjk);
+        font-size: 20px;
+        line-height: 1.55;
+        color: #173d2a;
+        font-weight: bold;
+    }
+
+    .result-info > p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.85;
+        color: #355244;
+    }
+
+    .trait-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 14px 0;
+    }
+
+    .trait-tag {
+        padding: 4px 8px;
+        font-size: 11px;
+        line-height: 1.4;
+        color: #173d2a;
+        background: #e2ffeb;
+        border: 1px solid #2f5d43;
+    }
+
+    .radar-box {
+        margin-top: 14px;
+        padding: 10px 8px 4px;
+        background: rgba(255, 255, 255, 0.42);
+        border: 1px dashed #2f5d43;
+    }
+
+    .radar-title {
+        font-family: var(--pixel-font-latin);
+        font-size: 8px;
+        line-height: 1.5;
+        color: #2f5d43;
+        margin-bottom: 2px;
+    }
+
+    .radar-chart {
+        display: flex;
+        justify-content: center;
+    }
+
+    .radar-chart svg {
+        display: block;
+        width: 100%;
+        max-width: 340px;
+        height: auto;
+    }
+
+    .radar-grid {
+        fill: none;
+        stroke: rgba(47, 93, 67, 0.2);
+        stroke-width: 1;
+    }
+
+    .radar-spoke {
+        stroke: rgba(47, 93, 67, 0.28);
+        stroke-width: 1;
+        stroke-dasharray: 2 3;
+    }
+
+    .radar-shape {
+        fill: rgba(79, 143, 104, 0.3);
+        stroke: #2f5d43;
+        stroke-width: 1.5;
+    }
+
+    .radar-dot {
+        fill: #2f5d43;
+    }
+
+    .radar-axis-title {
+        fill: #173d2a;
+        font-family: var(--pixel-font-cjk);
+        font-size: 13px;
+        font-weight: bold;
+    }
+
+    .radar-axis-sub {
+        fill: #5f7a6b;
+        font-family: var(--pixel-font-cjk);
+        font-size: 11px;
+    }
+
+    .care-box {
+        margin-top: 16px;
+        padding: 10px 12px;
+        background: rgba(255, 255, 255, 0.45);
+        border: 1px dashed #2f5d43;
+    }
+
+    .care-title {
+        margin-bottom: 5px;
+        font-family: var(--pixel-font-latin);
+        font-size: 8px;
+        line-height: 1.5;
+        color: #2f5d43;
+    }
+
+    .care-box p {
+        margin: 0;
+        font-size: 12px;
+        line-height: 1.75;
+        color: #355244;
+    }
+
+    .result-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(47, 93, 67, 0.28);
+    }
+
+    .flora-statusbar {
+        display: flex;
+        gap: 3px;
+        padding: 3px 4px;
+        background: var(--win98-bg);
+        border-top: 1px solid var(--win98-border-light);
+        font-family: var(--pixel-font-latin);
+        font-size: 7px;
+        line-height: 1.5;
+        color: #333;
+    }
+
+    .status-pane {
+        flex: 1;
+        min-width: 0;
+        padding: 2px 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border-top: 1px solid var(--win98-border-dark);
+        border-left: 1px solid var(--win98-border-dark);
+        border-right: 1px solid var(--win98-border-light);
+        border-bottom: 1px solid var(--win98-border-light);
+    }
+
+    .status-pane:first-child { flex: 2; }
+
+    @media (max-width: 760px) {
+        .flora-window {
+            position: fixed;
+            width: 96vw;
+            max-width: 96vw;
+            height: 88vh;
+            max-height: 88vh;
+        }
+
+        .flora-screen { padding: 10px; }
+
+        .start-layout {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .start-visual { display: none; }
+
+        .start-copy h2 { font-size: 21px; }
+
+        .question-text {
+            min-height: 76px;
+            margin: 16px 0 18px;
+            font-size: 16px;
+        }
+
+        .option-btn {
+            padding: 10px 11px;
+            font-size: 13px;
+        }
+
+        .result-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .specimen-card {
+            display: grid;
+            grid-template-columns: 116px minmax(0, 1fr);
+            grid-template-areas:
+                "top top"
+                "frame name"
+                "frame latin"
+                "frame kind";
+            column-gap: 12px;
+            align-items: center;
+        }
+
+        .specimen-card .specimen-top { grid-area: top; }
+        .specimen-card .specimen-frame {
+            grid-area: frame;
+            margin: 6px 0 0;
+        }
+        .specimen-name {
+            grid-area: name;
+            margin-top: 6px;
+            font-size: 21px;
+        }
+        .specimen-latin { grid-area: latin; }
+        .specimen-kind {
+            grid-area: kind;
+            margin-top: 4px;
+        }
+
+        .result-info h2 { font-size: 18px; }
+
+        .radar-chart svg { max-width: 300px; }
+
+        .result-actions { justify-content: center; }
+        .status-pane:nth-child(2),
+        .status-pane:nth-child(3) { display: none; }
+    }
+</style>
+
+<script>
+    const AXES = [
+        { id: 'DG', title: '感知', left: 'D', right: 'G', leftName: '细节', rightName: '整体' },
+        { id: 'LH', title: '理解', left: 'L', right: 'H', leftName: '逻辑', rightName: '情感' },
+        { id: 'CA', title: '共情', left: 'C', right: 'A', leftName: '连接', rightName: '独立' },
+        { id: 'SF', title: '行动', left: 'S', right: 'F', leftName: '结构', rightName: '发散' }
+    ];
+
+    const QUESTIONS = [
+        {
+            axis: 'DG',
+            text: '走进一个陌生的房间，你最先捕捉到的是？',
+            a: { pole: 'D', text: '空间里真实存在的细节，比如光线、气味、特定的抓人的物品。' },
+            b: { pole: 'G', text: '这个空间本身的氛围、感觉，以及你可以联想到的背后的故事。' }
+        },
+        {
+            axis: 'DG',
+            text: '学习一项新技能时，你更习惯？',
+            a: { pole: 'D', text: '按步骤练习，从能学会的开始。' },
+            b: { pole: 'G', text: '大概理解一些整体框架，再自己想想它还能怎么用。' }
+        },
+        {
+            axis: 'DG',
+            text: '回忆一次旅行，你最先想起的通常是？',
+            a: { pole: 'D', text: '路上的经典、活动，一些清楚的瞬间。' },
+            b: { pole: 'G', text: '路程结束以后的感想。' }
+        },
+        {
+            axis: 'LH',
+            text: '朋友深夜发来一大段烦恼。你更容易先做什么？',
+            a: { pole: 'L', text: '总之先梳理问题原因，找找解决办法。' },
+            b: { pole: 'H', text: '回应情绪，让对方知道此刻有人站在一起。' }
+        },
+        {
+            axis: 'LH',
+            text: '团队在讨论中出现了明显分歧。你更倾向于？',
+            a: { pole: 'L', text: '把利弊摆出来，选一个最可行、最经得起检验的方案。' },
+            b: { pole: 'H', text: '先照顾每个人的感受，再慢慢找到大家都能接受的共识。' }
+        },
+        {
+            axis: 'LH',
+            text: '看完一部电影，你更容易记住什么？',
+            a: { pole: 'L', text: '剧情逻辑、设定是否自洽，以及那些没被解释清楚的伏笔。' },
+            b: { pole: 'H', text: '角色之间的情绪、关系变化，还有某个让你心里一软的瞬间。' }
+        },
+        {
+            axis: 'CA',
+            text: '朋友情绪低落，但暂时没有开口。你更自然的反应是？',
+            a: { pole: 'C', text: '陪在身边，试着感受并回应 TA 的情绪。' },
+            b: { pole: 'A', text: '给 TA 空间，等 TA 需要的时候再靠近。' }
+        },
+        {
+            axis: 'CA',
+            text: '在一段亲近的关系里，你更在意？',
+            a: { pole: 'C', text: '情绪流动和及时回应，让彼此知道对方在。' },
+            b: { pole: 'A', text: '各自的空间和独立感，不必时时黏在一起。' }
+        },
+        {
+            axis: 'CA',
+            text: '看到陌生人陷入尴尬或难过，你通常会？',
+            a: { pole: 'C', text: '很容易被牵动，会想主动做点什么。' },
+            b: { pole: 'A', text: '会留意，但更倾向于不打扰，让对方自己处理。' }
+        },
+        {
+            axis: 'SF',
+            text: '计划一次旅行时，你更接近哪种状态？',
+            a: { pole: 'S', text: '提前查好路线和备选方案，心里有底才安心。' },
+            b: { pole: 'F', text: '只定一个大方向，留出空白，到了再决定。' }
+        },
+        {
+            axis: 'SF',
+            text: '面对一个截止日期，你通常会？',
+            a: { pole: 'S', text: '提前拆解任务，按计划一段段推进。' },
+            b: { pole: 'F', text: '在压力临近时集中爆发，最后一刻效率最高。' }
+        },
+        {
+            axis: 'SF',
+            text: '你的房间或桌面，更接近下面哪种描述？',
+            a: { pole: 'S', text: '物品有相对固定的位置，秩序让人安心。' },
+            b: { pole: 'F', text: '随手放置也没关系，需要的时候再找。' }
+        }
+    ];
+
+    const PLANTS = {
+        GLAS: {
+            name: '雪松', latin: 'Cedrus deodara', kind: '常绿乔木 / CEDAR', form: 'tree',
+            petal: '#3f6b4f', center: '#a7c97a', leaf: '#3f6b4f', trunk: '#5c432b',
+            tagline: '在安静里，长成一棵有方向的树。',
+            desc: '你习惯站得稍远一点看事情，擅长把混乱拆成结构，再沿着长期目标一步步推进。你并不冷淡，只是把在意藏得很深，很少轻易交出自己的信任。',
+            traits: ['战略视角', '独立', '克制', '长期主义'],
+            care: '给自己留出独处和思考的时间，但别把所有想法都解释成“没必要说”。偶尔让别人看见你的在意，会让关系更稳。'
+        },
+        GLAF: {
+            name: '苔藓', latin: 'Bryophyta', kind: '小型地被植物 / MOSS', form: 'moss',
+            petal: '#d9e8a8', center: '#f2c14e', leaf: '#6f8f5a', trunk: '#5c432b',
+            tagline: '把世界拆开，再悄悄拼回自己的形状。',
+            desc: '你有一张很热闹的脑内地图，喜欢追问原理、比较可能性，也享受一个人慢慢想明白的过程。你看起来安静低耗，其实对真正感兴趣的事会投入得惊人。',
+            traits: ['好奇', '分析', '慢热', '脑内宇宙'],
+            care: '允许自己从小处开始，不必等到模型完美才行动。把想法拿出来晒晒太阳，它们会比你想象中更有生命力。'
+        },
+        GLCS: {
+            name: '竹子', latin: 'Bambusoideae', kind: '常绿禾本植物 / BAMBOO', form: 'bamboo',
+            petal: '#c8e6a0', center: '#a7c97a', leaf: '#5a9e66', trunk: '#3f6b4f',
+            tagline: '节节向上，是无需解释的野心。',
+            desc: '你天生带着推进力，目标一旦清晰，就会迅速组织资源、划出路径。你欣赏直接和效率，也愿意为结果承担责任。别人看到的是强势，你自己知道那只是不想浪费时间。',
+            traits: ['领导力', '效率', '果断', '目标感'],
+            care: '给自己留一点不产出的时间。倾听不是退让，慢一点也不会削弱你的锋芒。'
+        },
+        GLCF: {
+            name: '蒲公英', latin: 'Taraxacum officinale', kind: '多年生草本 / DANDELION', form: 'flower',
+            petal: '#f2e08a', center: '#c9a227', leaf: '#5d8f4e', trunk: '#6b4b2a',
+            tagline: '风一吹，就把奇思妙想撒向四面八方。',
+            desc: '你脑子里的点子像风里的种子，看到一个新问题就忍不住想拆开、重组、再试一遍。你喜欢辩论，不是为了赢，而是享受思路碰撞时那一下亮光。',
+            traits: ['机敏', '发散', '试验精神', '自由'],
+            care: '选一颗种子认真种下。完成比开始更难，但只有完成才会让灵感真正落地。'
+        },
+        GHAS: {
+            name: '铃兰', latin: 'Convallaria majalis', kind: '多年生草本 / LILY OF THE VALLEY', form: 'flower',
+            petal: '#f6f2e8', center: '#d8c25e', leaf: '#4f7d4a', trunk: '#6b4b2a',
+            tagline: '听见别人心里的回声，也不丢掉自己的光。',
+            desc: '你对情绪和关系的暗流很敏感，常常在别人开口之前就察觉到不对。你有坚定的内在价值，也愿意用温柔的方式把理想一点点变成现实。',
+            traits: ['洞察', '共情', '理想主义', '温柔坚定'],
+            care: '别把所有人的情绪都收进自己身体里。边界不是冷漠，而是让你的善意可以持续更久。'
+        },
+        GHAF: {
+            name: '勿忘我', latin: 'Myosotis sylvatica', kind: '一年生草本 / FORGET-ME-NOT', form: 'flower',
+            petal: '#7fa7e8', center: '#f4d35e', leaf: '#4f7d4a', trunk: '#6b4b2a',
+            tagline: '在无人注意的角落，认真地相信美好。',
+            desc: '你的内心世界比外面看起来辽阔得多，对美、意义和真诚有很高的敏感度。你不喜欢被粗暴地归类，也很难对违背内心的事视而不见。',
+            traits: ['理想', '诗意', '真诚', '内在丰盈'],
+            care: '把想象写下来，也做一点小小的行动。你的光需要被看见，而第一步不必惊天动地。'
+        },
+        GHCS: {
+            name: '向日葵', latin: 'Helianthus annuus', kind: '一年生草本 / SUNFLOWER', form: 'flower',
+            petal: '#f2c14e', center: '#6b4b2a', leaf: '#4f7d4a', trunk: '#6b4b2a',
+            tagline: '把光和热分给身边的人。',
+            desc: '你擅长看见别人的潜力，也愿意主动把人聚在一起。你的热情不是表演，而是真的希望每个人都好。你常常成为那个让局面变得更温暖的人。',
+            traits: ['热忱', '联结', '引导', '责任心'],
+            care: '先照看自己，再去照亮别人。拒绝一次邀请不会让你失去朋友，却会让你更完整。'
+        },
+        GHCF: {
+            name: '野蔷薇', latin: 'Rosa multiflora', kind: '攀援灌木 / WILD ROSE', form: 'flower',
+            petal: '#e88aa0', center: '#f4d35e', leaf: '#4f7d4a', trunk: '#6b4b2a',
+            tagline: '自由生长，也热烈地爱这个世界。',
+            desc: '你对人和可能性都充满好奇，容易在交流里获得灵感，也很擅长把别人从低落里拉出来。你热烈、真诚，偶尔有点不受控，但正是这种生命力让你独特。',
+            traits: ['活力', '灵感', '共情', '自由'],
+            care: '给热情一个容器，不必对每个可能都说好。真正重要的东西，值得你用更长的耐心去靠近。'
+        },
+        DLAS: {
+            name: '橡树', latin: 'Quercus robur', kind: '落叶乔木 / OAK', form: 'tree',
+            petal: '#5c7f4a', center: '#a7c97a', leaf: '#5c7f4a', trunk: '#6b4b2a',
+            tagline: '年轮不喧哗，却记录每一次可靠。',
+            desc: '你重视承诺、秩序和可验证的经验，做事有始有终，不喜欢空话。你的可靠不是无趣，而是一种安静的力量：答应过的事，你会认真做到。',
+            traits: ['稳重', '责任', '耐心', '务实'],
+            care: '允许计划外的小惊喜出现。变化不一定等于失控，有时它只是让年轮多一圈。'
+        },
+        DHAS: {
+            name: '山茶花', latin: 'Camellia japonica', kind: '常绿灌木 / CAMELLIA', form: 'flower',
+            petal: '#e46a7a', center: '#f2d16b', leaf: '#3f6b4f', trunk: '#6b4b2a',
+            tagline: '把温柔藏进细节，把细节变成守护。',
+            desc: '你总是默默记住别人的需要，用很小但很准确的方式照顾身边的人。你不一定站在舞台中央，却常常是让一个地方变得安心的那个人。',
+            traits: ['温柔', '守护', '细致', '体谅'],
+            care: '你的需要也值得被说出来。照顾别人之前，先问问自己今天有没有被好好照顾。'
+        },
+        DLCS: {
+            name: '白桦', latin: 'Betula pendula', kind: '落叶乔木 / BIRCH', form: 'tree',
+            petal: '#a7c97a', center: '#f2c14e', leaf: '#a7c97a', trunk: '#e8e0cf',
+            tagline: '把混乱修剪成可以通行的路。',
+            desc: '你直率、务实，擅长把模糊的事情变成清晰的步骤。你重视规则，也愿意扛起责任，在大家都不知从何下手时，你常常是那个先动手的人。',
+            traits: ['果断', '秩序', '务实', '执行力'],
+            care: '给别人一点自己的节奏。效率之外也有风景，关系不是待办清单。'
+        },
+        DHCS: {
+            name: '绣球花', latin: 'Hydrangea macrophylla', kind: '落叶灌木 / HYDRANGEA', form: 'flower',
+            petal: '#9bb7e8', center: '#e7d9a8', leaf: '#4f7d4a', trunk: '#6b4b2a',
+            tagline: '让彼此靠近，让关系开花。',
+            desc: '你重视关系和归属感，擅长让不同的人待在同一个空间里也不尴尬。你会记得每个人的喜好，也愿意为了大家的舒适多走一步。',
+            traits: ['亲和', '协作', '周到', '照顾'],
+            care: '不必让所有人满意。你的感受同样重要，真正的关系容得下你说“不”。'
+        },
+        DLAF: {
+            name: '仙人掌', latin: 'Cactaceae', kind: '多肉植物 / CACTUS', form: 'cactus',
+            petal: '#f0b7c4', center: '#f2c14e', leaf: '#5f8f5a', trunk: '#6b4b2a',
+            tagline: '不需要太多水，也能长出自己的形状。',
+            desc: '你冷静、独立，喜欢用实际动手的方式理解世界。你不太爱说漂亮话，但在关键时刻往往最靠得住。你的边界感很强，那是一种自我保护，也是一种诚实。',
+            traits: ['冷静', '实用', '独立', '边界感'],
+            care: '偶尔让人靠近一点。独处之外也有绿洲，不必永远一个人扛着所有天气。'
+        },
+        DHAF: {
+            name: '薰衣草', latin: 'Lavandula angustifolia', kind: '多年生草本 / LAVENDER', form: 'flower',
+            petal: '#9b8ad4', center: '#c8bce8', leaf: '#6f8f5a', trunk: '#6b4b2a',
+            tagline: '用自己的节奏，开一朵安静的花。',
+            desc: '你对美和细微的情绪很敏锐，喜欢在当下感受生活，而不是急着给一切下定义。你温和、有分寸，内心却有自己的坚持和浪漫。',
+            traits: ['美感', '温和', '自由', '当下感'],
+            care: '相信你的直觉，也不必追赶别人的节奏。你开花的时间，不需要和任何人比较。'
+        },
+        DLCF: {
+            name: '捕蝇草', latin: 'Dionaea muscipula', kind: '食虫植物 / VENUS FLYTRAP', form: 'trap',
+            petal: '#c9566a', center: '#e8d9b0', leaf: '#4f7d4a', trunk: '#6b4b2a',
+            tagline: '机会经过时，毫不犹豫地张开叶片。',
+            desc: '你反应快、胆子大，擅长在真实场景里做判断。你不太喜欢纸上谈兵，更相信身体力行的经验。刺激和变化会让你兴奋，而你也总能在混乱里找到下一步。',
+            traits: ['敏锐', '行动', '冒险', '临场感'],
+            care: '冲之前多看一眼。耐心不会拖慢你，反而会让你的速度用在对的地方。'
+        },
+        DHCF: {
+            name: '扶桑花', latin: 'Hibiscus rosa-sinensis', kind: '常绿灌木 / HIBISCUS', form: 'flower',
+            petal: '#e85d5d', center: '#f2c14e', leaf: '#4f7d4a', trunk: '#6b4b2a',
+            tagline: '今天就要盛开，明天再说明天。',
+            desc: '你热烈、真诚，擅长把普通的一天变成值得记住的时刻。你对人的情绪有天然的感知力，也愿意把快乐分享出去。你活得很有现场感。',
+            traits: ['热情', '表现力', '感染力', '真诚'],
+            care: '允许自己慢下来。快乐也需要休息，安静不是无聊，而是下一次盛开的土壤。'
+        }
+    };
+
+    let currentQuestion = 0;
+    let answers = new Array(QUESTIONS.length).fill(null);
+    let locked = false;
+    let finished = false;
+    let currentCode = '';
+
+    function makeDraggable(element) {
+        const titleBar = element.querySelector('.dialog-title-bar');
+        let offsetX;
+        let offsetY;
+        let isDragging = false;
+
+        titleBar.addEventListener('mousedown', (event) => {
+            if (event.target.closest('button')) return;
+            isDragging = true;
+            element.style.transition = 'none';
+            element.style.transform = 'none';
+
+            const rect = element.getBoundingClientRect();
+            offsetX = event.clientX - rect.left;
+            offsetY = event.clientY - rect.top;
+            element.style.zIndex = ++highestZIndex;
+        });
+
+        document.addEventListener('mousemove', (event) => {
+            if (!isDragging) return;
+
+            const parentRect = (element.offsetParent || document.body).getBoundingClientRect();
+            let newX = (event.clientX - offsetX) - parentRect.left;
+            let newY = (event.clientY - offsetY) - parentRect.top;
+
+            newX = Math.max(8, newX);
+            newY = Math.max(8, newY);
+
+            element.style.left = `${newX}px`;
+            element.style.top = `${newY}px`;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+    }
+
+    let highestZIndex = 2000;
+
+    function centerWindow(element) {
+        setTimeout(() => {
+            const parent = element.offsetParent || document.body;
+            const parentRect = parent.getBoundingClientRect();
+            const centerX = (window.innerWidth - element.offsetWidth) / 2 - parentRect.left;
+            const centerY = (window.innerHeight - element.offsetHeight) / 2 - parentRect.top;
+
+            element.style.transition = 'none';
+            element.style.left = `${Math.max(8, centerX)}px`;
+            element.style.top = `${Math.max(8, centerY)}px`;
+            element.style.transform = 'scale(0.98)';
+
+            element.offsetHeight;
+
+            element.style.transition = 'opacity 0.35s ease-out, transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            element.style.opacity = '1';
+            element.style.transform = 'scale(1)';
+        }, 100);
+    }
+
+    function setStatus(text) {
+        const statusEl = document.getElementById('statusText');
+        if (statusEl) statusEl.textContent = text;
+    }
+
+    function buildProgress() {
+        const track = document.getElementById('progressTrack');
+        track.innerHTML = '';
+        QUESTIONS.forEach(() => {
+            const segment = document.createElement('span');
+            segment.className = 'progress-seg';
+            track.appendChild(segment);
+        });
+    }
+
+    function updateProgress() {
+        const segments = document.querySelectorAll('.progress-seg');
+        const answered = answers.filter((answer) => answer !== null).length;
+        const quizActive = !document.getElementById('quizPanel').hidden;
+
+        segments.forEach((segment, index) => {
+            segment.classList.toggle('done', answers[index] !== null);
+            segment.classList.toggle('current', !finished && quizActive && index === currentQuestion);
+        });
+
+        document.getElementById('progressText').textContent =
+            `ANSWERED ${String(answered).padStart(2, '0')}/${QUESTIONS.length}`;
+    }
+
+    function showPanel(panelId) {
+        ['startPanel', 'quizPanel', 'resultPanel'].forEach((id) => {
+            document.getElementById(id).hidden = id !== panelId;
+        });
+        document.getElementById('floraScreen').scrollTop = 0;
+    }
+
+    function startQuiz() {
+        currentQuestion = 0;
+        answers = new Array(QUESTIONS.length).fill(null);
+        finished = false;
+        locked = false;
+        showPanel('quizPanel');
+        setStatus('SCANNING...');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const question = QUESTIONS[currentQuestion];
+
+        document.getElementById('qIndex').textContent =
+            `Q${String(currentQuestion + 1).padStart(2, '0')} / ${QUESTIONS.length}`;
+        document.getElementById('qText').textContent = question.text;
+        document.getElementById('optA').textContent = question.a.text;
+        document.getElementById('optB').textContent = question.b.text;
+
+        const backBtn = document.getElementById('backBtn');
+        backBtn.disabled = currentQuestion === 0;
+
+        document.querySelectorAll('.option-btn').forEach((button) => {
+            button.classList.toggle('selected', answers[currentQuestion] === button.dataset.choice);
+        });
+
+        updateProgress();
+    }
+
+    function chooseOption(choice) {
+        if (locked || finished) return;
+
+        answers[currentQuestion] = choice;
+        locked = true;
+
+        document.querySelectorAll('.option-btn').forEach((button) => {
+            button.classList.toggle('selected', button.dataset.choice === choice);
+        });
+        updateProgress();
+
+        setTimeout(() => {
+            locked = false;
+
+            if (currentQuestion < QUESTIONS.length - 1) {
+                currentQuestion += 1;
+                setStatus('ANALYZING RESPONSE...');
+                renderQuestion();
+            } else {
+                finished = true;
+                updateProgress();
+                showResult();
+            }
+        }, 170);
+    }
+
+    function goBack() {
+        if (locked || currentQuestion === 0) return;
+        currentQuestion -= 1;
+        setStatus('REVIEWING...');
+        renderQuestion();
+    }
+
+    function computeScores() {
+        const scores = {};
+        AXES.forEach((axis) => {
+            scores[axis.id] = {};
+            scores[axis.id][axis.left] = 0;
+            scores[axis.id][axis.right] = 0;
+        });
+
+        QUESTIONS.forEach((question, index) => {
+            const choice = answers[index];
+            if (!choice) return;
+            scores[question.axis][question[choice].pole] += 1;
+        });
+
+        return scores;
+    }
+
+    function buildResultData(scores) {
+        const axisData = AXES.map((axis) => {
+            const leftScore = scores[axis.id][axis.left];
+            const rightScore = scores[axis.id][axis.right];
+            const total = leftScore + rightScore || 1;
+            const chosen = rightScore > leftScore ? axis.right : axis.left;
+            const leftPercent = Math.round((leftScore / total) * 100);
+
+            return {
+                axis,
+                chosen,
+                leftPercent,
+                rightPercent: 100 - leftPercent
+            };
+        });
+
+        const code = axisData.map((item) => item.chosen).join('');
+
+        return { code, axisData };
+    }
+
+    function polarPoint(cx, cy, radius, angleDegrees) {
+        const radians = angleDegrees * Math.PI / 180;
+        return {
+            x: cx + radius * Math.cos(radians),
+            y: cy + radius * Math.sin(radians)
+        };
+    }
+
+    function createSvgElement(name, attributes = {}) {
+        const node = document.createElementNS('http://www.w3.org/2000/svg', name);
+        Object.entries(attributes).forEach(([key, value]) => {
+            node.setAttribute(key, value);
+        });
+        return node;
+    }
+
+    function renderRadar(axisData) {
+        const container = document.getElementById('radarChart');
+        container.innerHTML = '';
+
+        const svg = createSvgElement('svg', {
+            viewBox: '0 0 380 300',
+            role: 'img',
+            'aria-hidden': 'true'
+        });
+
+        const cx = 190;
+        const cy = 150;
+        const radius = 80;
+        const angles = [-90, 0, 90, 180];
+        const levels = [1, 0.66, 0.33];
+
+        const pointsForScale = (scale) => angles.map((angle) => {
+            const point = polarPoint(cx, cy, radius * scale, angle);
+            return `${point.x.toFixed(2)},${point.y.toFixed(2)}`;
+        }).join(' ');
+
+        levels.forEach((scale) => {
+            svg.appendChild(createSvgElement('polygon', {
+                points: pointsForScale(scale),
+                class: 'radar-grid'
+            }));
+        });
+
+        angles.forEach((angle) => {
+            const end = polarPoint(cx, cy, radius, angle);
+            svg.appendChild(createSvgElement('line', {
+                x1: cx,
+                y1: cy,
+                x2: end.x.toFixed(2),
+                y2: end.y.toFixed(2),
+                class: 'radar-spoke'
+            }));
+        });
+
+        const dataPoints = axisData.map((item, index) => {
+            const scale = Math.max(0.08, Math.min(1, item.leftPercent / 100));
+            return polarPoint(cx, cy, radius * scale, angles[index]);
+        });
+
+        svg.appendChild(createSvgElement('polygon', {
+            points: dataPoints.map((point) => `${point.x.toFixed(2)},${point.y.toFixed(2)}`).join(' '),
+            class: 'radar-shape'
+        }));
+
+        dataPoints.forEach((point) => {
+            svg.appendChild(createSvgElement('circle', {
+                cx: point.x.toFixed(2),
+                cy: point.y.toFixed(2),
+                r: '2.6',
+                class: 'radar-dot'
+            }));
+        });
+
+        const labels = [
+            { angle: -90, title: '感知', sub: '细节 D / 整体 G', anchor: 'middle' },
+            { angle: 0, title: '理解', sub: '逻辑 L / 情感 H', anchor: 'start' },
+            { angle: 90, title: '共情', sub: '连接 C / 独立 A', anchor: 'middle' },
+            { angle: 180, title: '行动', sub: '结构 S / 流动 F', anchor: 'end' }
+        ];
+        const labelRadius = radius + 30;
+
+        labels.forEach((label) => {
+            const point = polarPoint(cx, cy, labelRadius, label.angle);
+            const isVertical = label.angle === -90 || label.angle === 90;
+            const text = createSvgElement('text', {
+                x: point.x.toFixed(2),
+                y: (isVertical ? point.y : point.y - 3).toFixed(2),
+                'text-anchor': label.anchor
+            });
+
+            const title = createSvgElement('tspan', {
+                x: point.x.toFixed(2),
+                dy: '0',
+                class: 'radar-axis-title'
+            });
+            title.textContent = label.title;
+
+            const sub = createSvgElement('tspan', {
+                x: point.x.toFixed(2),
+                dy: '11',
+                class: 'radar-axis-sub'
+            });
+            sub.textContent = label.sub;
+
+            text.appendChild(title);
+            text.appendChild(sub);
+            svg.appendChild(text);
+        });
+
+        container.appendChild(svg);
+    }
+
+    function showResult() {
+        const scores = computeScores();
+        const { code, axisData } = buildResultData(scores);
+        const plant = PLANTS[code] || PLANTS.GHAF;
+
+        currentCode = code;
+
+        const specimenCard = document.getElementById('specimenCard');
+        specimenCard.style.setProperty('--petal', plant.petal);
+        specimenCard.style.setProperty('--center', plant.center);
+        specimenCard.style.setProperty('--leaf', plant.leaf);
+        specimenCard.style.setProperty('--trunk', plant.trunk);
+
+        document.getElementById('plantUse').setAttribute('href', `#form-${plant.form}`);
+        document.getElementById('resultCode').textContent = code;
+        document.getElementById('plantName').textContent = plant.name;
+        document.getElementById('plantLatin').textContent = plant.latin;
+        const kindParts = plant.kind.split(' / ');
+        document.getElementById('plantKind').innerHTML = kindParts.length === 2
+            ? `<span class="label-zh">${kindParts[0]}</span> <span class="label-en">/ ${kindParts[1]}</span>`
+            : `<span class="label-zh">${plant.kind}</span>`;
+        document.getElementById('plantTagline').textContent = plant.tagline;
+        document.getElementById('plantDescription').textContent = plant.desc;
+        document.getElementById('careText').textContent = plant.care;
+
+        const typeWords = axisData.map((item) => {
+            const poleName = item.chosen === item.axis.left ? item.axis.leftName : item.axis.rightName;
+            return `<span class="type-word"><span class="label-zh">${item.axis.title}</span> <span class="label-en">${item.chosen}</span> <span class="label-zh">${poleName}</span></span>`;
+        }).join('<span class="type-sep"> / </span>');
+        document.getElementById('resultTypeLine').innerHTML = `<span class="label-en">TYPE: ${code} //</span> ${typeWords}`;
+
+        const traitContainer = document.getElementById('traitTags');
+        traitContainer.innerHTML = '';
+        plant.traits.forEach((trait) => {
+            const tag = document.createElement('span');
+            tag.className = 'trait-tag';
+            tag.textContent = trait;
+            traitContainer.appendChild(tag);
+        });
+
+        renderRadar(axisData);
+
+        showPanel('resultPanel');
+        setStatus('SPECIMEN IDENTIFIED');
+    }
+
+    function copyResult() {
+        const plant = PLANTS[currentCode];
+        if (!plant) return;
+
+        const text = `我的植物人格是 ${plant.name}（${plant.latin}）\n类型：${currentCode} — ${plant.tagline}\n${plant.desc}`;
+        const done = () => setStatus('RESULT COPIED TO CLIPBOARD');
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+        } else {
+            fallbackCopy(text, done);
+        }
+    }
+
+    function fallbackCopy(text, done) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+
+        try {
+            document.execCommand('copy');
+            done();
+        } catch (error) {
+            setStatus('COPY FAILED - SELECT MANUALLY');
+        }
+
+        document.body.removeChild(textarea);
+    }
+
+    function resetToStart() {
+        currentQuestion = 0;
+        answers = new Array(QUESTIONS.length).fill(null);
+        finished = false;
+        locked = false;
+        currentCode = '';
+        showPanel('startPanel');
+        updateProgress();
+        setStatus('READY');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const win = document.getElementById('floraWindow');
+        makeDraggable(win);
+        centerWindow(win);
+        buildProgress();
+        updateProgress();
+
+        document.getElementById('startBtn').addEventListener('click', startQuiz);
+        document.getElementById('backBtn').addEventListener('click', goBack);
+        document.getElementById('restartBtn').addEventListener('click', resetToStart);
+        document.getElementById('copyBtn').addEventListener('click', copyResult);
+
+        document.querySelectorAll('.option-btn').forEach((button) => {
+            button.addEventListener('click', () => chooseOption(button.dataset.choice));
+        });
+
+        document.addEventListener('keydown', (event) => {
+            const quizVisible = !document.getElementById('quizPanel').hidden;
+            if (!quizVisible || locked) return;
+
+            const key = event.key.toLowerCase();
+            if (key === '1' || key === 'a') {
+                event.preventDefault();
+                chooseOption('a');
+            } else if (key === '2' || key === 'b') {
+                event.preventDefault();
+                chooseOption('b');
+            } else if (key === 'arrowleft' || key === 'backspace') {
+                event.preventDefault();
+                goBack();
+            }
+        });
+    });
+</script>
+
