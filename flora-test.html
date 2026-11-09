@@ -3,7 +3,7 @@ layout: pixel-app
 title: Flora Personality Scanner
 ---
 
-        <svg class="sprite-defs" aria-hidden="true" focusable="false">
+<svg class="sprite-defs" aria-hidden="true" focusable="false">
     <defs>
         <g id="form-flower">
             <rect x="30" y="34" width="4" height="24" fill="var(--leaf)" />
@@ -82,7 +82,7 @@ title: Flora Personality Scanner
 
 <div class="dialog-box flora-window" id="floraWindow">
     <div class="dialog-title-bar">
-        <span class="dialog-title">FLORA.EXE - [PERSONALITY SCANNER v2.6]</span>
+        <span class="dialog-title">FLORA PERSONALITY v1.0</span>
         <div class="dialog-title-controls">
             <button class="dialog-close-button" onclick="location.href='/'">X</button>
         </div>
@@ -90,7 +90,7 @@ title: Flora Personality Scanner
 
     <div class="flora-screen" id="floraScreen">
         <div class="scan-strip">
-            <span>SYS: HERBARIUM OS / SCAN_MODULE: ONLINE</span>
+            <span>HERBARIUM SERIES/ SCAN_MODULE: ONLINE</span>
             <span id="progressText">ANSWERED 00/20</span>
         </div>
         <div class="progress-track" id="progressTrack" aria-hidden="true"></div>
@@ -98,7 +98,7 @@ title: Flora Personality Scanner
         <section class="flora-panel" id="startPanel">
             <div class="start-layout">
                 <div class="start-copy">
-                    <div class="eyebrow">FLORA PERSONALITY SCAN // NO. 2026</div>
+                    <div class="eyebrow">FLORA PERSONALITY SCAN </div>
                     <h2>你在植物图鉴里，<br>会是哪一株？</h2>
                     <p>20 道轻量选择题，扫描你的感知、理解、共情与行动方式。没有标准答案，请选择更接近直觉的那一项。</p>
 
@@ -110,7 +110,7 @@ title: Flora Personality Scanner
                     </div>
 
                     <button class="btn98 primary" id="startBtn">开始鉴定 [START]</button>
-                    <p class="disclaimer">* 这是一个关于感知与理解方式的趣味植物人格测试，不是专业心理评估。结果仅保存在当前页面。</p>
+                    <p class="disclaimer">* 这是一个关于感知与理解方式的趣味植物人格测试，不是专业心理评估，因为我也不懂心理学。结果仅保存在当前页面，本站不会收集或传输你的任何数据。</p>
                 </div>
 
                 <div class="start-visual">
@@ -139,11 +139,11 @@ title: Flora Personality Scanner
 
                 <div class="option-list" id="optionList">
                     <button class="option-btn" data-choice="a">
-                        <span class="option-key">A</span>
+                        <span class="option-key">1</span>
                         <span id="optA"></span>
                     </button>
                     <button class="option-btn" data-choice="b">
-                        <span class="option-key">B</span>
+                        <span class="option-key">2</span>
                         <span id="optB"></span>
                     </button>
                 </div>
@@ -182,7 +182,7 @@ title: Flora Personality Scanner
                     <div class="radar-box">
                         <div class="radar-title"><span class="label-en">PERCEPTION MAP //</span> <span class="label-zh">感知图谱</span></div>
                         <div class="radar-chart" id="radarChart" role="img" aria-label="四维行为风格雷达图，含各维度中点参考，无优劣之分"></div>
-                        <div class="radar-hint">* 两端仅代表不同风格倾向，无优劣之分</div>
+                        <div class="radar-hint">* 离坐标轴中点的距离代表不同风格倾向</div>
                     </div>
 
                     <div class="care-box">
@@ -665,13 +665,6 @@ title: Flora Personality Scanner
         color: #2f5d43;
     }
 
-    .type-word {
-        display: inline-block;
-        white-space: nowrap;
-    }
-
-    .type-sep { color: #5f7a6b; }
-
     .result-info h2 {
         margin: 0 0 11px;
         font-family: var(--pixel-font-cjk);
@@ -938,7 +931,7 @@ title: Flora Personality Scanner
             axis: 'DG',
             text: '你在和神秘特工接头，因为你也是一位神秘特工。他给你一张城市夜景照片，你敏锐地注意到：',
             a: { pole: 'D', text: '霓虹招牌“正宗老上海牛油果馄饨”，尝鲜价 59.8。' },
-            b: { pole: 'G', text: '海湾倒映着街灯，熙熙攘攘的游客在防波堤边闲逛，氛围感很好。决定给照片取名《印象·威海》这样。' }
+            b: { pole: 'G', text: '海湾倒映着街灯，熙熙攘攘的游客在防波堤边闲逛，氛围感很好。决定给照片取名《印象·威海》。' }
         },
         {
             axis: 'DG',
@@ -1518,11 +1511,10 @@ title: Flora Personality Scanner
         document.getElementById('plantDescription').textContent = plant.desc;
         document.getElementById('careText').textContent = plant.care;
 
-        const typeWords = axisData.map((item) => {
-            const poleName = item.chosen === item.axis.left ? item.axis.leftName : item.axis.rightName;
-            return `<span class="type-word"><span class="label-zh">${item.axis.title}</span> <span class="label-en">${item.chosen}</span> <span class="label-zh">${poleName}</span></span>`;
-        }).join('<span class="type-sep"> / </span>');
-        document.getElementById('resultTypeLine').innerHTML = `<span class="label-en">TYPE: ${code} //</span> ${typeWords}`;
+        const typeWords = axisData
+            .map((item) => (item.chosen === item.axis.left ? item.axis.leftName : item.axis.rightName))
+            .join('、');
+        document.getElementById('resultTypeLine').innerHTML = `<span class="label-en">TYPE: ${code} //</span> <span class="label-zh">${typeWords}</span>`;
 
         const traitContainer = document.getElementById('traitTags');
         traitContainer.innerHTML = '';
